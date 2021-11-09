@@ -9,7 +9,7 @@ Analyzer::Analyzer(int size, Buffer* input) {
   buffer = input;
   fft_size = size;
   fft2 = fft_size / 2;
-  f_inc = 44100.0 / fft_size;
+  f_inc = samplerate / fft_size;
 
   x = 0;
   z = 0;
@@ -32,7 +32,7 @@ void Analyzer::process() {
 
   // Do FFT analysis
   for(int i = 0; i < fft_size; i++) {
-    val = (buffer->readBack((fft2) - i) / 65536.0) - 1.0;
+    val = (buffer->readBack((fft2) - i) / 2*SAMPLE_MAX_VALUE) - 1.0;
 
     amp_avg += abs(val);
     chunk[i] = val;

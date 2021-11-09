@@ -8,7 +8,7 @@
 #define CAVES_TESTSYNTH_H
 
 #include <cmath>
-#include "Buffer.h"
+#include "../../Header/Buffer.h"
 
 class Synth {
   public:

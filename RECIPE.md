@@ -4,3 +4,6 @@
 - An intelligent panner with 3D capabilities.
 - Tons of filters with high resonance.
 - Cool visuals.
+
+### Notes
+- Put frequency in control of more than just pitch (filter params, grainy stuff, delay, reverb...)

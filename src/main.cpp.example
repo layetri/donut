@@ -4,7 +4,7 @@
 #include "Header/Buffer.h"
 #include "Header/DelayLine.h"
 
-#include "Header/Amplitude.h"
+#include "util/Header/Amplitude.h"
 #include "Header/PanningInterface.h"
 
 // Compilation target TEENSY40 hasn't been implemented yet
@@ -49,7 +49,7 @@
     outputR.write(filterR.process() * pan.gainCalR(angleDeg, panning));
   }
 #elif defined(PLATFORM_DARWIN_X86)
-  #include "Header/jack_module.h"
+  #include "util/Header/jack_module.h"
 
   int main() {
     int samplerate = 44100;

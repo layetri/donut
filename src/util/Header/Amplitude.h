@@ -1,5 +1,5 @@
-#include "Buffer.h"
-#include "Global.h"
+#include "../../Header/Buffer.h"
+#include "../../Header/Global.h"
 #include "Biquad.h"
 
 #include <vector>

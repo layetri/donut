@@ -1,2 +1,10 @@
+# System specific files
 .DS_Store
-.vscode/c_cpp_properties.json
+
+# Folders to ignore
+/.vscode
+/obj
+
+# Files to ignore
+*.o
+/.idea/

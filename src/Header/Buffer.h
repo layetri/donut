@@ -27,6 +27,7 @@ public:
     void tick();
     void flush();
     void wipe();
+    void setPosition(int position);
 
     int getPosition();
     int getSize();

@@ -6,7 +6,7 @@
 #
 */
 
-#include "Header/Global.h"
+#include "../Header/Global.h"
 
 #if defined(PLATFORM_DARWIN_X86)
   #include <iostream>

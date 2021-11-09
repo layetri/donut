@@ -47,12 +47,7 @@ sample_t Buffer::getCurrentSample() {
 }
 
 void Buffer::tick() {
-  if(position < size) {
-    position++;
-  } else {
-    if(!full_cycle_flag) full_cycle_flag = true;
-    position -= size;
-  }
+  position = (position + 1) * (position < size - 1);
 }
 
 void Buffer::write(sample_t sample) {
@@ -65,6 +60,10 @@ void Buffer::writeAddition(sample_t sample) {
 
 void Buffer::writeAhead(sample_t sample, int places) {
   data[position + places] = sample;
+}
+
+void Buffer::setPosition(int position) {
+  this->position = position;
 }
 
 sample_t Buffer::readAhead(int places) {
