@@ -8,3 +8,4 @@
 # Files to ignore
 *.o
 /.idea/
+/donut

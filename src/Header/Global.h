@@ -20,7 +20,7 @@
 #else
   #define ENGINE_JACK
   #include <cstdint>
-  #include "../util/Header/CommandPool.h"
+  #include "CommandPool.h"
 
 //  CommandPool command_pool();
 #endif
@@ -34,10 +34,29 @@ typedef int16_t sample_t;
 #define SAMPLE_MAX_VALUE 32768
 
 // Provide a global samplerate value;
-extern const int samplerate;
+extern unsigned int samplerate;
 
 // Project-specific global code goes here!
 #define NUM_INPUTS 1
+#define NUMBER_OF_VOICES 16
+#define MAX_ENVELOPE_LENGTH 220500
+
+struct Event {
+	unsigned short cc;
+	unsigned short value;
+};
+
+enum ParameterStore {
+	p_Harmonics,
+	p_Detune,
+	p_Attack,
+	p_Decay,
+	p_Sustain,
+	p_Release,
+	p_Cutoff,
+	p_Resonance,
+	p_FilterType
+};
 
 #include <complex>
 #include <valarray>

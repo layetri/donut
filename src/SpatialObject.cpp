@@ -3,7 +3,7 @@
 //
 
 #include "Header/SpatialObject.h"
-#define FFT_SIZE 4096
+#define FFT_SIZE 2048
 
 SpatialObject::SpatialObject(Buffer *input) {
   input_buffer = input;
