@@ -14,12 +14,15 @@ void NoteHandler::noteOn(Note* note) {
 	// Push note onto queue and wait for the next tick to assign it
 	if(!findNextFree(note)) {
 	  	stealLeastRecent(note);
+	} else {
+		used_voices++;
 	}
 }
 
 void NoteHandler::noteOff(Note* note) {
 	for(auto& v : *voices) {
 		if(v->releaseIfMatches(note->pitch)) {
+			used_voices--;
 			return;
 		}
 	}
@@ -66,4 +69,8 @@ void NoteHandler::tick() {
       }
     }
   }
+}
+
+uint8_t NoteHandler::inUse() {
+	return used_voices;
 }

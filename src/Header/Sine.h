@@ -1,6 +1,6 @@
 #include "Oscillator.h"
 
-class Sine : Oscillator {
+class Sine : public Oscillator {
     public:
         Sine(float frequency, float phase_offset, Buffer* output);
         ~Sine();

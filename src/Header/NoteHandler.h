@@ -26,10 +26,12 @@ class NoteHandler {
 	void stealLeastRecent(Note* note);
 	void incrementVoiceIndex();
     void tick();
+	uint8_t inUse();
 
   private:
     vector<Voice*>* voices;
     queue<Note*> note_queue;
+	uint8_t used_voices = 0;
 
 	int voice_index = 0;
 };

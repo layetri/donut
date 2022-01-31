@@ -23,6 +23,7 @@ public:
     void write(sample_t sample);
     void writeAhead(sample_t sample, int places);
     void writeAddition(sample_t sample);
+	void writeAtPosition(sample_t sample, int position);
 
     void tick();
     void flush();
@@ -43,6 +44,7 @@ public:
     }
 
 private:
+	int bounds(int value);
     sample_t *data;
     int size;
     int position;

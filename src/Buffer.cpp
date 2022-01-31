@@ -62,6 +62,10 @@ void Buffer::writeAhead(sample_t sample, int places) {
   data[position + places] = sample;
 }
 
+void Buffer::writeAtPosition(sample_t sample, int w_position) {
+	data[bounds(w_position)] = sample;
+}
+
 void Buffer::setPosition(int position) {
   this->position = position;
 }
@@ -84,4 +88,8 @@ void Buffer::wipe() {
   }
 }
 
-
+int Buffer::bounds(int value) {
+	return (value > 0 && value < size) * value +
+		(value < 0) * 0 +
+		(value >= size) * (size - 1);
+}

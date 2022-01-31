@@ -2,8 +2,8 @@
 // Created by Daniël Kamp on 09/11/2021.
 //
 
-#ifndef DONUT_SQUARE_H
-#define DONUT_SQUARE_H
+#ifndef DONUT_WAVESHAPER_H
+#define DONUT_WAVESHAPER_H
 
 #include "Oscillator.h"
 
@@ -20,4 +20,4 @@ class WaveShaper : public Oscillator {
 };
 
 
-#endif //DONUT_SQUARE_H
+#endif //DONUT_WAVESHAPER_H

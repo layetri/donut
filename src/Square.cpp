@@ -12,10 +12,10 @@ Square::~Square() {}
 
 void Square::process() {
   incrementPhase();
-  int harmonics = 10;
+  int overtones = 10;
   output->flush();
 
-  for(int i = 1; i < harmonics; i++) {
+  for(int i = 1; i < overtones; i++) {
     int n = (2 * i) - 1;
     output->writeAddition(((sin(TWO_PI * n * phase) / n) * SAMPLE_MAX_VALUE));
   }

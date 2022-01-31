@@ -13,6 +13,7 @@
 #endif
 
 #include "Filter.h"
+using namespace std;
 
 class LowPassFilter : public Filter {
   public:
@@ -21,10 +22,14 @@ class LowPassFilter : public Filter {
 
     void process();
     void frequencyHandler();
+    void frequencyHandler_RBJ();
 	void setFrequency(float frequency);
+	void setResonance(float res);
 
-  private:
+	void printCoef();
+
+private:
     // Filter coefficients, butterworth-style
-    double b0, b1, b2, a1, a2;
+    double b0, b1, b2, a0, a1, a2, q;
     float frequency;
 };

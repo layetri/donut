@@ -2,6 +2,7 @@
 // Created by Daniël Kamp on 30/05/2021.
 //
 
+#pragma once
 #ifndef DONUT_GLOBAL_H
 #define DONUT_GLOBAL_H
 
@@ -20,7 +21,7 @@
 #else
   #define ENGINE_JACK
   #include <cstdint>
-  #include "CommandPool.h"
+//  #include "CommandPool.h"
 
 //  CommandPool command_pool();
 #endif
@@ -32,30 +33,48 @@
 // Provide a global sample template type
 typedef int16_t sample_t;
 #define SAMPLE_MAX_VALUE 32768
+#define PARAMETER_MAX_VALUE 65535
 
 // Provide a global samplerate value;
 extern unsigned int samplerate;
 
 // Project-specific global code goes here!
 #define NUM_INPUTS 1
-#define NUMBER_OF_VOICES 16
+#define NUMBER_OF_VOICES 12
 #define MAX_ENVELOPE_LENGTH 220500
 
 struct Event {
 	unsigned short cc;
 	unsigned short value;
+	unsigned char type = 'n';
 };
 
-enum ParameterStore {
+enum ApplicationState {
+	app_Idle,
+	app_Sequencer
+};
+
+enum ParameterID {
 	p_Harmonics,
+	p_AMP_Attack,
+	p_AMP_Decay,
+	p_AMP_Sustain,
+	p_AMP_Release,
+	p_Filter_Cutoff,
+	p_FM_Amount,
+	p_FM_KeyTrack,
+	p_LFO1_Rate,
 	p_Detune,
-	p_Attack,
-	p_Decay,
-	p_Sustain,
-	p_Release,
-	p_Cutoff,
-	p_Resonance,
-	p_FilterType
+	p_Detune_Range,
+	p_Filter_Resonance,
+	p_Filter_KeyTrack,
+	p_Filter_Type,
+	p_MOD_Attack,
+	p_MOD_Decay,
+	p_MOD_Sustain,
+	p_MOD_Release,
+	p_NotFound,
+	p_Exit
 };
 
 #include <complex>

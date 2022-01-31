@@ -3,11 +3,14 @@
 #include "Buffer.h"
 #include "Modulator.h"
 #include "WaveShaper.h"
+#include "Sine.h"
+#include "Square.h"
 #include "Note.h"
 #include "FloatBuffer.h"
 #include "AddAndDivide.h"
 #include "ADSR.h"
 #include "LowPassFilter.h"
+#include "ParameterStore.h"
 
 #include <vector>
 
@@ -15,18 +18,19 @@ using namespace std;
 
 class Voice {
   public:
-    Voice(Buffer* output, int v_id=0);
+    Voice(Buffer* output, ParameterPool* params, int v_id=0);
     ~Voice();
 
     void assign(Note* note);
     bool assignIfAvailable(Note* note);
 	bool releaseIfMatches(int note);
+	bool isAvailable();
     void process();
 	void release();
 	void tick();
 	sample_t getSample();
 
-	void set(ParameterStore, int);
+	void set(ParameterID, int);
 
 	[[nodiscard]] clock_t getTime() const;
 
@@ -34,6 +38,11 @@ class Voice {
     vector<Modulator*> mods;
     vector<WaveShaper*> osc_wav;
     vector<Buffer*> osc_buf;
+	vector<Sine*> lfo;
+	vector<Buffer*> lfo_buf;
+	Square* sub;
+
+	ParameterPool* parameters;
 
 	LowPassFilter* lpf;
     Buffer* output;
@@ -42,8 +51,11 @@ class Voice {
 	Note* midi_note;
 	ADSR2* envelope;
 
+	float crossmod = 0.5;
     bool available;
 	clock_t last_used;
 	int voice_id;
 	short unsigned int pitch = 0;
+
+	int8_t harmonics_knob = 0;
 };

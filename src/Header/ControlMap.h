@@ -5,14 +5,17 @@
 #ifndef DONUT_CONTROLMAP_H
 #define DONUT_CONTROLMAP_H
 
+#include "Global.h"
+#include "ParameterStore.h"
 #include <string>
-#include <map>
+#include <unordered_map>
 #include <cstdlib>
+
 using namespace std;
 
 struct Map {
 	string name;
-	map<string, int> values;
+	unordered_map<ParameterID, uint16_t> values;
 };
 
 class ControlMap {
@@ -20,10 +23,12 @@ class ControlMap {
 		ControlMap();
 		~ControlMap();
 
-		void addCC(int, string);
+		void addCC(uint16_t, ParameterID);
+		void changeCC(ParameterID, uint16_t);
 		void loadMap();
 		void storeMap();
-		int getCC(string name);
+		int getCC(ParameterID pid);
+		ParameterID getPID(uint16_t cc);
 
 	private:
 		Map* current_map;

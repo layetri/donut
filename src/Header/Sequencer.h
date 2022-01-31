@@ -5,10 +5,21 @@
 #ifndef DONUT_SEQUENCER_H
 #define DONUT_SEQUENCER_H
 
+#include <vector>
 #include "Modulator.h"
+#include "Buffer.h"
 
-class Sequencer : Modulator {
+using namespace std;
 
+class Sequencer {
+	public:
+		Sequencer(uint16_t);
+		~Sequencer();
+
+		void set(uint16_t, uint8_t);
+		uint16_t next();
+	protected:
+		Buffer* steps;
 };
 
 

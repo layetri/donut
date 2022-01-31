@@ -2,7 +2,7 @@
 
 CC=g++
 CFLAGS = -I/usr/local/include -Wall -fexceptions -std=c++20 -framework CoreMIDI -framework CoreAudio -framework CoreFoundation
-LDFLAGS= -ljack
+LDFLAGS= -ljack -lncurses
 
 SRC_DIR=src
 OBJ_DIR=obj

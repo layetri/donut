@@ -12,7 +12,10 @@ class Oscillator {
         Oscillator(float frequency, float phase_offset, Buffer* output);
         ~Oscillator();
 
+		void setBaseFrequency(float base_frequency);
         void setFrequency(float frequency);
+		float getFrequency();
+
         void calculatePhaseStep();
         void incrementPhase();
         void pitch(int midi_num);
@@ -26,4 +29,5 @@ class Oscillator {
         float phase;
         float phase_step;
         float phase_offset;
+		int note = 0;
 };

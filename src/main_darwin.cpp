@@ -10,38 +10,88 @@
 
 mutex mtx;
 
-// Abstraction to easily provide a text coloring utility
-string color(const string& text, int color) {
-	return "\033[" + to_string(color) + "m" + text + "\033[0m";
-}
+void ui(bool& running, queue<Event *>& events, ParameterPool& parameters, ApplicationState* app, vector<Voice*>& voices) {
+	// Clear screen
+	cout << "\x1B[2J\x1B[H";
+	int row, col;
+	getmaxyx(stdscr, row, col);
 
-void ui(bool& running) {
-	cout << "Welcome to " << color("Donut", 32) << endl;
+	// Setup UI
+	move(0, col-18);
+	attron(COLOR_PAIR(3));
+	printw("Donut");
+	attroff(COLOR_PAIR(3));
+	printw(" version 0.1");
+	refresh();
+
+	move(4, 0);
+	clrtoeol();
+	printw("[");
+	attron(COLOR_PAIR(3));
+	printw(">");
+	attroff(COLOR_PAIR(3));
+	printw("] ");
+	refresh();
+
+	CommandPool cmd_pool(&events, &parameters, &running);
+
 	while (running) {
-//    CommandPool.namespace(ns).find(command).assign(arguments);
-		string cmd;
-		getline(cin, cmd);
+		mtx.lock();
 
-		if(cmd == "exit") {
-			running = false;
-		}
+		string cmd;
+//		getline(cin, cmd);
+
+		move(4, 4);
+		clrtoeol();
+		curs_set(1);
+
+		mtx.unlock();
+
+		char s[80];
+		getstr(s);
+		cmd = s;
+
+		mtx.lock();
+		curs_set(0);
+		clrtobot();
+		refresh();
+
+		cmd_pool.handleCommand(cmd);
+		refresh();
+
+		mtx.unlock();
+		usleep(100);
 	}
+
 }
 
 
 void event(vector<Voice*>& voices, queue<Event *>& events, bool& running) {
+	bool remap_mode = false;
+	uint8_t remap_cc = 0;
+	ControlMap cm;
+
 	while(running) {
 		mtx.lock();
 
 		if(!events.empty()) {
 			Event* e = events.front();
 			events.pop();
-			cout << e->value << endl;
 
-			if(e->cc > 20 && e->cc < 29) {
-				cout << ParameterStore(e->cc - 21);
-				for (auto &v: voices) {
-					v->set(ParameterStore(e->cc - 21), e->value);
+			if(remap_mode) {
+				cm.changeCC(ParameterID(remap_cc), (uint16_t) e->cc);
+				cout << "Remapped " << remap_cc << " to " << CommandPool::color(to_string(e->cc), 36) << endl;
+				remap_mode = false;
+			} else {
+				if (e->cc == 255) {
+					remap_mode = true;
+					remap_cc = e->value;
+				} else if ((e->cc - 21) == p_Exit) {
+					running = false;
+				} else {
+					for (auto &v: voices) {
+						v->set(cm.getPID(e->cc), e->value);
+					}
 				}
 			}
 		}
@@ -55,6 +105,8 @@ void event(vector<Voice*>& voices, queue<Event *>& events, bool& running) {
 void midi(NoteHandler& handler, queue<Event*>& event_queue, RtMidiIn* midi_in, bool& running) {
 	vector<unsigned char> message;
 	size_t nBytes;
+	int winy, winx, row, col;
+	getmaxyx(stdscr, row, col);
 
 	// Periodically check input queue.
 	while (running) {
@@ -67,10 +119,11 @@ void midi(NoteHandler& handler, queue<Event*>& event_queue, RtMidiIn* midi_in, b
 			int type = message[0] & 0b11110000;
 			int channel = message[0] & 0b00001111;
 
-			cout << "type: " << to_string(type) <<
-				", channel: " << to_string(channel) <<
-				", control: " << to_string(message[1]) <<
-				", value: " << to_string(message[2]) << endl;
+			getyx(stdscr,winy,winx);
+			mvprintw(0, 0, "type: %u, channel: %u, control: %u, value: %u ", type, channel, message[1],
+				 message[2]);
+			move(winy, winx);
+			refresh();
 
 			if(type == 176) {
 				Event e = {message[1], message[2]};
@@ -84,18 +137,21 @@ void midi(NoteHandler& handler, queue<Event*>& event_queue, RtMidiIn* midi_in, b
 						cout << "Sustain off!" << endl;
 					}
 				}
-				if (message[1] == 74 || message[1] == 22) {
-					// Knob 2
-					cout << "knob2: " << to_string(message[2]) << endl;
-				}
-				if (message[1] == 71 || message[1] == 23) {
-					// Knob 3
-				}
 			} else if(type == 128 || message[2] == 0) {
 				handler.noteOff(&n);
 			} else if(type == 144) {
 				handler.noteOn(&n);
 			}
+
+			if(handler.inUse() < 10) {
+				mvprintw(1, col - 8, " %u / %u", handler.inUse(), NUMBER_OF_VOICES);
+			} else {
+				attron(COLOR_PAIR(2));
+				mvprintw(1, col - 8, "%u / %u", handler.inUse(), NUMBER_OF_VOICES);
+				attroff(COLOR_PAIR(2));
+			}
+			move(winy, winx);
+			refresh();
 			mtx.unlock();
 		}
 
@@ -110,7 +166,7 @@ void init_midi(RtMidiIn *midi_in) {
 
 	// Check inputs.
 	unsigned int nPorts = midi_in->getPortCount();
-	cout << "\nThere are " << color(to_string(nPorts), 35) << " MIDI input sources available.\n";
+//	printw("\nThere are %s MIDI input sources available.\n", CommandPool::color(to_string(nPorts), 35).c_str());
 
 	// List inputs
 	string portName;
@@ -122,18 +178,19 @@ void init_midi(RtMidiIn *midi_in) {
 			delete midi_in;
 			return;
 		}
-		cout << "  Input Port #" << i << ": " << portName << '\n';
+//		printw("  Input Port #%u: %s\n", i, portName.c_str());
 	}
 
 	// Prompt user selection
 	if (nPorts > 0) {
-		cout << "\nChoose a MIDI port to use: ";
+//		printw("\nChoose a MIDI port to use: ");
+//		refresh();
+//
+//		int port;
+//		cin >> port;
+		midi_in->openPort(1);
 
-		int port;
-		cin >> port;
-		midi_in->openPort(port);
-
-		cout << "\n\n";
+//		cout << "\n\n";
 
 		// Don't ignore sysex, timing, or active sensing messages.
 		midi_in->ignoreTypes(false, false, false);
@@ -142,8 +199,22 @@ void init_midi(RtMidiIn *midi_in) {
 
 
 void program() {
+	initscr();
+
+	curs_set(0);
+	use_default_colors();
+	start_color();
+	init_pair(0, COLOR_CYAN, -1);
+	init_pair(1, COLOR_MAGENTA, -1);
+	init_pair(2, COLOR_RED, -1);
+	init_pair(3, COLOR_GREEN, -1);
+	init_pair(4, COLOR_WHITE, -1);
+
+
 	bool running = true;
 	extern unsigned int samplerate;
+	ApplicationState app = app_Idle;
+	ParameterPool parameters;
 
 	#ifdef ENGINE_JACK
 		// Do Jack setup
@@ -166,7 +237,7 @@ void program() {
 	for (int i = 0; i < NUMBER_OF_VOICES; i++) {
 		voice_buffers.push_back(new Buffer(samplerate, "voice_"+to_string(i)));
 
-		voices.push_back(new Voice(voice_buffers[i], i));
+		voices.push_back(new Voice(voice_buffers[i], &parameters, i));
 	}
 
 	NoteHandler handle(&voices);
@@ -219,12 +290,16 @@ void program() {
 
 	thread midi_handler(midi, ref(handle), ref(event_queue), ref(midi_in), ref(running));
 	thread event_handler(event, ref(voices), ref(event_queue), ref(running));
-	ui(running);
+	ui(running, event_queue, ref(parameters), &app, voices);
 
 	midi_handler.join();
 	event_handler.join();
 
 	delete midi_in;
+
+	curs_set(1);
+	cout << "\x1B[2J\x1B[H";
+
 	exit(0);
 }
 

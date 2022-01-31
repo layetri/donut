@@ -16,6 +16,15 @@ void Oscillator::setFrequency(float frequency) {
     calculatePhaseStep();
 }
 
+float Oscillator::getFrequency() {
+	return this->frequency;
+}
+
+void Oscillator::setBaseFrequency(float base_frequency) {
+	this->base_freq = base_frequency;
+	setFrequency(mtof(note));
+}
+
 void Oscillator::calculatePhaseStep() {
     phase_step = frequency / samplerate;
 }
@@ -25,6 +34,7 @@ void Oscillator::incrementPhase() {
 }
 
 void Oscillator::pitch(int midi_num) {
+	note = midi_num;
 	setFrequency(mtof(midi_num));
 }
 

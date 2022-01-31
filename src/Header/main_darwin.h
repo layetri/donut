@@ -7,14 +7,19 @@
 
 #include "jack_module.h"
 #include "RtMidi.h"
+#include <curses.h>
 
+#include "ParameterStore.h"
+#include "CommandPool.h"
 #include "Buffer.h"
 #include "NoteHandler.h"
 #include "Voice.h"
+#include "ControlMap.h"
 //#include "PanningInterface.h"
 
 #include <vector>
 #include <string>
+#include <sstream>
 
 #include <unistd.h>
 #include <cstdlib>
