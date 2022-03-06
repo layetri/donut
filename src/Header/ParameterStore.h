@@ -27,7 +27,7 @@ class ParameterPool {
 		void set(ParameterID pid, float value);
 		void add(ParameterID pid, float value);
 		void store(ParameterID pid, string key, float value);
-		void load(map<int, float> params);
+		void load(map<string, float> params);
 		ParameterID translate(string key);
 		float value(ParameterID pid);
 		vector<Parameter*>* getAll();

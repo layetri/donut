@@ -21,9 +21,7 @@
 #else
   #define ENGINE_JACK
   #include <cstdint>
-//  #include "CommandPool.h"
-
-//  CommandPool command_pool();
+  #include <vector>
 #endif
 
 // Add global likely/unlikely directives
@@ -43,11 +41,7 @@ extern unsigned int samplerate;
 #define NUMBER_OF_VOICES 12
 #define MAX_ENVELOPE_LENGTH 220500
 
-struct Event {
-	unsigned short cc;
-	unsigned short value;
-	unsigned char type = 'n';
-};
+typedef std::vector<unsigned char> midi_message_t;
 
 enum ApplicationState {
 	app_Idle,
@@ -75,6 +69,47 @@ enum ParameterID {
 	p_MOD_Release,
 	p_NotFound,
 	p_Exit
+};
+
+enum ControlID {
+	c_Generic,
+	c_NoteOn,
+	c_NoteOff,
+	c_ccChange,
+	c_RemapOn,
+	c_Sustain,
+};
+
+enum EventType {
+	e_Midi,
+	e_Control,
+	e_Feedback
+};
+
+struct Event {
+	EventType type;
+	uint16_t cc = 0;
+	uint16_t value = 0;
+
+	ControlID cid = c_Generic;
+	std::vector<uint16_t> content;
+
+	void write(uint16_t c) {
+		content.push_back(c);
+	}
+};
+
+struct MidiEvent : public Event {
+	MidiEvent(uint16_t cc, uint16_t value) : Event {e_Midi} {
+		this->cc = cc;
+		this->value = value;
+	};
+};
+
+struct ControlEvent : public Event {
+	ControlEvent(ControlID cid) : Event {e_Control} {
+		this->cid = cid;
+	};
 };
 
 #include <complex>

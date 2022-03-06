@@ -41,9 +41,9 @@ void ParameterPool::add(ParameterID pid, float value) {
 	get(pid)->value = get(pid)->base_value + value;
 }
 
-void ParameterPool::load(map<int, float> params) {
+void ParameterPool::load(map<string, float> params) {
 	for(auto& p : params) {
-		set(ParameterID(p.first), p.second);
+		set(translate(p.first), p.second);
 	}
 }
 

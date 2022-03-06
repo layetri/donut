@@ -30,8 +30,13 @@ class ControlMap {
 		int getCC(ParameterID pid);
 		ParameterID getPID(uint16_t cc);
 
+		void setController(uint);
+		void listControllers();
+
 	private:
 		Map* current_map;
+		uint selected_controller;
+
 };
 
 

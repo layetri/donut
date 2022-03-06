@@ -17,7 +17,7 @@
 
 class Buffer {
 public:
-    Buffer(int length, std::string name="Generic Buffer");
+    Buffer(uint length, std::string name="Generic Buffer");
     ~Buffer();
 
     void write(sample_t sample);
@@ -30,8 +30,8 @@ public:
     void wipe();
     void setPosition(int position);
 
-    int getPosition();
-    int getSize();
+    uint getPosition();
+    uint getSize();
     std::string getName();
 
     sample_t getSample(int sample_position);
@@ -44,10 +44,10 @@ public:
     }
 
 private:
-	int bounds(int value);
+	uint bounds(int value);
     sample_t *data;
-    int size;
-    int position;
+    uint size;
+    uint position;
     std::string name;
 
     bool full_cycle_flag;

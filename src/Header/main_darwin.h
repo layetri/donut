@@ -9,6 +9,7 @@
 #include "RtMidi.h"
 #include <curses.h>
 
+#include "PresetEngine.h"
 #include "ParameterStore.h"
 #include "CommandPool.h"
 #include "Buffer.h"

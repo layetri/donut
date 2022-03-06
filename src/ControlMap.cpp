@@ -6,6 +6,7 @@
 
 ControlMap::ControlMap() {
 	current_map = new Map {"default_controls"};
+	selected_controller = 1;
 
 	// Map modwheel
 	addCC(1, p_Detune);
@@ -37,7 +38,9 @@ void ControlMap::changeCC(ParameterID pid, uint16_t cc) {
 	}
 }
 
-void ControlMap::loadMap() {}
+void ControlMap::loadMap() {
+
+}
 
 void ControlMap::storeMap() {}
 
@@ -57,4 +60,12 @@ ParameterID ControlMap::getPID(uint16_t cc) {
 		}
 	}
 	return p_NotFound;
+}
+
+void ControlMap::listControllers() {
+
+}
+
+void ControlMap::setController(uint input_num) {
+
 }

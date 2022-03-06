@@ -4,7 +4,7 @@
 
 #include "Header/Buffer.h"
 
-Buffer::Buffer(int length, std::string name) {
+Buffer::Buffer(uint length, std::string name) {
   data = new sample_t [length];
   size = length;
   position = 0;
@@ -17,11 +17,11 @@ Buffer::~Buffer() {
   delete[] data;
 }
 
-int Buffer::getSize() {
+uint Buffer::getSize() {
   return size;
 }
 
-int Buffer::getPosition() {
+uint Buffer::getPosition() {
   return position;
 }
 
@@ -88,7 +88,7 @@ void Buffer::wipe() {
   }
 }
 
-int Buffer::bounds(int value) {
+uint Buffer::bounds(int value) {
 	return (value > 0 && value < size) * value +
 		(value < 0) * 0 +
 		(value >= size) * (size - 1);

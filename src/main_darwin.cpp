@@ -10,7 +10,7 @@
 
 mutex mtx;
 
-void ui(bool& running, queue<Event *>& events, ParameterPool& parameters, ApplicationState* app, vector<Voice*>& voices) {
+void ui(bool& running, queue<Event *>& events, ParameterPool& parameters, PresetEngine& presetEngine, ApplicationState* app, vector<Voice*>& voices) {
 	// Clear screen
 	cout << "\x1B[2J\x1B[H";
 	int row, col;
@@ -33,7 +33,7 @@ void ui(bool& running, queue<Event *>& events, ParameterPool& parameters, Applic
 	printw("] ");
 	refresh();
 
-	CommandPool cmd_pool(&events, &parameters, &running);
+	CommandPool cmd_pool(&events, &parameters, &presetEngine, &running);
 
 	while (running) {
 		mtx.lock();
@@ -78,9 +78,19 @@ void event(vector<Voice*>& voices, queue<Event *>& events, bool& running) {
 			Event* e = events.front();
 			events.pop();
 
+			switch(e->type) {
+				case e_Midi:
+					break;
+				case e_Control:
+					break;
+				default:
+					break;
+			}
+
 			if(remap_mode) {
 				cm.changeCC(ParameterID(remap_cc), (uint16_t) e->cc);
-				cout << "Remapped " << remap_cc << " to " << CommandPool::color(to_string(e->cc), 36) << endl;
+				cout << "Remapped " << remap_cc << " to " << CommandPool::color(to_string(e->cc), 36)
+					<< endl;
 				remap_mode = false;
 			} else {
 				if (e->cc == 255) {
@@ -103,7 +113,10 @@ void event(vector<Voice*>& voices, queue<Event *>& events, bool& running) {
 
 
 void midi(NoteHandler& handler, queue<Event*>& event_queue, RtMidiIn* midi_in, bool& running) {
-	vector<unsigned char> message;
+	midi_message_t message;
+	vector<Note> sustained;
+	bool sustain = false;
+
 	size_t nBytes;
 	int winy, winx, row, col;
 	getmaxyx(stdscr, row, col);
@@ -126,19 +139,26 @@ void midi(NoteHandler& handler, queue<Event*>& event_queue, RtMidiIn* midi_in, b
 			refresh();
 
 			if(type == 176) {
-				Event e = {message[1], message[2]};
-				event_queue.push(&e);
 				// Handle CC
 				// Handle sustain pedal
 				if (message[1] == 64) {
-					if (message[2] == 127) {
-						cout << "Sustain on!" << endl;
-					} else {
-						cout << "Sustain off!" << endl;
+					sustain = message[2] > 0;
+					if(!sustain) {
+						for(auto& note : sustained) {
+							handler.noteOff(&note);
+						}
+						sustained.clear();
 					}
+				} else {
+					MidiEvent e(message[1], message[2]);
+					event_queue.push(&e);
 				}
 			} else if(type == 128 || message[2] == 0) {
-				handler.noteOff(&n);
+				if (!sustain) {
+					handler.noteOff(&n);
+				} else {
+					sustained.push_back(n);
+				}
 			} else if(type == 144) {
 				handler.noteOn(&n);
 			}
@@ -162,11 +182,20 @@ void midi(NoteHandler& handler, queue<Event*>& event_queue, RtMidiIn* midi_in, b
 
 
 void init_midi(RtMidiIn *midi_in) {
-	// RTMidi implementation mostly copied from http://www.music.mcgill.ca/~gary/rtmidi/
-
 	// Check inputs.
 	unsigned int nPorts = midi_in->getPortCount();
-//	printw("\nThere are %s MIDI input sources available.\n", CommandPool::color(to_string(nPorts), 35).c_str());
+	#ifdef DEVMODE
+		midi_in->openPort(1);
+	#else
+		midi_in->openPort(0);
+	#endif
+	midi_in->ignoreTypes(false, false, false);
+}
+
+void switch_midi_devices(RtMidiIn* midi_in) {
+	// Check inputs.
+	unsigned int nPorts = midi_in->getPortCount();
+	printw("\nThere are %u MIDI input sources available.\n", nPorts);
 
 	// List inputs
 	string portName;
@@ -178,27 +207,22 @@ void init_midi(RtMidiIn *midi_in) {
 			delete midi_in;
 			return;
 		}
-//		printw("  Input Port #%u: %s\n", i, portName.c_str());
+		printw("  Input Port #%u: %s\n", i, portName.c_str());
 	}
+	printw("\nChoose a MIDI port to use: ");
+	refresh();
 
-	// Prompt user selection
-	if (nPorts > 0) {
-//		printw("\nChoose a MIDI port to use: ");
-//		refresh();
-//
-//		int port;
-//		cin >> port;
-		midi_in->openPort(1);
+	char s[80];
+	int port;
+	getstr(s);
+	port = stoi(s);
 
-//		cout << "\n\n";
-
-		// Don't ignore sysex, timing, or active sensing messages.
-		midi_in->ignoreTypes(false, false, false);
+	if(port < nPorts) {
+		midi_in->openPort(port);
 	}
 }
 
-
-void program() {
+void init_curses() {
 	initscr();
 
 	curs_set(0);
@@ -209,12 +233,17 @@ void program() {
 	init_pair(2, COLOR_RED, -1);
 	init_pair(3, COLOR_GREEN, -1);
 	init_pair(4, COLOR_WHITE, -1);
+}
 
+
+void program() {
+	init_curses();
 
 	bool running = true;
 	extern unsigned int samplerate;
 	ApplicationState app = app_Idle;
 	ParameterPool parameters;
+	PresetEngine pe(&parameters);
 
 	#ifdef ENGINE_JACK
 		// Do Jack setup
@@ -290,7 +319,7 @@ void program() {
 
 	thread midi_handler(midi, ref(handle), ref(event_queue), ref(midi_in), ref(running));
 	thread event_handler(event, ref(voices), ref(event_queue), ref(running));
-	ui(running, event_queue, ref(parameters), &app, voices);
+	ui(running, event_queue, ref(parameters), ref(pe), &app, voices);
 
 	midi_handler.join();
 	event_handler.join();
@@ -302,8 +331,3 @@ void program() {
 
 	exit(0);
 }
-
-// Each module has
-// - RegisterCommands
-//
-// CommandPool has all commands for all modules

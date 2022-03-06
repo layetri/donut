@@ -16,6 +16,7 @@
 #include "Global.h"
 #include "ctre.h"
 #include "ParameterStore.h"
+#include "PresetEngine.h"
 
 using namespace std;
 
@@ -25,7 +26,7 @@ enum CommandNamespace {
 };
 
 struct Command {
-	Command(queue<Event*>*, ParameterPool*, bool* running);
+	Command(queue<Event*>*, ParameterPool*, PresetEngine*, bool* running);
 
     virtual bool handleIfMatch(string command) = 0;
     virtual void handle(string command) = 0;
@@ -33,13 +34,14 @@ struct Command {
 	protected:
 		queue<Event *>* event_queue;
 		ParameterPool* parameters;
+		PresetEngine* presetEngine;
 		bool* running;
 		static constexpr auto pattern = "";
 };
 
 class CommandPool {
 	public:
-		CommandPool(queue<Event*>* event_queue, ParameterPool* parameters, bool* running);
+		CommandPool(queue<Event*>* event_queue, ParameterPool* parameters, PresetEngine* presetEngine, bool* running);
 		~CommandPool();
 
 		void registerCommand(Command *c);

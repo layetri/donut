@@ -9,10 +9,11 @@ string CommandPool::color(const string& text, int color) {
 	return "\033[" + std::to_string(color) + "m" + text + "\033[0m";
 }
 
-Command::Command(queue<Event*>* e_q, ParameterPool* parameters, bool* r) {
+Command::Command(queue<Event*>* e_q, ParameterPool* parameters, PresetEngine* presetEngine, bool* r) {
 	this->event_queue = e_q;
 	this->running = r;
 	this->parameters = parameters;
+	this->presetEngine = presetEngine;
 }
 
 
@@ -35,7 +36,7 @@ void CommandPool::handleCommand(string command) {
 //		Command Handlers		//
 // ============================ //
 struct handleFilterCutoffGlobal : public Command {
-	explicit handleFilterCutoffGlobal(queue<Event *>* event_queue, ParameterPool* parameters, bool* running) : Command(event_queue, parameters, running) {};
+	explicit handleFilterCutoffGlobal(queue<Event *>* event_queue, ParameterPool* parameters, PresetEngine* presetEngine, bool* running) : Command(event_queue, parameters, presetEngine, running) {};
 
 	bool handleIfMatch(string command) override {
 		if(ctre::match<pattern>(command)) {
@@ -57,7 +58,7 @@ struct handleFilterCutoffGlobal : public Command {
 };
 
 struct handleFilterResonanceGlobal : public Command {
-	explicit handleFilterResonanceGlobal(queue<Event *>* event_queue, ParameterPool* parameters, bool* running) : Command(event_queue, parameters, running) {};
+	explicit handleFilterResonanceGlobal(queue<Event *>* event_queue, ParameterPool* parameters, PresetEngine* presetEngine, bool* running) : Command(event_queue, parameters, presetEngine, running) {};
 
 	bool handleIfMatch(string command) override {
 		if(ctre::match<pattern>(command)) {
@@ -80,31 +81,8 @@ struct handleFilterResonanceGlobal : public Command {
 
 // =======================================================================
 
-struct handlePresetStore : public Command {
-	explicit handlePresetStore(queue<Event *>* event_queue, ParameterPool* parameters, bool* running) : Command(event_queue, parameters, running) {};
-
-	bool handleIfMatch(string command) override {
-		if(ctre::match<pattern>(command)) {
-			handle(command);
-			return true;
-		}
-		return false;
-	}
-
-	void handle(string command) override {
-		if(auto m = ctre::match<pattern>(command)) {
-			string name = m.get<1>().to_string();
-			cout << "Storing preset " << CommandPool::color(name, 35) << "." << endl;
-		}
-	}
-	protected:
-		static constexpr auto pattern = ctll::fixed_string {R"(^preset\sstore\s(.{1,})$)"};
-};
-
-// =======================================================================
-
 struct handleSequence : public Command {
-	explicit handleSequence(queue<Event *>* event_queue, ParameterPool* parameters, bool* running) : Command(event_queue, parameters, running) {};
+	explicit handleSequence(queue<Event *>* event_queue, ParameterPool* parameters, PresetEngine* presetEngine, bool* running) : Command(event_queue, parameters, presetEngine, running) {};
 
 	bool handleIfMatch(string command) override {
 		if(ctre::match<pattern>(command)) {
@@ -134,7 +112,7 @@ struct handleSequence : public Command {
 // =======================================================================
 
 struct handleRemap : public Command {
-	explicit handleRemap(queue<Event *>* event_queue, ParameterPool* parameters, bool* running) : Command(event_queue, parameters, running) {};
+	explicit handleRemap(queue<Event *>* event_queue, ParameterPool* parameters, PresetEngine* presetEngine, bool* running) : Command(event_queue, parameters, presetEngine, running) {};
 
 	bool handleIfMatch(string command) override {
 		if(ctre::match<pattern>(command)) {
@@ -169,7 +147,7 @@ struct handleRemap : public Command {
 // =======================================================================
 
 struct handleLFOAssign : public Command {
-	explicit handleLFOAssign(queue<Event *>* event_queue, ParameterPool* parameters, bool* running) : Command(event_queue, parameters, running) {};
+	explicit handleLFOAssign(queue<Event *>* event_queue, ParameterPool* parameters, PresetEngine* presetEngine, bool* running) : Command(event_queue, parameters, presetEngine, running) {};
 
 	bool handleIfMatch(string command) override {
 		if(ctre::match<pattern>(command)) {
@@ -197,7 +175,7 @@ struct handleLFOAssign : public Command {
 // =======================================================================
 
 struct handleLFORemove : public Command {
-	explicit handleLFORemove(queue<Event *>* event_queue, ParameterPool* parameters, bool* running) : Command(event_queue, parameters, running) {};
+	explicit handleLFORemove(queue<Event *>* event_queue, ParameterPool* parameters, PresetEngine* presetEngine, bool* running) : Command(event_queue, parameters, presetEngine, running) {};
 
 	bool handleIfMatch(string command) override {
 		if(ctre::match<pattern>(command)) {
@@ -230,8 +208,74 @@ struct handleLFORemove : public Command {
 
 // =======================================================================
 
+struct handleStorePreset : public Command {
+	explicit handleStorePreset(queue<Event *>* event_queue, ParameterPool* parameters, PresetEngine* presetEngine, bool* running) : Command(event_queue, parameters, presetEngine, running) {};
+
+	bool handleIfMatch(string command) override {
+		if(ctre::match<pattern>(command)) {
+			handle(command);
+			return true;
+		}
+		return false;
+	}
+
+	void handle(string command) override {
+		if(auto m = ctre::match<pattern>(command)) {
+			string name = m.get<1>().to_string();
+			presetEngine->store(name);
+		}
+	}
+protected:
+	static constexpr auto pattern = ctll::fixed_string {R"(^preset\sstore\s([a-z0-9_]+)$)"};
+};
+
+// =======================================================================
+
+struct handleLogPresets : public Command {
+	explicit handleLogPresets(queue<Event *>* event_queue, ParameterPool* parameters, PresetEngine* presetEngine, bool* running) : Command(event_queue, parameters, presetEngine, running) {};
+
+	bool handleIfMatch(string command) override {
+		if(ctre::match<pattern>(command)) {
+			handle(command);
+			return true;
+		}
+		return false;
+	}
+
+	void handle(string command) override {
+		presetEngine->log();
+	}
+	protected:
+		static constexpr auto pattern = ctll::fixed_string {R"(^preset\slist$)"};
+};
+
+// =======================================================================
+
+struct handleLoadPreset : public Command {
+	explicit handleLoadPreset(queue<Event *>* event_queue, ParameterPool* parameters, PresetEngine* presetEngine, bool* running) : Command(event_queue, parameters, presetEngine, running) {};
+
+	bool handleIfMatch(string command) override {
+		if(ctre::match<pattern>(command)) {
+			handle(command);
+			return true;
+		}
+		return false;
+	}
+
+	void handle(string command) override {
+		if(auto m = ctre::match<pattern>(command)) {
+			uint n = m.get<1>().to_number();
+			presetEngine->load(n);
+		}
+	}
+	protected:
+		static constexpr auto pattern = ctll::fixed_string {R"(^preset\sload\s([0-9]+)$)"};
+};
+
+// =======================================================================
+
 struct handleProgramExit : public Command {
-	explicit handleProgramExit(queue<Event *>* event_queue, ParameterPool* parameters, bool* running) : Command(event_queue, parameters, running) {};
+	explicit handleProgramExit(queue<Event *>* event_queue, ParameterPool* parameters, PresetEngine* presetEngine, bool* running) : Command(event_queue, parameters, presetEngine, running) {};
 
 	bool handleIfMatch(string command) override {
 		if(ctre::match<pattern>(command)) {
@@ -249,14 +293,16 @@ struct handleProgramExit : public Command {
 		static constexpr auto pattern = ctll::fixed_string {R"(exit)"};
 };
 
-CommandPool::CommandPool(queue<Event*>* event_queue, ParameterPool* parameters, bool* running) {
-	registerCommand(new handleFilterCutoffGlobal(event_queue, parameters, running));
-	registerCommand(new handleFilterResonanceGlobal(event_queue, parameters, running));
-	registerCommand(new handlePresetStore(event_queue, parameters, running));
-	registerCommand(new handleSequence(event_queue, parameters, running));
-	registerCommand(new handleRemap(event_queue, parameters, running));
-	registerCommand(new handleLFOAssign(event_queue, parameters, running));
-	registerCommand(new handleLFORemove(event_queue, parameters, running));
-	registerCommand(new handleProgramExit(event_queue, parameters, running));
+CommandPool::CommandPool(queue<Event*>* event_queue, ParameterPool* parameters, PresetEngine* presetEngine, bool* running) {
+	registerCommand(new handleFilterCutoffGlobal(event_queue, parameters, presetEngine, running));
+	registerCommand(new handleFilterResonanceGlobal(event_queue, parameters, presetEngine, running));
+	registerCommand(new handleStorePreset(event_queue, parameters, presetEngine, running));
+	registerCommand(new handleSequence(event_queue, parameters, presetEngine, running));
+	registerCommand(new handleRemap(event_queue, parameters, presetEngine, running));
+	registerCommand(new handleLFOAssign(event_queue, parameters, presetEngine, running));
+	registerCommand(new handleLFORemove(event_queue, parameters, presetEngine, running));
+	registerCommand(new handleLogPresets(event_queue, parameters, presetEngine, running));
+	registerCommand(new handleLoadPreset(event_queue, parameters, presetEngine, running));
+	registerCommand(new handleProgramExit(event_queue, parameters, presetEngine, running));
 }
 #endif
