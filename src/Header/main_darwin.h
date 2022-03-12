@@ -31,5 +31,7 @@
 using namespace std;
 
 void program();
+void switchMidiDevices(RtMidiIn*, uint);
+void listMidiDevices(RtMidiIn*);
 
 #endif //DONUT_MAIN_DARWIN_H

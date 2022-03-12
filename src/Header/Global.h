@@ -22,6 +22,7 @@
   #define ENGINE_JACK
   #include <cstdint>
   #include <vector>
+  #include <string>
 #endif
 
 // Add global likely/unlikely directives
@@ -67,6 +68,8 @@ enum ParameterID {
 	p_MOD_Decay,
 	p_MOD_Sustain,
 	p_MOD_Release,
+	p_MIDI_List,
+	p_MIDI_In,
 	p_NotFound,
 	p_Exit
 };
@@ -83,7 +86,13 @@ enum ControlID {
 enum EventType {
 	e_Midi,
 	e_Control,
-	e_Feedback
+	e_Feedback,
+	e_System
+};
+
+struct HelpItem {
+	std::string command;
+	std::string description;
 };
 
 struct Event {
@@ -120,7 +129,6 @@ typedef std::valarray<Complex> CArray;
 // Global logging function
 #ifdef DEVMODE
   #if defined(PLATFORM_DARWIN_X86)
-    #include <string>
     #include <iostream>
   #else
     #include <Arduino.h>

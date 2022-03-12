@@ -50,7 +50,7 @@ struct handleFilterCutoffGlobal : public Command {
 		if (auto m = ctre::match<pattern>(command)) {
 			auto frequency = std::stoi(m.get<1>().to_string());
 			cout <<"Setting cutoff to " << CommandPool::color(to_string(frequency), 36) << endl;
-			event_queue->push(new Event{21 + p_Filter_Cutoff, (uint16_t) frequency});
+			event_queue->push(new Event{e_Control, 21 + p_Filter_Cutoff, (uint16_t) frequency});
 		}
 	}
 	protected:
@@ -71,7 +71,7 @@ struct handleFilterResonanceGlobal : public Command {
 	void handle(string command) override {
 		if (auto m = ctre::match<pattern>(command)) {
 			auto amount = std::stoi(m.get<1>().to_string());
-			event_queue->push(new Event {21 + p_Filter_Resonance, (uint16_t) amount});
+			event_queue->push(new Event {e_Control, 21 + p_Filter_Resonance, (uint16_t) amount});
 		}
 	}
 
@@ -136,7 +136,7 @@ struct handleRemap : public Command {
 				// Enable global remap mode
 				// Next incoming MIDI CC is saved as new controller
 				auto pid = parameters->translate(bunch);
-				event_queue->push(new Event {255, static_cast<unsigned short>(pid)});
+				event_queue->push(new Event {e_Control, 255, static_cast<unsigned short>(pid)});
 			}
 		}
 	}
@@ -198,7 +198,7 @@ struct handleLFORemove : public Command {
 				// Enable global remap mode
 				// Next incoming MIDI CC is saved as new controller
 				auto pid = parameters->translate(bunch);
-				event_queue->push(new Event {255, static_cast<unsigned short>(pid)});
+				event_queue->push(new Event {e_Control, 255, static_cast<unsigned short>(pid)});
 			}
 		}
 	}
@@ -274,6 +274,51 @@ struct handleLoadPreset : public Command {
 
 // =======================================================================
 
+struct handleListMIDI : public Command {
+	explicit handleListMIDI(queue<Event *>* event_queue, ParameterPool* parameters, PresetEngine* presetEngine, bool* running) : Command(event_queue, parameters, presetEngine, running) {};
+
+	bool handleIfMatch(string command) override {
+		if(ctre::match<pattern>(command)) {
+			handle(command);
+			return true;
+		}
+		return false;
+	}
+
+	void handle(string command) override {
+		if(auto m = ctre::match<pattern>(command)) {
+			event_queue->push(new Event {e_System, 21 + p_MIDI_List, 0});
+		}
+	}
+	protected:
+		static constexpr auto pattern = ctll::fixed_string {R"(^midi\slist$)"};
+};
+
+// =======================================================================
+
+struct handleSelectMIDI : public Command {
+	explicit handleSelectMIDI(queue<Event *>* event_queue, ParameterPool* parameters, PresetEngine* presetEngine, bool* running) : Command(event_queue, parameters, presetEngine, running) {};
+
+	bool handleIfMatch(string command) override {
+		if(ctre::match<pattern>(command)) {
+			handle(command);
+			return true;
+		}
+		return false;
+	}
+
+	void handle(string command) override {
+		if(auto m = ctre::match<pattern>(command)) {
+			uint n = m.get<1>().to_number();
+			event_queue->push(new Event {e_System, 21 + p_MIDI_In, n});
+		}
+	}
+	protected:
+		static constexpr auto pattern = ctll::fixed_string {R"(^midi\sselect\s([0-9]+)$)"};
+};
+
+// =======================================================================
+
 struct handleProgramExit : public Command {
 	explicit handleProgramExit(queue<Event *>* event_queue, ParameterPool* parameters, PresetEngine* presetEngine, bool* running) : Command(event_queue, parameters, presetEngine, running) {};
 
@@ -303,6 +348,8 @@ CommandPool::CommandPool(queue<Event*>* event_queue, ParameterPool* parameters, 
 	registerCommand(new handleLFORemove(event_queue, parameters, presetEngine, running));
 	registerCommand(new handleLogPresets(event_queue, parameters, presetEngine, running));
 	registerCommand(new handleLoadPreset(event_queue, parameters, presetEngine, running));
+	registerCommand(new handleListMIDI(event_queue, parameters, presetEngine, running));
+	registerCommand(new handleSelectMIDI(event_queue, parameters, presetEngine, running));
 	registerCommand(new handleProgramExit(event_queue, parameters, presetEngine, running));
 }
 #endif

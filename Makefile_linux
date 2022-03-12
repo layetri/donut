@@ -1,14 +1,8 @@
 # ✨ Daniël Kamp's supersonic Makefile, oh yeah ✨
 
 CC=g++
-PLATFORM=linux
-ifeq ($(PLATFORM), linux)
 CFLAGS = -I/usr/include -Wall -fexceptions -std=c++20
 LDFLAGS= -ljack -lncurses -lpthread
-else
-CFLAGS = -I/usr/local/include -Wall -fexceptions -std=c++20 -framework CoreMIDI -framework CoreAudio -framework CoreFoundation
-LDFLAGS= -ljack -lncurses
-endif
 
 SRC_DIR=src
 OBJ_DIR=obj
@@ -29,6 +23,7 @@ obj/main.o: src/main.cpp src/Header/Global.h src/Header/TestSynth.h
 
 # Make all .cpp source files into .o files, like magic ✨
 obj/%.o: src/%.cpp src/Header/%.h
+	mkdir -p $(OBJ_DIR)
 	$(CC) -c $< $(CFLAGS) -o $@
 
 # Install to system path
@@ -39,12 +34,12 @@ install:
 clean:
 	rm donut *.o
 
-#TOP_TARGETS := all clean
-#
-#SUBDIRS := $(wildcard */.)
-#
-#$(TOP_TARGETS): $(SUBDIRS)
-#$(SUBDIRS):
-#	$(MAKE) -C $@ $(MAKECMDGOALS)
-#
-#.PHONY: $(TOPTARGETS) $(SUBDIRS)
+TOP_TARGETS := all clean
+
+SUBDIRS := $(wildcard */.)
+
+$(TOP_TARGETS): $(SUBDIRS)
+$(SUBDIRS):
+	$(MAKE) -C $@ $(MAKECMDGOALS)
+
+.PHONY: $(TOPTARGETS) $(SUBDIRS)

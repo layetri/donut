@@ -66,7 +66,7 @@ void ui(bool& running, queue<Event *>& events, ParameterPool& parameters, Preset
 }
 
 
-void event(vector<Voice*>& voices, queue<Event *>& events, bool& running) {
+void event(vector<Voice*>& voices, queue<Event *>& events, RtMidiIn* midiIn, bool& running) {
 	bool remap_mode = false;
 	uint8_t remap_cc = 0;
 	ControlMap cm;
@@ -96,6 +96,10 @@ void event(vector<Voice*>& voices, queue<Event *>& events, bool& running) {
 				if (e->cc == 255) {
 					remap_mode = true;
 					remap_cc = e->value;
+				} else if((e->cc - 21) == p_MIDI_List) {
+					listMidiDevices(midiIn);
+				} else if((e->cc - 21) == p_MIDI_In) {
+					switchMidiDevices(midiIn, e->value);
 				} else if ((e->cc - 21) == p_Exit) {
 					running = false;
 				} else {
@@ -192,7 +196,7 @@ void init_midi(RtMidiIn *midi_in) {
 	midi_in->ignoreTypes(false, false, false);
 }
 
-void switch_midi_devices(RtMidiIn* midi_in) {
+void listMidiDevices(RtMidiIn* midi_in) {
 	// Check inputs.
 	unsigned int nPorts = midi_in->getPortCount();
 	printw("\nThere are %u MIDI input sources available.\n", nPorts);
@@ -209,14 +213,17 @@ void switch_midi_devices(RtMidiIn* midi_in) {
 		}
 		printw("  Input Port #%u: %s\n", i, portName.c_str());
 	}
-	printw("\nChoose a MIDI port to use: ");
+	printw("\nUse ");
+	attron(COLOR_PAIR(5));
+	printw("midi select [device_number]");
+	attroff(COLOR_PAIR(5));
+	printw(" to select a MIDI device.");
 	refresh();
+}
 
-	char s[80];
-	int port;
-	getstr(s);
-	port = stoi(s);
-
+void switchMidiDevices(RtMidiIn* midi_in, uint port) {
+	// Check inputs.
+	unsigned int nPorts = midi_in->getPortCount();
 	if(port < nPorts) {
 		midi_in->openPort(port);
 	}
@@ -233,6 +240,7 @@ void init_curses() {
 	init_pair(2, COLOR_RED, -1);
 	init_pair(3, COLOR_GREEN, -1);
 	init_pair(4, COLOR_WHITE, -1);
+	init_pair(5, COLOR_CYAN, -1);
 }
 
 
@@ -253,6 +261,7 @@ void program() {
 		if (samplerate == 0) {
 			samplerate = 44100;
 		}
+		printw("Samplerate is: %u", samplerate);
 	#endif
 
 	Buffer output(samplerate);
@@ -318,7 +327,7 @@ void program() {
 	init_midi(midi_in);
 
 	thread midi_handler(midi, ref(handle), ref(event_queue), ref(midi_in), ref(running));
-	thread event_handler(event, ref(voices), ref(event_queue), ref(running));
+	thread event_handler(event, ref(voices), ref(event_queue), ref(midi_in), ref(running));
 	ui(running, event_queue, ref(parameters), ref(pe), &app, voices);
 
 	midi_handler.join();
@@ -326,8 +335,8 @@ void program() {
 
 	delete midi_in;
 
-	curs_set(1);
 	cout << "\x1B[2J\x1B[H";
+	curs_set(1);
 
 	exit(0);
 }

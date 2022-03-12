@@ -10,7 +10,8 @@ PresetEngine::PresetEngine(ParameterPool* parampool) {
 	available_presets = new vector<string>;
 	presets = new vector<Preset*>;
 
-	std::string path = "/Users/layetri/Development/_modules/donut/.donut_runtime/presets";
+	filesystem::path path = filesystem::current_path() / ".donut_runtime/presets";
+	cout << path << endl;
 	for (const auto & entry : filesystem::directory_iterator(path)) {
 		printw("%s\n", entry.path().c_str());
 		refresh();
