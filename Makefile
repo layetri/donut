@@ -1,12 +1,16 @@
 # ✨ Daniël Kamp's supersonic Makefile, oh yeah ✨
 
 CC=g++
-PLATFORM=linux
+PLATFORM=linux # Supported platforms: linux (unstable), macos
 ifeq ($(PLATFORM), linux)
-CFLAGS = -I/usr/include -Wall -fexceptions -std=c++20
+CFLAGS = -I/usr/include -Wall -fexceptions -std=c++20 -D__UNIX_JACK__
 LDFLAGS= -ljack -lncurses -lpthread
-else
-CFLAGS = -I/usr/local/include -Wall -fexceptions -std=c++20 -framework CoreMIDI -framework CoreAudio -framework CoreFoundation
+else ifeq ($(PLATFORM), macos)
+CFLAGS = -I/usr/local/include -Wall -fexceptions -std=c++20 -framework CoreMIDI -framework CoreAudio -framework CoreFoundation -D__MACOSX_CORE__
+LDFLAGS= -ljack -lncurses
+else ifeq ($(PLATFORM), windows)
+# God knows what we do here, cuz windows
+CFLAGS = -I/usr/local/include -Wall -fexceptions -std=c++20 -D__WINDOWS_MM__
 LDFLAGS= -ljack -lncurses
 endif
 

@@ -46,7 +46,7 @@
 
 // TODO: remove for other platforms!
 //#define __MACOSX_CORE__
-#define __UNIX_JACK__
+//#define __UNIX_JACK__
 
 #if defined _WIN32 || defined __CYGWIN__
   #if defined(RTMIDI_EXPORT)
