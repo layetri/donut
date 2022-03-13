@@ -5,7 +5,7 @@
 #ifndef DONUT_WAVETABLE_H
 #define DONUT_WAVETABLE_H
 
-#include <math.h>
+#include <cmath>
 #include <vector>
 
 #include "Global.h"
@@ -15,7 +15,7 @@
 
 #include <iostream>
 
-#define TABLE_FREQUENCY 3.0
+#define TABLE_FREQUENCY 5.0
 
 using namespace std;
 
@@ -38,7 +38,8 @@ class WaveTableOscillator {
 
 		Buffer* output;
 
-		uint16_t position;
+		float position;
+		int fl_position;
 		ParameterPool* parameters;
 
 		sample_t prev_square, prev_sine, prev_triangle;

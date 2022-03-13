@@ -15,7 +15,7 @@ Tables::~Tables() {
 }
 
 void Tables::generateWaveforms() {
-	float frequency = 3.0; // Generate one period for highest precision
+	float frequency = 5.0; // Generate one period for highest precision
 	uint16_t max_t = (uint16_t) (samplerate / frequency);
 	float phase_step = frequency / samplerate;
 	float phase = 0.0;

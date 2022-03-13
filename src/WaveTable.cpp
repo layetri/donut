@@ -12,7 +12,8 @@ WaveTableOscillator::WaveTableOscillator(Tables* tables, Buffer* output, Paramet
 
 	// Set initial values
 	setMix(0.0);
-	position = 0;
+	position = 0.0;
+	fl_position = 0;
 	frequency = 440.0;
 	this->output = output;
 
@@ -24,20 +25,21 @@ WaveTableOscillator::WaveTableOscillator(Tables* tables, Buffer* output, Paramet
 WaveTableOscillator::~WaveTableOscillator() {}
 
 void WaveTableOscillator::process() {
-	sample_t sample = (sample_t) (mix_square * (0.3 * square->getSample(position) + 0.7 * prev_square)) +
-		(sample_t) (mix_sine * (0.3 * sine->getSample(position) + 0.7 * prev_sine)) +
-		(sample_t) (mix_triangle * (0.3 * triangle->getSample(position) + 0.7 * prev_triangle));
+	sample_t sample = (sample_t) (mix_square * (0.3 * square->getSample(fl_position) + 0.7 * prev_square)) +
+		(sample_t) (mix_sine * (0.3 * sine->getSample(fl_position) + 0.7 * prev_sine)) +
+		(sample_t) (mix_triangle * (0.3 * triangle->getSample(fl_position) + 0.7 * prev_triangle));
 
-	prev_square = square->getSample(position);
-	prev_sine = sine->getSample(position);
-	prev_triangle = triangle->getSample(position);
+	prev_square = square->getSample(fl_position);
+	prev_sine = sine->getSample(fl_position);
+	prev_triangle = triangle->getSample(fl_position);
 
 	output->write(sample);
 }
 
 void WaveTableOscillator::tick() {
-	position = position + (uint) frequency;
-	position = (position < samplerate) * position + (position >= samplerate) * position - samplerate;
+	position = position + frequency;
+	position = (ceil(position) < square->getSize()) * position + (ceil(position) >= square->getSize()) * (position - square->getSize());
+	fl_position = floor(position);
 }
 
 void WaveTableOscillator::setMix(float mix) {
@@ -49,7 +51,7 @@ void WaveTableOscillator::setMix(float mix) {
 }
 
 void WaveTableOscillator::pitch(uint8_t midi_note) {
-	frequency = samplerate / mtof(midi_note, 440.0);
+	frequency = (samplerate / TABLE_FREQUENCY) / mtof(midi_note, 440.0);
 	verbose(frequency);
 //	frequency = clip(frequency, TABLE_FREQUENCY, samplerate/TABLE_FREQUENCY);
 }

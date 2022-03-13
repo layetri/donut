@@ -4,10 +4,6 @@ unsigned int samplerate = 44100;
 #include "Header/main_darwin.h"
 
 int main() {
-	#ifdef SYS_LINUX
-		system("jackd -d alsa");
-		system("a2jmidid -e");
-	#endif
 	program();
 }
 
