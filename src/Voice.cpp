@@ -1,21 +1,34 @@
 #include "Header/Voice.h"
 
-Voice::Voice(Buffer* output, ParameterPool* params, int v_id) {
+Voice::Voice(Buffer* output, ParameterPool* params, Tables* tables, int v_id) {
 	this->parameters = params;
 	// Initialize buffers
-	for(int i = 0; i < 3; i++) {
+#ifdef WS
+	for(int i = 0; i < 4; i++) {
 		osc_buf.push_back(new Buffer(500));
 	}
+#else
+	for(int i = 0; i < 2; i++) {
+		osc_buf.push_back(new Buffer(500));
+	}
+#endif
 	this->mixbus = new Buffer(500);
 	this->output = output;
 
 	// Initialize oscillators
+#ifdef WS
 	osc_wav.push_back(new WaveShaper(440.0, 0.0, osc_buf[0]));
 	osc_wav.push_back(new WaveShaper(441, 0.0, osc_buf[1]));
+	wt = new WaveTableOscillator(osc_buf[3]);
 	sub = new Square(220.0, 0.0, osc_buf[2]);
+#else
+	wt = new WaveTableOscillator(tables, osc_buf[0], params);
+	sub = new Square(220.0, 0.0, osc_buf[1]);
+	osc_buf[1]->setMultiplier(0.1);
+#endif
 
 	for(int i = 0; i < 3; i++) {
-		lfo_buf.push_back(new Buffer(500));
+		lfo_buf.push_back(new Buffer(50));
 		lfo.push_back(new Sine(0, 0.0, lfo_buf[i]));
 	}
 
@@ -24,12 +37,13 @@ Voice::Voice(Buffer* output, ParameterPool* params, int v_id) {
 	this->envelope->regen();
 
 	// Initialize voice mixer
-	mixer = new AddAndDivide(&osc_buf, 3, mixbus);
+	mixer = new AddAndDivide(&osc_buf, 4, mixbus);
 	// Initialize voice filter
 	this->lpf = new LowPassFilter(16000.0, mixbus, output);
 
 	// Do various setup things
 	voice_id = v_id;
+	this->tables = tables;
 	last_used = clock();
 	available = true;
 }
@@ -51,16 +65,25 @@ void Voice::process() {
 		l->process();
 	}
 	// Process the second oscillator
-	osc_wav[1]->process();
+	// TODO: turn different oscillators on and off
+#ifdef WS
+	if(enableWaveShaper) {
+		osc_wav[1]->process();
 
-	// Do FM modulation
-	osc_wav[0]->setFrequency((osc_wav[1]->mtof(pitch + 12) *
-		abs(osc_buf[1]->getCurrentSample() / (float) (2 * SAMPLE_MAX_VALUE)) *
-		parameters->value(p_FM_Amount)) +
-		osc_wav[1]->mtof(pitch));
+		// Do FM modulation
+		osc_wav[0]->setFrequency((osc_wav[1]->mtof(pitch + 12) *
+			abs(osc_buf[1]->getCurrentSample() / (float) (2 * SAMPLE_MAX_VALUE)) *
+			parameters->value(p_FM_Amount)) + osc_wav[1]->mtof(pitch));
 
-	osc_wav[0]->process();
-	sub->process();
+		osc_wav[0]->process();
+	}
+#endif
+	if(enableSub) {
+		sub->process();
+	}
+
+	wt->process();
+
 
 	// Apply amplitude envelope
 	mixer->setMultiplier(envelope->getMultiplier());
@@ -70,6 +93,7 @@ void Voice::process() {
 
 void Voice::tick() {
 	lpf->tick();
+	wt->tick();
 
 	output->tick();
 	output->flush();
@@ -85,15 +109,22 @@ void Voice::tick() {
 void Voice::assign(Note* note) {
 	this->midi_note = note;
 	this->pitch = note->pitch;
-	for(auto& sqr : osc_wav) {
-		sqr->pitch(note->pitch);
-	}
-	if((note->pitch - 12) > 0 && false) {
-		sub->pitch(note->pitch - 12);
-	} else {
-		sub->pitch(note->pitch);
-	}
 
+	// Set WaveShaper pitch
+#ifdef WS
+	if(enableWaveShaper) {
+		for (auto &ws: osc_wav) {
+			ws->pitch(note->pitch);
+		}
+	}
+#endif
+
+	sub->pitch(note->pitch);
+
+	// Set wavetable pitch
+	if(enableWaveTables) {
+		wt->pitch(note->pitch);
+	}
 
 	// TODO: velocity to envelope
 	envelope->start();
@@ -141,9 +172,11 @@ void Voice::set(ParameterID parameter, int value) {
 				o->setHarmonics(harmonics_knob);
 			}
 			break;
+#ifdef WS
 		case p_Detune:
 			osc_wav[1]->setBaseFrequency((value / parameters->value(p_Detune_Range)) + 440.0);
 			break;
+#endif
 		case p_Detune_Range:
 			parameters->set(p_Detune_Range, 1.0f - (127.0f / value));
 			break;
@@ -175,6 +208,18 @@ void Voice::set(ParameterID parameter, int value) {
 			break;
 		case p_FM_KeyTrack:
 			parameters->set(p_FM_KeyTrack, value / 127.0f);
+			break;
+		case p_WS_Toggle:
+			enableWaveShaper = !enableWaveShaper;
+			mixer->setChannels(mixer->getChannels() + (enableWaveShaper * 2 - 1) * 2);
+			break;
+		case p_WT_Toggle:
+			enableWaveTables = !enableWaveTables;
+			mixer->setChannels(mixer->getChannels() + (enableWaveTables * 2 - 1));
+			break;
+		case p_WT_Shape:
+			parameters->set(p_WT_Shape, value / 63.5f);
+			wt->setMix(value / 63.5f);
 			break;
 		default:
 			cout << "Parameter doesn't exist" << endl;

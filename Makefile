@@ -41,7 +41,7 @@ install:
 
 # Clean up
 clean:
-	rm donut *.o
+	rm donut obj/*.o
 
 #TOP_TARGETS := all clean
 #

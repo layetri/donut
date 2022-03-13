@@ -3,6 +3,7 @@
 #include "Buffer.h"
 #include "Modulator.h"
 #include "WaveShaper.h"
+#include "WaveTable.h"
 #include "Sine.h"
 #include "Square.h"
 #include "Note.h"
@@ -11,6 +12,7 @@
 #include "ADSR.h"
 #include "LowPassFilter.h"
 #include "ParameterStore.h"
+#include "Tables.h"
 
 #include <vector>
 
@@ -18,7 +20,7 @@ using namespace std;
 
 class Voice {
   public:
-    Voice(Buffer* output, ParameterPool* params, int v_id=0);
+    Voice(Buffer* output, ParameterPool* params, Tables* tables, int v_id=0);
     ~Voice();
 
     void assign(Note* note);
@@ -41,6 +43,7 @@ class Voice {
 	vector<Sine*> lfo;
 	vector<Buffer*> lfo_buf;
 	Square* sub;
+	WaveTableOscillator* wt;
 
 	ParameterPool* parameters;
 
@@ -56,6 +59,13 @@ class Voice {
 	clock_t last_used;
 	int voice_id;
 	short unsigned int pitch = 0;
+	Tables* tables;
 
 	int8_t harmonics_knob = 0;
+
+
+	// TMP
+	bool enableWaveTables = true;
+	bool enableWaveShaper = false;
+	bool enableSub = false;
 };

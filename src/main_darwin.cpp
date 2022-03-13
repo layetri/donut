@@ -270,12 +270,15 @@ void program() {
 	vector<Voice *> voices;
 	vector<Buffer *> voice_buffers;
 
+	Tables tables;
+	tables.generateWaveforms();
+
 	voices.reserve(NUMBER_OF_VOICES);
 	voice_buffers.reserve(NUMBER_OF_VOICES);
 	for (int i = 0; i < NUMBER_OF_VOICES; i++) {
-		voice_buffers.push_back(new Buffer(samplerate, "voice_"+to_string(i)));
+		voice_buffers.push_back(new Buffer(500, "voice_"+to_string(i)));
 
-		voices.push_back(new Voice(voice_buffers[i], &parameters, i));
+		voices.push_back(new Voice(voice_buffers[i], &parameters, &tables, i));
 	}
 
 	NoteHandler handle(&voices);

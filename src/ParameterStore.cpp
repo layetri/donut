@@ -27,6 +27,8 @@ ParameterPool::ParameterPool() {
 	store(p_FM_Amount, "fm_amount", 0.77);
 	store(p_FM_KeyTrack, "fm_keytrack", 0.5);
 
+	store(p_WT_Shape, "wt_shape", 1.0);
+
 	store(p_LFO1_Rate, "lfo1_rate", 0.0);
 }
 

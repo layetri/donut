@@ -30,7 +30,7 @@ struct Command {
 
     virtual bool handleIfMatch(string command) = 0;
     virtual void handle(string command) = 0;
-//	virtual HelpItem* getHelpText() = 0;
+	virtual HelpItem getHelpText() = 0;
 
 	protected:
 		queue<Event *>* event_queue;
@@ -38,6 +38,7 @@ struct Command {
 		PresetEngine* presetEngine;
 		bool* running;
 		static constexpr auto pattern = "";
+		HelpItem helpText = {"command", "text"};
 };
 
 class CommandPool {

@@ -29,6 +29,7 @@ public:
     void flush();
     void wipe();
     void setPosition(int position);
+	void setMultiplier(float multiplier);
 
     uint getPosition();
     uint getSize();
@@ -36,6 +37,7 @@ public:
 
     sample_t getSample(int sample_position);
     sample_t getCurrentSample();
+    sample_t getCurrentSampleMultiplied();
     sample_t readAhead(int places);
     sample_t readBack(int places);
 
@@ -49,6 +51,7 @@ private:
     uint size;
     uint position;
     std::string name;
+	float multiplier;
 
     bool full_cycle_flag;
 };

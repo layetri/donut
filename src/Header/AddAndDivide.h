@@ -18,6 +18,8 @@ class AddAndDivide {
 
     void process();
     void setMultiplier(double mult);
+	void setChannels(int);
+	int getChannels();
 
   private:
     Buffer* output;

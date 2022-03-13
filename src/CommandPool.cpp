@@ -24,9 +24,29 @@ void CommandPool::registerCommand(Command *c) {
 	this->commands.push_back(c);
 }
 void CommandPool::handleCommand(string command) {
-	for(auto& cmd : commands) {
-		if(cmd->handleIfMatch(command)) {
-			return;
+	if(command == "help") {
+		printw("Here's what I can do:\n");
+		refresh();
+
+		for (auto& cmd : commands) {
+			auto line = cmd->getHelpText();
+
+			int winy, winx;
+			getyx(stdscr,winy,winx);
+			move(winy, 4);
+
+			attron(COLOR_PAIR(5));
+			printw(line.command.c_str());
+			attroff(COLOR_PAIR(5));
+			mvprintw(winy, 40, "%s\n", line.description.c_str());
+		}
+		refresh();
+		return;
+	} else {
+		for (auto &cmd: commands) {
+			if (cmd->handleIfMatch(command)) {
+				return;
+			}
 		}
 	}
 	cout << "[" << color("x", 31) << "] Command does not exist." << endl;
@@ -46,6 +66,10 @@ struct handleFilterCutoffGlobal : public Command {
 		return false;
 	}
 
+	HelpItem getHelpText() override {
+		return helpText;
+	}
+
 	void handle(string command) override {
 		if (auto m = ctre::match<pattern>(command)) {
 			auto frequency = std::stoi(m.get<1>().to_string());
@@ -55,6 +79,7 @@ struct handleFilterCutoffGlobal : public Command {
 	}
 	protected:
 		static constexpr auto pattern = ctll::fixed_string {R"(^cutoff\s([0-9]+)$)"};
+		HelpItem helpText = {"cutoff <amount>", "Set the global filter cutoff."};
 };
 
 struct handleFilterResonanceGlobal : public Command {
@@ -68,6 +93,10 @@ struct handleFilterResonanceGlobal : public Command {
 		return false;
 	}
 
+	HelpItem getHelpText() override {
+		return helpText;
+	}
+
 	void handle(string command) override {
 		if (auto m = ctre::match<pattern>(command)) {
 			auto amount = std::stoi(m.get<1>().to_string());
@@ -77,6 +106,7 @@ struct handleFilterResonanceGlobal : public Command {
 
 	protected:
 		static constexpr auto pattern = ctll::fixed_string {R"(^resonance\s([0-9]+)$)"};
+		HelpItem helpText = {"resonance <amount>", "Set the global filter resonance."};
 };
 
 // =======================================================================
@@ -92,6 +122,10 @@ struct handleSequence : public Command {
 		return false;
 	}
 
+
+	HelpItem getHelpText() override {
+		return helpText;
+	}
 	void handle(string command) override {
 		if(auto m = ctre::match<pattern>(command)) {
 			string bunch = m.get<1>().to_string();
@@ -107,6 +141,7 @@ struct handleSequence : public Command {
 	}
 	protected:
 		static constexpr auto pattern = ctll::fixed_string {R"(^sequence(\s([0-9]+))+$)"};
+		HelpItem helpText = {"sequence", "Build a sequence (NOT IMPLEMENTED)."};
 };
 
 // =======================================================================
@@ -122,6 +157,10 @@ struct handleRemap : public Command {
 		return false;
 	}
 
+
+	HelpItem getHelpText() override {
+		return helpText;
+	}
 	void handle(string command) override {
 		if(auto m = ctre::match<pattern>(command)) {
 			string bunch = m.get<1>().to_string();
@@ -142,6 +181,7 @@ struct handleRemap : public Command {
 	}
 	protected:
 		static constexpr auto pattern = ctll::fixed_string {R"(^remap\s([a-z_]+)$)"};
+		HelpItem helpText = {"remap <parameter>", "Remap a MIDI control to a parameter. [remap help] for a list of parameters."};
 };
 
 // =======================================================================
@@ -157,6 +197,10 @@ struct handleLFOAssign : public Command {
 		return false;
 	}
 
+	HelpItem getHelpText() override {
+		return helpText;
+	}
+
 	void handle(string command) override {
 		if(auto m = ctre::match<pattern>(command)) {
 			string lfo_num = m.get<1>().to_string();
@@ -170,6 +214,7 @@ struct handleLFOAssign : public Command {
 	}
 	protected:
 		static constexpr auto pattern = ctll::fixed_string {R"(^lfo\s([0-9])\sassign\s([a-z_]+)\samount\s(12[0-7]|1[01][0-9]|[0-9]?[0-9]?)$)"};
+		HelpItem helpText = {"lfo <n> assign <param> amount <amt>", "Assign an LFO to a parameter and control the amount (NOT IMPLEMENTED)."};
 };
 
 // =======================================================================
@@ -183,6 +228,10 @@ struct handleLFORemove : public Command {
 			return true;
 		}
 		return false;
+	}
+
+	HelpItem getHelpText() override {
+		return helpText;
 	}
 
 	void handle(string command) override {
@@ -204,6 +253,7 @@ struct handleLFORemove : public Command {
 	}
 	protected:
 		static constexpr auto pattern = ctll::fixed_string {R"(^lfo\s([0-9])\sremove\s([a-z_]+)$)"};
+		HelpItem helpText = {"lfo <n> remove <parameter>", "Remove an LFO from the specified parameter (NOT IMPLEMENTED)."};
 };
 
 // =======================================================================
@@ -219,6 +269,10 @@ struct handleStorePreset : public Command {
 		return false;
 	}
 
+	HelpItem getHelpText() override {
+		return helpText;
+	}
+
 	void handle(string command) override {
 		if(auto m = ctre::match<pattern>(command)) {
 			string name = m.get<1>().to_string();
@@ -227,6 +281,7 @@ struct handleStorePreset : public Command {
 	}
 protected:
 	static constexpr auto pattern = ctll::fixed_string {R"(^preset\sstore\s([a-z0-9_]+)$)"};
+		HelpItem helpText = {"preset store <name>", "Store the current settings as a preset."};
 };
 
 // =======================================================================
@@ -242,11 +297,16 @@ struct handleLogPresets : public Command {
 		return false;
 	}
 
+	HelpItem getHelpText() override {
+		return helpText;
+	}
+
 	void handle(string command) override {
 		presetEngine->log();
 	}
 	protected:
 		static constexpr auto pattern = ctll::fixed_string {R"(^preset\slist$)"};
+		HelpItem helpText = {"preset list", "List all available presets."};
 };
 
 // =======================================================================
@@ -262,6 +322,10 @@ struct handleLoadPreset : public Command {
 		return false;
 	}
 
+	HelpItem getHelpText() override {
+		return helpText;
+	}
+
 	void handle(string command) override {
 		if(auto m = ctre::match<pattern>(command)) {
 			uint n = m.get<1>().to_number();
@@ -270,6 +334,7 @@ struct handleLoadPreset : public Command {
 	}
 	protected:
 		static constexpr auto pattern = ctll::fixed_string {R"(^preset\sload\s([0-9]+)$)"};
+		HelpItem helpText = {"preset load <name>", "Load the specified preset."};
 };
 
 // =======================================================================
@@ -285,6 +350,10 @@ struct handleListMIDI : public Command {
 		return false;
 	}
 
+
+	HelpItem getHelpText() override {
+		return helpText;
+	}
 	void handle(string command) override {
 		if(auto m = ctre::match<pattern>(command)) {
 			event_queue->push(new Event {e_System, 21 + p_MIDI_List, 0});
@@ -292,6 +361,7 @@ struct handleListMIDI : public Command {
 	}
 	protected:
 		static constexpr auto pattern = ctll::fixed_string {R"(^midi\slist$)"};
+		HelpItem helpText = {"midi list", "List available MIDI input devices."};
 };
 
 // =======================================================================
@@ -307,20 +377,29 @@ struct handleSelectMIDI : public Command {
 		return false;
 	}
 
+	HelpItem getHelpText() override {
+		return helpText;
+	}
+
 	void handle(string command) override {
 		if(auto m = ctre::match<pattern>(command)) {
-			uint n = m.get<1>().to_number();
+			uint16_t n = m.get<1>().to_number();
 			event_queue->push(new Event {e_System, 21 + p_MIDI_In, n});
 		}
 	}
 	protected:
 		static constexpr auto pattern = ctll::fixed_string {R"(^midi\sselect\s([0-9]+)$)"};
+		HelpItem helpText = {"midi select <device>", "Select a MIDI input device."};
 };
 
 // =======================================================================
 
 struct handleProgramExit : public Command {
 	explicit handleProgramExit(queue<Event *>* event_queue, ParameterPool* parameters, PresetEngine* presetEngine, bool* running) : Command(event_queue, parameters, presetEngine, running) {};
+
+	HelpItem getHelpText() override {
+		return helpText;
+	}
 
 	bool handleIfMatch(string command) override {
 		if(ctre::match<pattern>(command)) {
@@ -336,6 +415,7 @@ struct handleProgramExit : public Command {
 	}
 	protected:
 		static constexpr auto pattern = ctll::fixed_string {R"(exit)"};
+		HelpItem helpText = {"exit", "Quit Donut."};
 };
 
 CommandPool::CommandPool(queue<Event*>* event_queue, ParameterPool* parameters, PresetEngine* presetEngine, bool* running) {

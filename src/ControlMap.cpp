@@ -13,7 +13,7 @@ ControlMap::ControlMap() {
 	// Map knobs
 	addCC(21, p_Harmonics);
 	addCC(22, p_FM_Amount);
-	addCC(23, p_Filter_Cutoff);
+	addCC(23, p_WT_Shape);
 	addCC(24, p_Filter_Resonance);
 	addCC(25, p_AMP_Attack);
 	addCC(26, p_AMP_Decay);

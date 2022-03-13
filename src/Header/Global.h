@@ -23,6 +23,7 @@
   #include <cstdint>
   #include <vector>
   #include <string>
+  #include <math.h>
 #endif
 
 // Add global likely/unlikely directives
@@ -70,6 +71,9 @@ enum ParameterID {
 	p_MOD_Release,
 	p_MIDI_List,
 	p_MIDI_In,
+	p_WT_Toggle,
+	p_WT_Shape,
+	p_WS_Toggle,
 	p_NotFound,
 	p_Exit
 };

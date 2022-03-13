@@ -28,3 +28,11 @@ void AddAndDivide::process() {
 void AddAndDivide::setMultiplier(double mult) {
   this->multiplier = mult;
 }
+
+void AddAndDivide::setChannels(int channels) {
+	this->num_channels = channels;
+}
+
+int AddAndDivide::getChannels() {
+	return num_channels;
+}

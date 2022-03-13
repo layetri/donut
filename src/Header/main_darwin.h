@@ -16,6 +16,7 @@
 #include "NoteHandler.h"
 #include "Voice.h"
 #include "ControlMap.h"
+#include "Tables.h"
 //#include "PanningInterface.h"
 
 #include <vector>
