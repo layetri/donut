@@ -67,5 +67,5 @@ class Voice {
 	// TMP
 	bool enableWaveTables = true;
 	bool enableWaveShaper = false;
-	bool enableSub = false;
+	bool enableSub = true;
 };

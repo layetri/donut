@@ -51,7 +51,7 @@ void WaveTableOscillator::setMix(float mix) {
 }
 
 void WaveTableOscillator::pitch(uint8_t midi_note) {
-	frequency = (samplerate / TABLE_FREQUENCY) / mtof(midi_note, 440.0);
+	frequency = (samplerate / TABLE_FREQUENCY) / mtof(127-(midi_note-3), 440.0);
 	verbose(frequency);
 //	frequency = clip(frequency, TABLE_FREQUENCY, samplerate/TABLE_FREQUENCY);
 }
