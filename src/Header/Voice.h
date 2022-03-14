@@ -15,8 +15,16 @@
 #include "Tables.h"
 
 #include <vector>
+#define WS
 
 using namespace std;
+
+enum Source {
+	s_WS1,
+	s_WS2,
+	s_Sub,
+	s_WT
+};
 
 class Voice {
   public:

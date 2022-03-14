@@ -3,29 +3,18 @@
 Voice::Voice(Buffer* output, ParameterPool* params, Tables* tables, int v_id) {
 	this->parameters = params;
 	// Initialize buffers
-#ifdef WS
+
 	for(int i = 0; i < 4; i++) {
 		osc_buf.push_back(new Buffer(500));
 	}
-#else
-	for(int i = 0; i < 2; i++) {
-		osc_buf.push_back(new Buffer(500));
-	}
-#endif
 	this->mixbus = new Buffer(500);
 	this->output = output;
 
 	// Initialize oscillators
-#ifdef WS
-	osc_wav.push_back(new WaveShaper(440.0, 0.0, osc_buf[0]));
-	osc_wav.push_back(new WaveShaper(441, 0.0, osc_buf[1]));
-	wt = new WaveTableOscillator(osc_buf[3]);
-	sub = new Square(220.0, 0.0, osc_buf[2]);
-#else
-	wt = new WaveTableOscillator(tables, osc_buf[0], params);
-	sub = new Square(220.0, 0.0, osc_buf[1]);
-	osc_buf[1]->setMultiplier(0.1);
-#endif
+	osc_wav.push_back(new WaveShaper(440.0, 0.0, osc_buf[s_WS1]));
+	osc_wav.push_back(new WaveShaper(441, 0.0, osc_buf[s_WS2]));
+	wt = new WaveTableOscillator(tables, osc_buf[s_WT], params);
+	sub = new Square(220.0, 0.0, osc_buf[s_Sub]);
 
 	for(int i = 0; i < 3; i++) {
 		lfo_buf.push_back(new Buffer(50));
@@ -66,7 +55,6 @@ void Voice::process() {
 	}
 	// Process the second oscillator
 	// TODO: turn different oscillators on and off
-#ifdef WS
 	if(enableWaveShaper) {
 		osc_wav[1]->process();
 
@@ -77,13 +65,11 @@ void Voice::process() {
 
 		osc_wav[0]->process();
 	}
-#endif
 	if(enableSub) {
 		sub->process();
 	}
 
 	wt->process();
-
 
 	// Apply amplitude envelope
 	mixer->setMultiplier(envelope->getMultiplier());
@@ -111,20 +97,14 @@ void Voice::assign(Note* note) {
 	this->pitch = note->pitch;
 
 	// Set WaveShaper pitch
-#ifdef WS
-	if(enableWaveShaper) {
-		for (auto &ws: osc_wav) {
-			ws->pitch(note->pitch);
-		}
+	for (auto &ws: osc_wav) {
+		ws->pitch(note->pitch);
 	}
-#endif
 
 	sub->pitch(note->pitch);
 
-	// Set wavetable pitch
-	if(enableWaveTables) {
-		wt->pitch(note->pitch);
-	}
+	// Set WaveTable pitch
+	wt->pitch(note->pitch);
 
 	// TODO: velocity to envelope
 	envelope->start();
@@ -172,11 +152,9 @@ void Voice::set(ParameterID parameter, int value) {
 				o->setHarmonics(harmonics_knob);
 			}
 			break;
-#ifdef WS
 		case p_Detune:
 			osc_wav[1]->setBaseFrequency((value / parameters->value(p_Detune_Range)) + 440.0);
 			break;
-#endif
 		case p_Detune_Range:
 			parameters->set(p_Detune_Range, 1.0f - (127.0f / value));
 			break;
@@ -211,11 +189,19 @@ void Voice::set(ParameterID parameter, int value) {
 			break;
 		case p_WS_Toggle:
 			enableWaveShaper = !enableWaveShaper;
-			mixer->setChannels(mixer->getChannels() + (enableWaveShaper * 2 - 1) * 2);
+			mixer->setChannels(mixer->getChannels() + ((enableWaveShaper * 2 - 1) * 2));
+			osc_buf[s_WS1]->flush();
+			osc_buf[s_WS2]->flush();
 			break;
 		case p_WT_Toggle:
 			enableWaveTables = !enableWaveTables;
 			mixer->setChannels(mixer->getChannels() + (enableWaveTables * 2 - 1));
+			osc_buf[s_WT]->flush();
+			break;
+		case p_Sub_Toggle:
+			enableSub = !enableSub;
+			mixer->setChannels(mixer->getChannels() + (enableSub * 2 - 1));
+			osc_buf[s_Sub]->flush();
 			break;
 		case p_WT_Shape:
 			parameters->set(p_WT_Shape, value / 63.5f);

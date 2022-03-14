@@ -258,6 +258,41 @@ struct handleLFORemove : public Command {
 
 // =======================================================================
 
+struct handleToggleSource : public Command {
+	explicit handleToggleSource(queue<Event *>* event_queue, ParameterPool* parameters, PresetEngine* presetEngine, bool* running) : Command(event_queue, parameters, presetEngine, running) {};
+
+	bool handleIfMatch(string command) override {
+		if(ctre::match<pattern>(command)) {
+			handle(command);
+			return true;
+		}
+		return false;
+	}
+
+	HelpItem getHelpText() override {
+		return helpText;
+	}
+
+	void handle(string command) override {
+		if(auto m = ctre::match<pattern>(command)) {
+			string source = m.get<1>().to_string();
+			string state = m.get<2>().to_string();
+			if(source.compare("waveshaper")) {
+				event_queue->push(new Event {e_Control, 21 + p_WS_Toggle, (uint16_t) state.compare("on")});
+			} else if(source.compare("wavetable")) {
+				event_queue->push(new Event {e_Control, 21 + p_WT_Toggle, (uint16_t) state.compare("on")});
+			} else if(source.compare("sub")) {
+				event_queue->push(new Event {e_Control, 21 + p_Sub_Toggle, (uint16_t) state.compare("on")});
+			}
+		}
+	}
+protected:
+	static constexpr auto pattern = ctll::fixed_string {R"(^source\s([a-z0-9_]+)\s(on|off)$)"};
+	HelpItem helpText = {"source <name> <on/off>", "Toggle a specified sound source."};
+};
+
+// =======================================================================
+
 struct handleStorePreset : public Command {
 	explicit handleStorePreset(queue<Event *>* event_queue, ParameterPool* parameters, PresetEngine* presetEngine, bool* running) : Command(event_queue, parameters, presetEngine, running) {};
 
@@ -426,6 +461,7 @@ CommandPool::CommandPool(queue<Event*>* event_queue, ParameterPool* parameters, 
 	registerCommand(new handleRemap(event_queue, parameters, presetEngine, running));
 	registerCommand(new handleLFOAssign(event_queue, parameters, presetEngine, running));
 	registerCommand(new handleLFORemove(event_queue, parameters, presetEngine, running));
+	registerCommand(new handleToggleSource(event_queue, parameters, presetEngine, running));
 	registerCommand(new handleLogPresets(event_queue, parameters, presetEngine, running));
 	registerCommand(new handleLoadPreset(event_queue, parameters, presetEngine, running));
 	registerCommand(new handleListMIDI(event_queue, parameters, presetEngine, running));

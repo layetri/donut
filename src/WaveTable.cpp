@@ -43,7 +43,7 @@ void WaveTableOscillator::tick() {
 }
 
 void WaveTableOscillator::setMix(float mix) {
-	mixer = mix;
+	mixer = 0.8 * mixer + 0.2 * mix;
 
 	mix_square = 1.0 - clip(mixer, 0.0, 1.0);
 	mix_sine = clip(mixer, 0.0, 1.0) - clip(mixer-1.0, 0.0, 1.0);
@@ -51,13 +51,11 @@ void WaveTableOscillator::setMix(float mix) {
 }
 
 void WaveTableOscillator::pitch(uint8_t midi_note) {
-	frequency = (samplerate / TABLE_FREQUENCY) / mtof(127-(midi_note-3), 440.0);
-	verbose(frequency);
-//	frequency = clip(frequency, TABLE_FREQUENCY, samplerate/TABLE_FREQUENCY);
+	frequency = (samplerate / TABLE_FREQUENCY) / mtof(127-(midi_note+2), 430.0);
 }
 
 float WaveTableOscillator::clip(float value, float bottom, float top) {
-	return (value < top && value > bottom) * value + (value > top) * top * (value < bottom) * bottom;
+	return (value < top && value > bottom) * value + (value >= top) * top * (value <= bottom) * bottom;
 }
 float WaveTableOscillator::mtof(uint8_t midi_num, float base_freq) {
 	return pow(2.0, (midi_num - 69.0) / 12.0) * base_freq;

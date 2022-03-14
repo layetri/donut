@@ -42,6 +42,7 @@ extern unsigned int samplerate;
 #define NUM_INPUTS 1
 #define NUMBER_OF_VOICES 12
 #define MAX_ENVELOPE_LENGTH 220500
+#define TABLE_FREQUENCY 8.0
 
 typedef std::vector<unsigned char> midi_message_t;
 
@@ -74,6 +75,7 @@ enum ParameterID {
 	p_WT_Toggle,
 	p_WT_Shape,
 	p_WS_Toggle,
+	p_Sub_Toggle,
 	p_NotFound,
 	p_Exit
 };

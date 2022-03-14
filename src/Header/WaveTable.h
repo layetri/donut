@@ -15,8 +15,6 @@
 
 #include <iostream>
 
-#define TABLE_FREQUENCY 5.0
-
 using namespace std;
 
 class WaveTableOscillator {
