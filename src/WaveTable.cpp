@@ -4,22 +4,24 @@
 
 #include "Header/WaveTable.h"
 
-WaveTableOscillator::WaveTableOscillator(Tables* tables, Buffer* output, ParameterPool* params) {
+WaveTableOscillator::WaveTableOscillator(Tables* tables, ParameterPool* params, SourceID sid, uint8_t voice_id) : Source(params, voice_id) {
 	square = tables->getSquare();
 	sine = tables->getSine();
 	triangle = tables->getTriangle();
 	parameters = params;
+	this->sid = sid;
 
 	// Set initial values
-	setMix(0.0);
 	position = 0.0;
 	fl_position = 0;
 	frequency = 440.0;
-	this->output = output;
+	base_frequency = 430.0;
 
 	prev_square = 0;
 	prev_sine = 0;
 	prev_triangle = 0;
+
+	refresh();
 }
 
 WaveTableOscillator::~WaveTableOscillator() {}
@@ -37,26 +39,25 @@ void WaveTableOscillator::process() {
 }
 
 void WaveTableOscillator::tick() {
-	position = position + frequency;
+	position += frequency;
 	position = (ceil(position) < square->getSize()) * position + (ceil(position) >= square->getSize()) * (position - square->getSize());
 	fl_position = floor(position);
+	
+	output->tick();
 }
 
-void WaveTableOscillator::setMix(float mix) {
-	mixer = 0.8 * mixer + 0.2 * mix;
+void WaveTableOscillator::refresh() {
+	mixer = 0.8 * mixer + 0.2 * parameters->get(p_WT_Shape, voice_id)->value;
 
 	mix_square = 1.0 - clip(mixer, 0.0, 1.0);
 	mix_sine = clip(mixer, 0.0, 1.0) - clip(mixer-1.0, 0.0, 1.0);
 	mix_triangle = clip(mixer-1.0, 0.0, 1.0);
+	
+	if(sid == s_WT2) {
+		this->base_frequency = parameters->get(p_WS_Detune, voice_id)->value;
+	}
 }
 
 void WaveTableOscillator::pitch(uint8_t midi_note) {
-	frequency = (samplerate / TABLE_FREQUENCY) / mtof(127-(midi_note+2), 430.0);
-}
-
-float WaveTableOscillator::clip(float value, float bottom, float top) {
-	return (value < top && value > bottom) * value + (value >= top) * top * (value <= bottom) * bottom;
-}
-float WaveTableOscillator::mtof(uint8_t midi_num, float base_freq) {
-	return pow(2.0, (midi_num - 69.0) / 12.0) * base_freq;
+	frequency = (samplerate / TABLE_FREQUENCY) / mtof(127-(midi_note+2), base_frequency);
 }

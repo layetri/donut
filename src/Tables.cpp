@@ -16,35 +16,36 @@ Tables::~Tables() {
 
 void Tables::generateWaveforms() {
 	uint16_t max_t = (uint16_t) (samplerate / TABLE_FREQUENCY);
-	float phase_step = TABLE_FREQUENCY / samplerate;
-	float phase = 0.0;
 
 	square = new Buffer(max_t);
 	sine = new Buffer(max_t);
 	triangle = new Buffer(max_t);
 
-	uint16_t n, j;
-	for(int i = 0; i < max_t; i++) {
-		// Approximate triangle wave, thanks Fourier
-		square->flush();
-		triangle->flush();
-		for(j = 0; j < 8; j++) {
-			n = (2 * j) + 1;
-			triangle->writeAddition(((sin(TWO_PI * n * phase) / (n*n)) * SAMPLE_MAX_VALUE));
-			square->writeAddition(((sin(TWO_PI * j * phase) / (2*j-1)) * SAMPLE_MAX_VALUE));
+	filesystem::path path = filesystem::current_path() / ".donut_runtime/wavetable";
+	for (const auto & entry : filesystem::directory_iterator(path)) {
+		ifstream file(entry.path().c_str());
+		string line;
+		string filename = entry.path().filename().string();
+		
+		if(filename.find(to_string(samplerate)) != string::npos) {
+			while (getline(file, line)) {
+				istringstream iss(line);
+				sample_t val;
+				
+				while (iss >> val) {
+					if (filename.find("square") != string::npos) {
+						square->write(val);
+						square->tick();
+					} else if (filename.find("sine") != string::npos) {
+						sine->write(val);
+						sine->tick();
+					} else if (filename.find("triangle") != string::npos) {
+						triangle->write(val);
+						triangle->tick();
+					}
+				}
+			}
 		}
-
-		// Write waveforms to tables
-//		square->write(((i % max_t < max_t / 2.0) * 2 * SAMPLE_MAX_VALUE) - SAMPLE_MAX_VALUE); // Generate squarest square wave (1/0)
-//		square->write(sqr_tmp); // Generate approximate square wave (fourier)
-		sine->write(sin(TWO_PI * phase) * SAMPLE_MAX_VALUE); // Generate sine wave
-//		triangle->write(wave_tmp); // Generate tri wave
-
-		// Do the phase thingy
-		phase = (phase + phase_step < 1.0) * (phase + phase_step);
-		square->tick();
-		sine->tick();
-		triangle->tick();
 	}
 }
 

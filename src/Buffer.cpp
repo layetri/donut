@@ -12,6 +12,10 @@ Buffer::Buffer(uint length, std::string name) {
   multiplier = 1.0;
 
   this->name = name;
+  
+  for(int i = 0; i < length; i++) {
+	  data[i] = 0;
+  }
 }
 
 Buffer::~Buffer() {

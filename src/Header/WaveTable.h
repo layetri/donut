@@ -5,40 +5,35 @@
 #ifndef DONUT_WAVETABLE_H
 #define DONUT_WAVETABLE_H
 
-#include <cmath>
 #include <vector>
 
 #include "Global.h"
 #include "Buffer.h"
 #include "Tables.h"
 #include "ParameterStore.h"
-
-#include <iostream>
+#include "Source.h"
 
 using namespace std;
 
-class WaveTableOscillator {
+class WaveTableOscillator : public Source {
 	public:
-		WaveTableOscillator(Tables* tables, Buffer*, ParameterPool*);
+		WaveTableOscillator(Tables* tables, ParameterPool*, SourceID, uint8_t voice_id);
 		~WaveTableOscillator();
 
-		void process();
-		void setMix(float);
-		void tick();
-		void pitch(uint8_t);
+		void process() override;
+		void refresh() override;
+		void tick() override;
+		void pitch(uint8_t) override;
 
 	private:
-		float clip(float, float, float);
-		float mtof(uint8_t, float);
 		Buffer* square;
 		Buffer* sine;
 		Buffer* triangle;
 
-		Buffer* output;
-
 		float position;
 		int fl_position;
 		ParameterPool* parameters;
+		SourceID sid;
 
 		sample_t prev_square, prev_sine, prev_triangle;
 

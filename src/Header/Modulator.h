@@ -7,18 +7,27 @@
 #define DONUT_MODULATOR_H
 
 #include "Global.h"
-
+#include "ParameterStore.h"
+#include "FloatBuffer.h"
 
 class Modulator {
   public:
-    Modulator();
+    Modulator(ParameterPool* params, uint8_t voice_id);
     ~Modulator();
-
-    virtual void process();
-    void set(float); // Set a stable value
-    float getCurrentValue();
+	
+	void process();
+	void refresh();
+	void tick();
+	void set(float); // Set a stable value
+	
+	FloatBuffer* getBuffer();
+	float getCurrentValue();
 
   protected:
+	ParameterPool* parameters;
+	FloatBuffer* buffer;
+	
+	uint8_t voice_id;
     float value; // Modulators output float values, for easy multiplying (may use value/MAX_SAMPLE_VALUE under the hood)
 };
 

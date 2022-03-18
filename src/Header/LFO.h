@@ -7,14 +7,23 @@
 
 #include "Modulator.h"
 #include "Buffer.h"
+#include "Tables.h"
+#include "ParameterStore.h"
 
-
-class LFO {
+class LFO : public Modulator {
   public:
-    LFO(Modulator* frequency, float phase_offset, Buffer* output);
+    LFO(float frequency, Tables* tables, ParameterPool* params, uint8_t voice_id);
     ~LFO();
-
+	
+	void tick();
+	void refresh();
     void process();
+
+  private:
+	Buffer* wave;
+	float position, frequency;
+	
+	uint16_t fl_position;
 };
 
 

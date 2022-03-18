@@ -42,7 +42,7 @@ extern unsigned int samplerate;
 #define NUM_INPUTS 1
 #define NUMBER_OF_VOICES 12
 #define MAX_ENVELOPE_LENGTH 220500
-#define TABLE_FREQUENCY 8.0
+#define TABLE_FREQUENCY 1.0
 
 typedef std::vector<unsigned char> midi_message_t;
 
@@ -51,31 +51,63 @@ enum ApplicationState {
 	app_Sequencer
 };
 
+enum SourceID {
+	s_WS1,
+	s_WS2,
+	s_WT1,
+	s_WT2,
+	s_Sub,
+	s_Global
+};
+
+enum ModID {
+	m_LFO1,
+	m_LFO2,
+	m_ADSR1,
+	m_ADSR2
+};
+
 enum ParameterID {
-	p_Harmonics,
 	p_AMP_Attack,
 	p_AMP_Decay,
 	p_AMP_Sustain,
 	p_AMP_Release,
-	p_Filter_Cutoff,
+	
 	p_FM_Amount,
 	p_FM_KeyTrack,
+	
 	p_LFO1_Rate,
-	p_Detune,
-	p_Detune_Range,
+	
+	p_Filter_Cutoff,
 	p_Filter_Resonance,
 	p_Filter_KeyTrack,
 	p_Filter_Type,
+	
 	p_MOD_Attack,
 	p_MOD_Decay,
 	p_MOD_Sustain,
 	p_MOD_Release,
+	
 	p_MIDI_List,
 	p_MIDI_In,
+	p_MIDI_Out,
+	
 	p_WT_Toggle,
 	p_WT_Shape,
+	p_WT_BaseFrequency,
+	p_WT_Detune,
+	
 	p_WS_Toggle,
+	p_WS_BaseFrequency,
+	p_WS_Harmonics,
+	p_WS_Detune,
+	p_WS_Detune_Range,
+	
 	p_Sub_Toggle,
+	
+	p_KeyboardSplit,
+	
+	p_Generic,
 	p_NotFound,
 	p_Exit
 };
@@ -87,13 +119,16 @@ enum ControlID {
 	c_ccChange,
 	c_RemapOn,
 	c_Sustain,
+	c_Transpose,
+	c_Split
 };
 
 enum EventType {
 	e_Midi,
 	e_Control,
 	e_Feedback,
-	e_System
+	e_System,
+	e_Transpose
 };
 
 struct HelpItem {
@@ -107,6 +142,7 @@ struct Event {
 	uint16_t value = 0;
 
 	ControlID cid = c_Generic;
+	SourceID source = s_Global;
 	std::vector<uint16_t> content;
 
 	void write(uint16_t c) {
@@ -122,8 +158,9 @@ struct MidiEvent : public Event {
 };
 
 struct ControlEvent : public Event {
-	ControlEvent(ControlID cid) : Event {e_Control} {
+	ControlEvent(ControlID cid, uint16_t value=0) : Event {e_Control} {
 		this->cid = cid;
+		this->value = value;
 	};
 };
 

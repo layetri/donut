@@ -30,6 +30,10 @@ void Filter::setCoefficients(Coefficients* n_c) {
     this->c = n_c;
 }
 
+void Filter::bypass() {
+	output->write(input->getCurrentSample());
+}
+
 sample_t Filter::getSample() {
     return output->getCurrentSample();
 }

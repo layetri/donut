@@ -25,6 +25,7 @@ struct Filter {
 
     void tick();
     void setCoefficients(Coefficients*);
+    void bypass();
 
     sample_t getSample();
 

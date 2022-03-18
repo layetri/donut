@@ -12,7 +12,7 @@
 #include <sstream>
 
 #include <string>
-#include <map>
+#include <tuple>
 #include <vector>
 
 #include <curses.h>
@@ -30,7 +30,7 @@
 using namespace std;
 
 struct Preset {
-    map<string, float> parameters;
+    vector<ParameterPreset*>* parameters;
 	string name = "default";
 };
 

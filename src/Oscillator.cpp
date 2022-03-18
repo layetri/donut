@@ -1,10 +1,8 @@
 #include "Header/Oscillator.h"
 
-Oscillator::Oscillator(float frequency, float phase_offset, Buffer* output) {
-    this->output = output;
+Oscillator::Oscillator(float frequency, ParameterPool* params, uint8_t voice_id) : Source(params, voice_id) {
     this->frequency = frequency;
-	this->base_freq = frequency;
-    this->phase_offset = phase_offset;
+	this->base_frequency = frequency;
 
     calculatePhaseStep();
 }
@@ -21,8 +19,8 @@ float Oscillator::getFrequency() {
 }
 
 void Oscillator::setBaseFrequency(float base_frequency) {
-	this->base_freq = base_frequency;
-	setFrequency(mtof(note));
+	this->base_frequency = base_frequency;
+	setFrequency(mtof(note, base_frequency));
 }
 
 void Oscillator::calculatePhaseStep() {
@@ -33,11 +31,7 @@ void Oscillator::incrementPhase() {
     phase = (phase + phase_step < 1.0) * (phase + phase_step);
 }
 
-void Oscillator::pitch(int midi_num) {
+void Oscillator::pitch(uint8_t midi_num) {
 	note = midi_num;
-	setFrequency(mtof(midi_num));
-}
-
-float Oscillator::mtof(int midi_num) {
-  return pow(2.0, (midi_num - 69.0) / 12.0) * base_freq;
+	setFrequency(mtof(midi_num, base_frequency));
 }

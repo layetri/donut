@@ -2,7 +2,7 @@
 
 class Supersaw : Oscillator {
     public:
-        Supersaw(float, float, Buffer*);
+        Supersaw(float frequency, ParameterPool* params, uint8_t voice_id);
         ~Supersaw();
 
         void process();

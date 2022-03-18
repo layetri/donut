@@ -1,33 +1,26 @@
 #pragma once
 #include "Global.h"
 #include "Buffer.h"
+#include "Source.h"
 
 #ifndef PLATFORM_EMBEDDED
     #include <math.h>
     #define TWO_PI (2 * M_PI)
 #endif
 
-class Oscillator {
+class Oscillator : public Source {
     public:
-        Oscillator(float frequency, float phase_offset, Buffer* output);
+        Oscillator(float frequency, ParameterPool* params, uint8_t voice_id);
         ~Oscillator();
 
 		void setBaseFrequency(float base_frequency);
-        void setFrequency(float frequency);
+        void setFrequency(float frequency) override;
 		float getFrequency();
-
+		void incrementPhase();
         void calculatePhaseStep();
-        void incrementPhase();
-        void pitch(int midi_num);
-        float mtof(int midi_num);
+
+        void pitch(uint8_t midi_num) override;
 
     protected:
-        Buffer* output;
-
-        float frequency;
-		float base_freq;
-        float phase;
-        float phase_step;
-        float phase_offset;
 		int note = 0;
 };

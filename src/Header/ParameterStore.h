@@ -6,16 +6,28 @@
 #define DONUT_PARAMETERSTORE_H
 #include "Global.h"
 #include <vector>
-#include <map>
+#include <tuple>
 
 using namespace std;
 
 struct Parameter {
 	ParameterID pid;
-	string key;
+	uint8_t voice_id;
 	float value;
 	float base_value;
 	vector<float> lfo_amount;
+};
+
+struct ParameterPreset {
+	string key;
+	uint8_t voice_id;
+	float value;
+};
+
+struct ParameterDict {
+	ParameterID pid;
+	string key;
+	string description = "Placeholder description.";
 };
 
 class ParameterPool {
@@ -23,16 +35,22 @@ class ParameterPool {
 		ParameterPool();
 		~ParameterPool();
 
-		Parameter* get(ParameterID pid);
-		void set(ParameterID pid, float value);
-		void add(ParameterID pid, float value);
-		void store(ParameterID pid, string key, float value);
-		void load(map<string, float> params);
+		Parameter* get(ParameterID pid, uint8_t voice_id);
+		void set(ParameterID pid, uint8_t voice_id, float value);
+		void add(ParameterID pid, uint8_t voice_id, float value);
+		void store(ParameterID pid, uint8_t voice_id, string key, float value);
+		void load(vector<ParameterPreset*>* params);
+
 		ParameterID translate(string key);
-		float value(ParameterID pid);
+		string translate(ParameterID pid);
+
+		float value(ParameterID pid, uint8_t voice_id);
 		vector<Parameter*>* getAll();
+		vector<ParameterDict*>* getDictionary();
+
 	private:
 		vector<Parameter*> parameters;
+		vector<ParameterDict*> dictionary;
 };
 
 

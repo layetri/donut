@@ -17,7 +17,7 @@ void AddAndDivide::process() {
   sample_t val = 0;
 
   for(auto& b : *inputs) {
-    val += (b->getCurrentSample() / num_channels);
+    val += (b->getCurrentSampleMultiplied() / num_channels);
   }
 
   if(multiplier > 0.00) {

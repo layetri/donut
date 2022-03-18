@@ -9,7 +9,7 @@
 
 class Square : public Oscillator {
   public:
-    Square(float, float, Buffer*);
+    Square(float frequency, ParameterPool* params, uint8_t voice_id);
     ~Square();
 
     void process();

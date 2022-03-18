@@ -9,6 +9,9 @@
 #include "Buffer.h"
 #include <vector>
 #include <math.h>
+#include <filesystem>
+#include <fstream>
+
 #define TWO_PI (2 * M_PI)
 
 using namespace std;

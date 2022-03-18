@@ -2,7 +2,7 @@
 
 class Sine : public Oscillator {
     public:
-        Sine(float frequency, float phase_offset, Buffer* output);
+        Sine(float frequency, ParameterPool* params, uint8_t voice_id);
         ~Sine();
 
         void process();

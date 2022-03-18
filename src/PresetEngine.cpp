@@ -47,14 +47,20 @@ void PresetEngine::load(uint n) {
 	while(getline(file, line)) {
 		istringstream iss(line);
 		string key;
-		if(getline(iss, key, '=')) {
-			string value;
-			if(line[0] == '#')
-				continue;
+		if(getline(iss, key, ',')) {
+			string voice;
 
-			if(getline(iss, value)) {
-				p.parameters.insert(pair<string, float> {key, stof(value)});
-				printw("%s: %s\n", key.c_str(), value.c_str());
+			if (getline(iss, voice, '=')) {
+				string value;
+				if (line[0] == '#')
+					continue;
+
+				if (getline(iss, value)) {
+					p.parameters->push_back(new ParameterPreset {
+						key, (uint8_t) stoi(voice), stof(value)
+					});
+					printw("%s(%s): %s\n", key.c_str(), voice.c_str(), value.c_str());
+				}
 			}
 		}
 	}
@@ -70,7 +76,8 @@ void PresetEngine::store(string name) {
 	ofstream out(path.append(name).append(".donutpreset"));
 
 	for(auto& param : *pool->getAll()) {
-		out << param->key << "=" << to_string(param->value) << endl;
+		string key = pool->translate(param->pid);
+		out << key << "," << to_string(param->voice_id) << "=" << to_string(param->value) << endl;
 	}
 
 	out.close();

@@ -2,7 +2,7 @@
 
 class Saw : Oscillator {
     public:
-        Saw(float, float, Buffer*);
+        Saw(float frequency, ParameterPool* params, uint8_t voice_id);
         ~Saw();
 
         void process();

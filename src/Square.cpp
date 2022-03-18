@@ -4,7 +4,7 @@
 
 #include "Header/Square.h"
 
-Square::Square(float frequency, float phase_offset, Buffer* output) : Oscillator(frequency, phase_offset, output) {
+Square::Square(float frequency, ParameterPool* params, uint8_t voice_id) : Oscillator(frequency, params, voice_id) {
 
 }
 

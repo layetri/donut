@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Buffer.h"
-#include "Modulator.h"
 #include "WaveShaper.h"
 #include "WaveTable.h"
 #include "Sine.h"
@@ -19,16 +18,9 @@
 
 using namespace std;
 
-enum Source {
-	s_WS1,
-	s_WS2,
-	s_Sub,
-	s_WT
-};
-
 class Voice {
   public:
-    Voice(Buffer* output, ParameterPool* params, Tables* tables, int v_id=0);
+    Voice(Buffer* output, ParameterPool* params, Tables* tables, uint8_t v_id=0);
     ~Voice();
 
     void assign(Note* note);
@@ -38,20 +30,17 @@ class Voice {
     void process();
 	void release();
 	void tick();
-	sample_t getSample();
-
 	void set(ParameterID, int);
-
-	[[nodiscard]] clock_t getTime() const;
-
+	
+	sample_t getSample();
+	clock_t getTime() const;
+	Note* getNote();
+	uint8_t voice_id;
   private:
     vector<Modulator*> mods;
-    vector<WaveShaper*> osc_wav;
-    vector<Buffer*> osc_buf;
-	vector<Sine*> lfo;
 	vector<Buffer*> lfo_buf;
-	Square* sub;
-	WaveTableOscillator* wt;
+	vector<Source*> sources;
+	vector<Buffer*> buffers;
 
 	ParameterPool* parameters;
 
@@ -65,7 +54,7 @@ class Voice {
 	float crossmod = 0.5;
     bool available;
 	clock_t last_used;
-	int voice_id;
+	
 	short unsigned int pitch = 0;
 	Tables* tables;
 
@@ -75,5 +64,5 @@ class Voice {
 	// TMP
 	bool enableWaveTables = true;
 	bool enableWaveShaper = false;
-	bool enableSub = true;
+	bool enableSub = false;
 };

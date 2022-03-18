@@ -5,10 +5,11 @@
 #ifndef DONUT_NOTE_H
 #define DONUT_NOTE_H
 
+#include <cstdint>
 
 struct Note {
-    int pitch;
-    int velocity;
+    uint8_t pitch;
+    uint8_t velocity;
 };
 
 

@@ -3,14 +3,14 @@
 CC=g++
 PLATFORM=linux # Supported platforms: linux (unstable), macos
 ifeq ($(PLATFORM), linux)
-CFLAGS = -I/usr/include -Wall -fexceptions -std=c++20 -D__UNIX_JACK__
+CFLAGS = -I/usr/include -Wall -fexceptions -std=c++2a -D__UNIX_JACK__
 LDFLAGS= -ljack -lncurses -lpthread
 else ifeq ($(PLATFORM), macos)
-CFLAGS = -I/usr/local/include -Wall -fexceptions -std=c++20 -framework CoreMIDI -framework CoreAudio -framework CoreFoundation -D__MACOSX_CORE__
+CFLAGS = -I/usr/local/include -Wall -fexceptions -std=c++2a -framework CoreMIDI -framework CoreAudio -framework CoreFoundation -D__MACOSX_CORE__
 LDFLAGS= -ljack -lncurses
 else ifeq ($(PLATFORM), windows)
 # God knows what we do here, cuz windows
-CFLAGS = -I/usr/local/include -Wall -fexceptions -std=c++20 -D__WINDOWS_MM__
+CFLAGS = -I/usr/local/include -Wall -fexceptions -std=c++2a -D__WINDOWS_MM__
 LDFLAGS= -ljack -lncurses
 endif
 

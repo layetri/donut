@@ -65,8 +65,7 @@ void ui(bool& running, queue<Event *>& events, ParameterPool& parameters, Preset
 
 }
 
-
-void event(vector<Voice*>& voices, queue<Event *>& events, RtMidiIn* midiIn, bool& running) {
+void event(vector<Voice*>& voices, NoteHandler& nh, ParameterPool& parameters, queue<Event *>& events, RtMidiIn* midiIn, RtMidiOut* midiOut, bool& running) {
 	bool remap_mode = false;
 	uint8_t remap_cc = 0;
 	ControlMap cm;
@@ -77,36 +76,40 @@ void event(vector<Voice*>& voices, queue<Event *>& events, RtMidiIn* midiIn, boo
 		if(!events.empty()) {
 			Event* e = events.front();
 			events.pop();
-
+			
 			switch(e->type) {
 				case e_Midi:
+					if(remap_mode) {
+						cm.changeCC(ParameterID(remap_cc), (uint16_t) e->cc);
+						cout << "Remapped " << remap_cc << " to " << CommandPool::color(to_string(e->cc), 36)
+							 << endl;
+						remap_mode = false;
+					} else if((e->cc - 21) >= 0 && (e->cc - 21) <= 8) {
+						nh.set(cm.getPID(e->cc), e->value);
+					}
 					break;
 				case e_Control:
+					if(e->cid == c_Split) {
+						nh.setSplit(e->value);
+					} else if (e->cc == 255) {
+						remap_mode = true;
+						remap_cc = e->value;
+					} else if((e->cc - 21) == p_Exit) {
+						running = false;
+					} else if(e->cc >= p_AMP_Attack && e->cc <= p_Exit) {
+						nh.set(ParameterID(e->cc - 21), e->value);
+					}
 					break;
+				case e_System:
+					if((e->cc - 21) == p_MIDI_List) {
+						listMidiDevices(midiIn, midiOut);
+					} else if((e->cc - 21) == p_MIDI_In) {
+						switchMidiInputs(midiIn, e->value);
+					} else if((e->cc - 21) == p_MIDI_Out) {
+						switchMidiOutputs(midiOut, e->value);
+					}
 				default:
 					break;
-			}
-
-			if(remap_mode) {
-				cm.changeCC(ParameterID(remap_cc), (uint16_t) e->cc);
-				cout << "Remapped " << remap_cc << " to " << CommandPool::color(to_string(e->cc), 36)
-					<< endl;
-				remap_mode = false;
-			} else {
-				if (e->cc == 255) {
-					remap_mode = true;
-					remap_cc = e->value;
-				} else if((e->cc - 21) == p_MIDI_List) {
-					listMidiDevices(midiIn);
-				} else if((e->cc - 21) == p_MIDI_In) {
-					switchMidiDevices(midiIn, e->value);
-				} else if ((e->cc - 21) == p_Exit) {
-					running = false;
-				} else {
-					for (auto &v: voices) {
-						v->set(cm.getPID(e->cc), e->value);
-					}
-				}
 			}
 		}
 
@@ -116,7 +119,7 @@ void event(vector<Voice*>& voices, queue<Event *>& events, RtMidiIn* midiIn, boo
 }
 
 
-void midi(NoteHandler& handler, queue<Event*>& event_queue, RtMidiIn* midi_in, bool& running) {
+void midi(NoteHandler& handler, queue<Event*>& event_queue, RtMidiIn* midi_in, RtMidiOut* midi_out, bool& running) {
 	midi_message_t message;
 	vector<Note> sustained;
 	bool sustain = false;
@@ -137,7 +140,7 @@ void midi(NoteHandler& handler, queue<Event*>& event_queue, RtMidiIn* midi_in, b
 			int channel = message[0] & 0b00001111;
 
 			getyx(stdscr,winy,winx);
-			mvprintw(0, 0, "type: %u, channel: %u, control: %u, value: %u ", type, channel, message[1],
+			mvprintw(0, 1, "type: %u, channel: %u, control: %u, value: %u ", type, channel, message[1],
 				 message[2]);
 			move(winy, winx);
 			refresh();
@@ -196,9 +199,10 @@ void init_midi(RtMidiIn *midi_in) {
 	midi_in->ignoreTypes(false, false, false);
 }
 
-void listMidiDevices(RtMidiIn* midi_in) {
+void listMidiDevices(RtMidiIn* midi_in, RtMidiOut* midi_out) {
 	// Check inputs.
 	unsigned int nPorts = midi_in->getPortCount();
+	unsigned int nOutPorts = midi_out->getPortCount();
 	printw("\nThere are %u MIDI input sources available.\n", nPorts);
 
 	// List inputs
@@ -215,17 +219,57 @@ void listMidiDevices(RtMidiIn* midi_in) {
 	}
 	printw("\nUse ");
 	attron(COLOR_PAIR(5));
-	printw("midi select [device_number]");
+	printw("midi in [device_number]");
 	attroff(COLOR_PAIR(5));
-	printw(" to select a MIDI device.");
+	printw(" to select a MIDI input device.");
+	refresh();
+	
+	// List outputs
+	printw("\nThere are %u MIDI output destinations available.\n", nOutPorts);
+	for (unsigned int i = 0; i < nOutPorts; i++) {
+		try {
+			portName = midi_out->getPortName(i);
+		} catch (RtMidiError &error) {
+			error.printMessage();
+			delete midi_out;
+			return;
+		}
+		printw("  Output Port #%u: %s\n", i, portName.c_str());
+	}
+	printw("\nUse ");
+	attron(COLOR_PAIR(5));
+	printw("midi out [device_number]");
+	attroff(COLOR_PAIR(5));
+	printw(" to select a MIDI output device.");
 	refresh();
 }
 
-void switchMidiDevices(RtMidiIn* midi_in, uint port) {
+void switchMidiInputs(RtMidiIn* midi_in, uint port) {
 	// Check inputs.
 	unsigned int nPorts = midi_in->getPortCount();
 	if(port < nPorts) {
+		midi_in->closePort();
 		midi_in->openPort(port);
+		
+		string name = midi_in->getPortName(port);
+		printw("Now using %s.", name.c_str());
+	} else {
+		printw("That MIDI input doesn't exist.");
+	}
+}
+
+void switchMidiOutputs(RtMidiOut* midi_out, uint port) {
+	// Check outputs.
+	unsigned int nPorts = midi_out->getPortCount();
+	if(port < nPorts) {
+		midi_out->closePort();
+		midi_out->openPort(port);
+		
+		string name = midi_out->getPortName(port);
+		printw("Now using %s.", name.c_str());
+		
+	} else {
+		printw("That MIDI output doesn't exist.");
 	}
 }
 
@@ -243,7 +287,6 @@ void init_curses() {
 	init_pair(5, COLOR_CYAN, -1);
 }
 
-
 void program() {
 	init_curses();
 
@@ -252,6 +295,9 @@ void program() {
 	ApplicationState app = app_Idle;
 	ParameterPool parameters;
 	PresetEngine pe(&parameters);
+
+	Tables tables;
+	tables.generateWaveforms();
 
 	#ifdef ENGINE_JACK
 		// Do Jack setup
@@ -270,18 +316,16 @@ void program() {
 	vector<Voice *> voices;
 	vector<Buffer *> voice_buffers;
 
-	Tables tables;
-	tables.generateWaveforms();
-
 	voices.reserve(NUMBER_OF_VOICES);
 	voice_buffers.reserve(NUMBER_OF_VOICES);
 	for (int i = 0; i < NUMBER_OF_VOICES; i++) {
 		voice_buffers.push_back(new Buffer(500, "voice_"+to_string(i)));
 
-		voices.push_back(new Voice(voice_buffers[i], &parameters, &tables, i));
+		voices.push_back(new Voice(voice_buffers[i], &parameters, &tables, (uint8_t) i));
 	}
 
 	NoteHandler handle(&voices);
+	handle.setSplit(0);
 
 	#ifdef ENGINE_JACK
 		// Assign the Jack callback function
@@ -321,22 +365,25 @@ void program() {
 	#endif
 
 	RtMidiIn *midi_in = 0;
+	RtMidiOut *midi_out = 0;
 	try {
 		midi_in = new RtMidiIn();
+		midi_out = new RtMidiOut();
 	} catch (RtMidiError &error) {
 		error.printMessage();
 		exit(EXIT_FAILURE);
 	}
 	init_midi(midi_in);
 
-	thread midi_handler(midi, ref(handle), ref(event_queue), ref(midi_in), ref(running));
-	thread event_handler(event, ref(voices), ref(event_queue), ref(midi_in), ref(running));
+	thread midi_handler(midi, ref(handle), ref(event_queue), ref(midi_in), ref(midi_out), ref(running));
+	thread event_handler(event, ref(voices), ref(handle), ref(parameters), ref(event_queue), ref(midi_in), ref(midi_out), ref(running));
 	ui(running, event_queue, ref(parameters), ref(pe), &app, voices);
 
 	midi_handler.join();
 	event_handler.join();
 
 	delete midi_in;
+	delete midi_out;
 
 	cout << "\x1B[2J\x1B[H";
 	curs_set(1);

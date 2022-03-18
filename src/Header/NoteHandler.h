@@ -12,7 +12,20 @@
 #include <vector>
 #include <queue>
 
+#define LOWER_HALF 0
+#define UPPER_HALF 1
+
 using namespace std;
+
+struct KeyboardHalf {
+	vector<Voice*>* voices;
+	uint8_t rr_index = 0;
+	string name;
+	
+	KeyboardHalf() {
+		voices = new vector<Voice*>;
+	}
+};
 
 class NoteHandler {
   public:
@@ -21,17 +34,28 @@ class NoteHandler {
 
     void noteOn(Note* note);
 	void noteOff(Note* note);
-
+	void set(ParameterID, uint16_t);
+	
 	bool findNextFree(Note* note);
 	void stealLeastRecent(Note* note);
-	void incrementVoiceIndex();
+	void incrementVoiceIndex(KeyboardHalf* half);
     void tick();
 	uint8_t inUse();
-
+	
+	void setSplit(uint8_t key);
+	void setSplitRatio(float split_ratio);
+	void intelliSplit();
+	KeyboardHalf* getHalf(Note* note);
+	
   private:
-    vector<Voice*>* voices;
+	vector<Voice*>* voices;
+	KeyboardHalf* voices_lower;
+	KeyboardHalf* voices_upper;
+	
     queue<Note*> note_queue;
 	uint8_t used_voices = 0;
+	uint8_t split_key = 0;
+	uint8_t split_index = 3;
 
 	int voice_index = 0;
 };
