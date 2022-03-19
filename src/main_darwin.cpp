@@ -307,11 +307,8 @@ void program() {
 		if (samplerate == 0) {
 			samplerate = 44100;
 		}
-		printw("Samplerate is: %u", samplerate);
 	#endif
-
-	Buffer output(samplerate);
-
+	
 	queue<Event *> event_queue;
 	vector<Voice *> voices;
 	vector<Buffer *> voice_buffers;
@@ -319,44 +316,27 @@ void program() {
 	voices.reserve(NUMBER_OF_VOICES);
 	voice_buffers.reserve(NUMBER_OF_VOICES);
 	for (int i = 0; i < NUMBER_OF_VOICES; i++) {
-		voice_buffers.push_back(new Buffer(500, "voice_"+to_string(i)));
+		voice_buffers.push_back(new Buffer(4410, "voice_"+to_string(i)));
 
 		voices.push_back(new Voice(voice_buffers[i], &parameters, &tables, (uint8_t) i));
 	}
 
 	NoteHandler handle(&voices);
 	handle.setSplit(0);
+	
+	AutoMaster sensei(&voices);
 
 	#ifdef ENGINE_JACK
 		// Assign the Jack callback function
-		jack.onProcess = [&voices, &output](jack_default_audio_sample_t **inBufs,jack_default_audio_sample_t *outBuf_L,jack_default_audio_sample_t *outBuf_R,
+		jack.onProcess = [&sensei](jack_default_audio_sample_t **inBufs,jack_default_audio_sample_t *outBuf_L,jack_default_audio_sample_t *outBuf_R,
 			jack_nframes_t nframes) {
 			for (unsigned int i = 0; i < nframes; i++) {
-				int s = 0;
-				long m = 0;
+				sensei.process();
+				
+				outBuf_L[i] = sensei.getLeftChannel();
+				outBuf_R[i] = sensei.getRightChannel();
 
-				output.flush();
-				for (auto &v: voices) {
-					v->process();
-					m += v->getSample();
-					s += (v->getSample() != 0);
-				}
-				s = s > 0 ? s : 1;
-
-				// Apply conversion and soft clipping on master out
-				float smp = (m * (0.5 + (0.5 / s))) / (float) SAMPLE_MAX_VALUE;
-				smp = (smp > 1.0) * 0.666666666666667 +
-					(smp < -1.0) * -0.666666666666667 +
-					(smp > -1.0 && smp < 1.0) * (smp - (pow(smp, 3) / 3.0));
-
-				outBuf_L[i] = smp;
-				outBuf_R[i] = outBuf_L[i];
-
-				output.tick();
-
-				for(auto& v : voices) {
-					v->tick();
-				}
+				sensei.tick();
 			}
 
 			return 0;

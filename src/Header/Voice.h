@@ -32,6 +32,7 @@ class Voice {
 	void tick();
 	void set(ParameterID, int);
 	
+	Buffer* getBuffer();
 	sample_t getSample();
 	clock_t getTime() const;
 	Note* getNote();

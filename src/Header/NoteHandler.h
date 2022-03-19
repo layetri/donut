@@ -51,6 +51,7 @@ class NoteHandler {
 	vector<Voice*>* voices;
 	KeyboardHalf* voices_lower;
 	KeyboardHalf* voices_upper;
+	vector<KeyboardHalf*>* last_controlled;
 	
     queue<Note*> note_queue;
 	uint8_t used_voices = 0;

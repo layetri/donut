@@ -8,13 +8,13 @@ NoteHandler::NoteHandler(vector<Voice*>* voices) {
   this->voices = voices;
   voices_upper = new KeyboardHalf;
   voices_lower = new KeyboardHalf;
-  voices_upper->name = "upper";
-  voices_lower->name = "lower";
+  last_controlled = new vector<KeyboardHalf*>;
 }
 
 NoteHandler::~NoteHandler() {
 	delete voices_upper;
 	delete voices_lower;
+	delete last_controlled;
 }
 
 void NoteHandler::noteOn(Note* note) {
@@ -40,6 +40,7 @@ void NoteHandler::set(ParameterID parameter, uint16_t value) {
 	if(inUse() > 0) {
 		bool set_lower = false;
 		bool set_upper = false;
+		last_controlled->clear();
 		// Find the associated half for these notes
 		for(auto& v : *voices) {
 			if(!v->isAvailable()) {
@@ -48,12 +49,20 @@ void NoteHandler::set(ParameterID parameter, uint16_t value) {
 						r->set(parameter, value);
 					}
 					set_lower = true;
+					last_controlled->push_back(voices_lower);
 				} else if(count(voices_upper->voices->begin(), voices_upper->voices->end(), v) && !set_upper) {
 					for(auto& r : *voices_upper->voices) {
 						r->set(parameter, value);
 					}
 					set_upper = true;
+					last_controlled->push_back(voices_upper);
 				}
+			}
+		}
+	} else {
+		for(auto& half : *last_controlled) {
+			for(auto& voice : *half->voices) {
+				voice->set(parameter, value);
 			}
 		}
 	}

@@ -17,7 +17,7 @@
 #include "Voice.h"
 #include "ControlMap.h"
 #include "Tables.h"
-//#include "PanningInterface.h"
+#include "AutoMaster.h"
 
 #include <vector>
 #include <string>

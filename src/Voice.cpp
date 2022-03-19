@@ -202,3 +202,7 @@ void Voice::set(ParameterID parameter, int value) {
 bool Voice::isAvailable() {
 	return available;
 }
+
+Buffer* Voice::getBuffer () {
+	return output;
+}
