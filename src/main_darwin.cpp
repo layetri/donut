@@ -21,7 +21,7 @@ void ui(bool& running, queue<Event *>& events, ParameterPool& parameters, Preset
 	attron(COLOR_PAIR(3));
 	printw("Donut");
 	attroff(COLOR_PAIR(3));
-	printw(" version 0.1");
+	printw(" version 0.2");
 	refresh();
 	
 	move(4,0);
