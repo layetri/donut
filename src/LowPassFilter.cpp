@@ -9,7 +9,8 @@ extern unsigned int samplerate;
 
 LowPassFilter::LowPassFilter(float frequency, Buffer *input, Buffer *output) : Filter(1, &coef, input, output) {
   this->frequency = frequency;
-  frequencyHandler();
+  this->q = 0.5;
+  frequencyHandler_RBJ();
 }
 
 LowPassFilter::~LowPassFilter() {}

@@ -1,3 +1,5 @@
+#pragma once
+
 #include "Modulator.h"
 #include "FloatBuffer.h"
 
@@ -33,31 +35,23 @@ enum EnvPhase {
 	ph_release
 };
 
-class ADSR2 {
+class ADSR2 : public Modulator {
 	public:
-		ADSR2(int, int, float, int);
+		ADSR2(Parameter*, Parameter*, Parameter*, Parameter*, ModID, string, uint8_t);
 		~ADSR2();
 
 		void regen();
-		void step();
-		void start();
-		void noteOff();
-		double getMultiplier();
-
-		void setAttack(int attack);
-		void setDecay(int decay);
-		void setSustain(float sustain);
-		void setRelease(int release);
-
+		void process() override;
+		void start(float velocity) override;
+		void noteOff() override;
+//		float getCurrentValue() override;
 	private:
-		int attack;
-		int decay;
-		float sustain;
-		int release;
+		Parameter *attack, *decay, *sustain, *release;
+		float velocity;
 
 		double a_step, d_step, r_step;
 		EnvPhase phase;
 
-		int counter;
-		double multiplier = 0.0;
+		int position;
+		float multiplier;
 };

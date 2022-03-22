@@ -1,6 +1,6 @@
 #include "Header/Voice.h"
 
-Voice::Voice(Buffer* output, ParameterPool* params, Tables* tables, uint8_t v_id) {
+Voice::Voice(Buffer* output, ParameterPool* params, ModMatrix* mm, Tables* tables, uint8_t v_id) {
 	// Do various setup things
 	this->voice_id = v_id;
 	this->tables = tables;
@@ -17,24 +17,56 @@ Voice::Voice(Buffer* output, ParameterPool* params, Tables* tables, uint8_t v_id
 	sources.push_back(new WaveShaper(params, s_WS2, v_id)); // WS2
 	sources.push_back(new WaveTableOscillator(tables, params, s_WT1, v_id)); // WT
 	sources.push_back(new WaveTableOscillator(tables, params, s_WT2, v_id)); // WT
+	sources.push_back(new Tensions(tables, params, v_id));
 //	sources.push_back(new Square(220.0, params, v_id)); // Sub
-	
+
 	// Grab source buffers
 	for(auto& s : sources) {
 		buffers.push_back(s->getBuffer());
 	}
-
-//	modulators.push_back(new LFO());
-
+	
+	buffers[s_WS1]->attachMultiplier(params->get(p_WS1_Amount, v_id));
+	buffers[s_WS2]->attachMultiplier(params->get(p_WS2_Amount, v_id));
+	buffers[s_WT1]->attachMultiplier(params->get(p_WT1_Amount, v_id));
+	buffers[s_WT2]->attachMultiplier(params->get(p_WT2_Amount, v_id));
+	buffers[s_KS]->attachMultiplier(params->get(p_KS_Amount, v_id));
+	
+	modulators.push_back(new LFO(params->get(p_LFO1_Rate, v_id), params->get(p_LFO1_Sync, v_id), tables, m_LFO1, "lfo1", v_id));
+	modulators.push_back(new LFO(params->get(p_LFO1_Rate, v_id), params->get(p_LFO1_Sync, v_id), tables, m_LFO2, "lfo2", v_id));
+	mm->store(modulators[m_LFO1]);
+	mm->store(modulators[m_LFO2]);
+	
+	mm->link(params->get(p_WS_Harmonics, v_id), modulators[m_LFO1], v_id);
+	
+	
 	// Initialize envelope
-	this->envelope = new ADSR2(2200, 2200, 0.7, 44100);
-	this->envelope->regen();
+	modulators.push_back(new ADSR2(
+		  params->get(p_ADSR1_Attack, v_id),
+		  params->get(p_ADSR1_Decay, v_id),
+		  params->get(p_ADSR1_Sustain, v_id),
+		  params->get(p_ADSR1_Release, v_id),
+		  m_ADSR1, "adsr1", v_id));
+	
+	modulators.push_back(new ADSR2(
+		  params->get(p_ADSR1_Attack, v_id),
+		  params->get(p_ADSR1_Decay, v_id),
+		  params->get(p_ADSR1_Sustain, v_id),
+		  params->get(p_ADSR1_Release, v_id),
+		  m_ADSR2, "adsr2", v_id));
+	
+	mm->store(modulators[m_ADSR1]);
+	mm->store(modulators[m_ADSR2]);
+	
+	mm->link(params->get(p_VoiceMaster, v_id), modulators[m_ADSR1], v_id);
 
 	// Initialize voice mixer
-	mixer = new AddAndDivide(&buffers, 4, mixbus);
+	mixer = new AddAndDivide(&buffers, params, v_id, mixbus);
 	
 	// Initialize voice filter
 	this->lpf = new LowPassFilter(16000.0, mixbus, output);
+	
+	filter_cutoff = parameters->get(p_Filter_Cutoff, voice_id);
+	ws_fm_amount = parameters->get(p_FM_Amount, voice_id);
 }
 
 Voice::~Voice() {
@@ -46,20 +78,22 @@ Voice::~Voice() {
 }
 
 void Voice::process() {
+	for(auto& m : modulators) {
+		m->process();
+	}
+	
 	// Do FM modulation
-	// FM takes 23 clock cycles
-	// Rest takes ~50 cycles
-	// Whole process takes 76 clock cycles
-//	sources[s_WS1]->fm(buffers[s_WS2]->getCurrentSample() / (float) SAMPLE_MAX_VALUE);
+	sources[s_WS1]->fm(buffers[s_WS2]->getCurrentSample() / (float) SAMPLE_MAX_VALUE, ws_fm_amount->value);
 	
 	// Process sources
 	for(auto& s : sources) {
 		s->process();
 	}
-	
+
 	// Apply amplitude envelope
-	mixer->setMultiplier(envelope->getMultiplier());
 	mixer->process();
+	
+	lpf->setFrequency(filter_cutoff->value * modulators[m_ADSR2]->getCurrentValue());
 	lpf->process();
 }
 
@@ -70,9 +104,12 @@ void Voice::tick() {
 		s->tick();
 	}
 	
+	for(auto& m : modulators) {
+		m->tick();
+	}
+	
 	output->tick();
 	output->flush();
-	envelope->step();
 }
 
 void Voice::assign(Note* note) {
@@ -83,9 +120,14 @@ void Voice::assign(Note* note) {
 	for(auto& s : sources) {
 		s->pitch(note->pitch);
 	}
+	
+	for(auto& m : modulators) {
+		m->sync();
+	}
 
 	// TODO: velocity to envelope
-	envelope->start();
+	modulators[m_ADSR1]->start(0.6 + (note->velocity / 127.0f) * 0.4);
+	modulators[m_ADSR2]->start(0.6 + (note->velocity / 127.0f) * 0.4);
 
 	// Housekeeping
 	last_used = clock();
@@ -93,7 +135,7 @@ void Voice::assign(Note* note) {
 }
 
 void Voice::release() {
-	envelope->noteOff();
+	modulators[m_ADSR1]->noteOff();
 	available = true;
 }
 
@@ -142,24 +184,23 @@ void Voice::set(ParameterID parameter, int value) {
 			parameters->set(p_WS_Detune_Range, voice_id, 1.0f - (127.0f / value));
 			break;
 		case p_Filter_Cutoff:
-			lpf->setFrequency((value / 127.0f) * 16000.0);
 			parameters->set(p_Filter_Cutoff, voice_id, (value / 127.0f) * 16000.0);
 			break;
 		case p_Filter_Resonance:
 			lpf->setResonance(0.5f + (value / 12.7f));
 			parameters->set(p_Filter_Resonance, voice_id, 0.5f + (value / 12.7f));
 			break;
-		case p_AMP_Attack:
-			envelope->setAttack(((value / 127.0f) * 220500));
+		case p_ADSR1_Attack:
+			parameters->set(p_ADSR1_Attack, voice_id, ((value / 127.0f) * 220500));
 			break;
-		case p_AMP_Decay:
-			envelope->setDecay(((value / 127.0f) * 220500));
+		case p_ADSR1_Decay:
+			parameters->set(p_ADSR1_Decay, voice_id, ((value / 127.0f) * 220500));
 			break;
-		case p_AMP_Sustain:
-			envelope->setSustain((value / 127.0f));
+		case p_ADSR1_Sustain:
+			parameters->set(p_ADSR1_Sustain, voice_id, (value / 127.0f));
 			break;
-		case p_AMP_Release:
-			envelope->setRelease(((value / 127.0f) * 220500));
+		case p_ADSR1_Release:
+			parameters->set(p_ADSR1_Release, voice_id, ((value / 127.0f) * 220500));
 			break;
 //		case p_LFO1_Rate:
 //			lfo[0]->setFrequency((value / 127.0f) * 220.0);
@@ -170,23 +211,20 @@ void Voice::set(ParameterID parameter, int value) {
 		case p_FM_KeyTrack:
 			parameters->set(p_FM_KeyTrack, voice_id, value / 127.0f);
 			break;
-		case p_WS_Toggle:
-			enableWaveShaper = !enableWaveShaper;
-			mixer->setChannels(mixer->getChannels() - (enableWaveShaper * 2));
-			buffers[s_WS1]->setMultiplier((float) (enableWaveShaper * 1.0));
-			buffers[s_WS2]->setMultiplier((float) (enableWaveShaper * 1.0));
+		case p_WS1_Amount:
+			parameters->set(p_WS1_Amount, voice_id, value / 127.0f);
 			break;
-		case p_WT_Toggle:
-			enableWaveTables = !enableWaveTables;
-			mixer->setChannels(mixer->getChannels() - enableWaveTables);
-			buffers[s_WT1]->setMultiplier((float) (enableWaveTables * 1.0));
-			buffers[s_WT2]->setMultiplier((float) (enableWaveTables * 1.0));
+		case p_WS2_Amount:
+			parameters->set(p_WS2_Amount, voice_id, value / 127.0f);
 			break;
-		case p_Sub_Toggle:
-			enableSub = !enableSub;
-			mixer->setChannels(mixer->getChannels() - enableSub);
-			buffers[s_Sub]->setMultiplier((float) (enableSub * 1.0));
-			verbose(enableSub * 1.0);
+		case p_WT1_Amount:
+			parameters->set(p_WT1_Amount, voice_id, value / 127.0f);
+			break;
+		case p_WT2_Amount:
+			parameters->set(p_WT2_Amount, voice_id, value / 127.0f);
+			break;
+		case p_KS_Amount:
+			parameters->set(p_KS_Amount, voice_id, value / 127.0f);
 			break;
 		case p_WT_Shape:
 			parameters->set(p_WT_Shape, voice_id, value / 63.5f);
@@ -194,7 +232,8 @@ void Voice::set(ParameterID parameter, int value) {
 			sources[s_WT2]->refresh();
 			break;
 		default:
-			cout << "Parameter doesn't exist" << endl;
+			printw("Parameter doesn't exist");
+			refresh();
 			break;
 	}
 }

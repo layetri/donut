@@ -10,23 +10,34 @@
 #include "ParameterStore.h"
 #include "FloatBuffer.h"
 
+using namespace std;
+
 class Modulator {
   public:
-    Modulator(ParameterPool* params, uint8_t voice_id);
+    Modulator(ModID mod_id, string name, uint8_t voice_id);
     ~Modulator();
 	
-	void process();
-	void refresh();
-	void tick();
-	void set(float); // Set a stable value
+	virtual void process();
+	virtual void refresh();
+	virtual void tick();
+	virtual void set(float); // Set a stable value
+	
+	virtual void sync();
+	virtual void start(float);
+	virtual void noteOff();
 	
 	FloatBuffer* getBuffer();
-	float getCurrentValue();
+	virtual float getCurrentValue();
+	
+	ModID getModID() {return mod_id;};
+	string getName() {return name;};
+	uint8_t getVoice() {return voice_id;};
 
   protected:
-	ParameterPool* parameters;
 	FloatBuffer* buffer;
-	
+	Parameter* sync_amt;
+	ModID mod_id;
+	string name;
 	uint8_t voice_id;
     float value; // Modulators output float values, for easy multiplying (may use value/MAX_SAMPLE_VALUE under the hood)
 };

@@ -32,8 +32,9 @@ void WaveShaper::process() {
 }
 
 void WaveShaper::pitch (uint8_t midi_note) {
-	frequency = mtof(midi_note, base_frequency + detune);
+	frequency = mtof(midi_note, 440.0 + detune);
 	phase_step = frequency / samplerate;
+	base_frequency = frequency;
 }
 
 void WaveShaper::tick () {
@@ -58,6 +59,6 @@ void WaveShaper::refresh () {
  * @note uses base_frequency, which is set to 440.0 by default
  * @param val The value of the modulation source at the given tick [0.0, 1.0]
  */
-void WaveShaper::fm(float val) {
-	setFrequency((base_frequency * 2 * abs(val) * parameters->value(p_FM_Amount, voice_id)) + base_frequency);
+void WaveShaper::fm(float val, float amount) {
+	setFrequency((base_frequency * 2 * abs(val) * amount) + base_frequency);
 }

@@ -3,6 +3,7 @@
 FloatBuffer::FloatBuffer(int length) {
     this->length = length;
     data = new float[length];
+	position = 0;
 }
 
 FloatBuffer::~FloatBuffer() {

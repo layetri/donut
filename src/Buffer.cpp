@@ -52,7 +52,7 @@ sample_t Buffer::getCurrentSample() {
 }
 
 sample_t Buffer::getCurrentSampleMultiplied() {
-  return this->operator[](position) * multiplier;
+  return this->operator[](position) * multiplier * multiplier_src->value;
 }
 
 void Buffer::tick() {
@@ -89,6 +89,10 @@ sample_t Buffer::readBack(int places) {
 
 void Buffer::setMultiplier(float multiplier) {
 	this->multiplier = multiplier;
+}
+
+void Buffer::attachMultiplier (Parameter *multiplier) {
+	this->multiplier_src = multiplier;
 }
 
 void Buffer::flush() {

@@ -4,8 +4,9 @@
 
 #include "Header/PresetEngine.h"
 
-PresetEngine::PresetEngine(ParameterPool* parampool) {
-	pool = parampool;
+PresetEngine::PresetEngine(ParameterPool* parameters, ModMatrix* mm) {
+	pool = parameters;
+	modmatrix = mm;
 
 	available_presets = new vector<string>;
 	presets = new vector<Preset*>;
@@ -34,52 +35,74 @@ void PresetEngine::log() {
 	}
 }
 
-void PresetEngine::load(uint n) {
-	auto path = available_presets->at(n);
-	// Read preset
-	ifstream file(path.c_str());
-
-	// Parse to struct
-	Preset p;
-	p.name = path.erase(0, 65);
-
-	string line;
-	while(getline(file, line)) {
-		istringstream iss(line);
-		string key;
-		if(getline(iss, key, ',')) {
-			string voice;
-
-			if (getline(iss, voice, '=')) {
-				string value;
-				if (line[0] == '#')
-					continue;
-
-				if (getline(iss, value)) {
-					p.parameters->push_back(new ParameterPreset {
-						key, (uint8_t) stoi(voice), stof(value)
-					});
-					printw("%s(%s): %s\n", key.c_str(), voice.c_str(), value.c_str());
-				}
+void PresetEngine::load(string name) {
+	filesystem::path path = filesystem::current_path() / ".donut_runtime/presets";
+	
+	for (const auto & entry : filesystem::directory_iterator(path)) {
+		string filename = entry.path().filename().string();
+		
+		if(filename.compare(name)) {
+			ifstream file(entry.path().c_str());
+			nlohmann::json filecontents;
+			file >> filecontents;
+			
+			// Parse to Preset
+			Preset preset;
+			preset.name = name;
+			
+			for(auto& p : filecontents["parameters"]) {
+				preset.parameters->push_back(new ParameterPreset {
+					p["key"], p["voice"], p["base_value"]
+				});
 			}
+			
+			for(auto& m : filecontents["mod_links"]) {
+				modmatrix->link(
+					  pool->get(pool->translate((string) m["destination"]), m["voice"]),
+					  modmatrix->get(m["source"], m["voice"]),
+					  m["voice"]
+					  );
+			}
+			
+			presets->push_back(&preset);
+			
+			// Write to ParameterPool
+			pool->load(preset.parameters);
+			return;
 		}
 	}
-
-	presets->push_back(&p);
-
-	// Write to ParameterPool
-	pool->load(p.parameters);
+	
+	printw("A preset with that name couldn't be found");
 }
 
 void PresetEngine::store(string name) {
 	string path = "/Users/layetri/Development/_modules/donut/.donut_runtime/presets/";
 	ofstream out(path.append(name).append(".donutpreset"));
 
+	nlohmann::json filecontents;
+	filecontents["parameters"] = {};
+	filecontents["mod_links"] = {};
+	
 	for(auto& param : *pool->getAll()) {
 		string key = pool->translate(param->pid);
-		out << key << "," << to_string(param->voice_id) << "=" << to_string(param->value) << endl;
+		filecontents["parameters"].push_back({
+		 {"key", key},
+		 {"voice", param->voice_id},
+		 {"value", param->value},
+		 {"base_value", param->base_value}
+		});
 	}
-
+	
+	for(auto& link : *modmatrix->get()) {
+		filecontents["mod_links"].push_back({
+		  {"source", link->modulator->getName()},
+		  {"destination", pool->translate(link->parameter->pid)},
+		  {"voice", link->voice_id},
+		  {"amount", link->amount}
+		});
+	}
+	
+	out << setw(4) << filecontents << endl;
 	out.close();
 }
 

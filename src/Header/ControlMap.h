@@ -8,14 +8,20 @@
 #include "Global.h"
 #include "ParameterStore.h"
 #include <string>
-#include <unordered_map>
+#include <vector>
 #include <cstdlib>
 
 using namespace std;
 
+struct Control {
+	ParameterID parameter;
+	uint16_t cc;
+	uint16_t channel = 0;
+};
+
 struct Map {
 	string name;
-	unordered_map<ParameterID, uint16_t> values;
+	vector<Control*> values;
 };
 
 class ControlMap {
@@ -23,12 +29,12 @@ class ControlMap {
 		ControlMap();
 		~ControlMap();
 
-		void addCC(uint16_t, ParameterID);
+		void addCC(ParameterID, uint16_t, uint16_t channel=0);
 		void changeCC(ParameterID, uint16_t);
 		void loadMap();
 		void storeMap();
 		int getCC(ParameterID pid);
-		ParameterID getPID(uint16_t cc);
+		ParameterID getPID(uint16_t cc, uint16_t channel=0);
 
 		void setController(uint);
 		void listControllers();

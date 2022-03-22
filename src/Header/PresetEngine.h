@@ -7,6 +7,9 @@
 
 #include "Global.h"
 #include "ParameterStore.h"
+#include "ModMatrix.h"
+#include "json.h"
+
 #include <filesystem>
 #include <fstream>
 #include <sstream>
@@ -36,15 +39,16 @@ struct Preset {
 
 class PresetEngine {
 	public:
-		PresetEngine(ParameterPool*);
+		PresetEngine(ParameterPool*, ModMatrix*);
 		~PresetEngine();
 
-		void load(uint n);
+		void load(string name);
 		void store(string name);
 		void log();
 
 	private:
 		ParameterPool* pool;
+		ModMatrix* modmatrix;
 		vector<Preset*>* presets;
 		vector<string>* available_presets;
 		uint16_t selected;

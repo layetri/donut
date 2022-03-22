@@ -432,13 +432,13 @@ struct handleLoadPreset : public Command {
 	
 	void handle (string command) override {
 		if (auto m = ctre::match<pattern>(command)) {
-			uint n = m.get<1>().to_number();
+			string n = m.get<1>().to_string();
 			presetEngine->load(n);
 		}
 	}
 
 protected:
-	static constexpr auto pattern = ctll::fixed_string{R"(^preset\sload\s([0-9]+)$)"};
+	static constexpr auto pattern = ctll::fixed_string{R"(^preset\sload\s([a-zA-Z0-9_]+)$)"};
 	HelpItem helpText = {"preset load <name>", "Load the specified preset."};
 };
 

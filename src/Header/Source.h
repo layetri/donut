@@ -27,7 +27,7 @@ class Source {
 		virtual void refresh();
 		virtual void pitch(uint8_t midi_note);
 		virtual void setFrequency(float frequency);
-		virtual void fm(float val);
+		virtual void fm(float val, float amount);
 
 		Buffer* getBuffer();
 		float mtof(uint8_t midi_note, float base_frequency=440.0);
@@ -37,7 +37,7 @@ class Source {
 		Buffer* output;
 		ParameterPool* parameters;
 		uint8_t voice_id;
-		float frequency, base_frequency;
+		float frequency, base_frequency, old_frequency;
 		float phase, phase_step, phase_offset;
 };
 

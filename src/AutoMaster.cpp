@@ -4,8 +4,9 @@
 
 #include "Header/AutoMaster.h"
 
-AutoMaster::AutoMaster(vector<Voice*>* voices) {
+AutoMaster::AutoMaster(vector<Voice*>* voices, Parameter* volume) {
 	this->voices = voices;
+	this->volume = volume;
 	output_left = 0.0;
 	output_right = 0.0;
 }
@@ -29,7 +30,7 @@ void AutoMaster::process () {
 //	if(left != 0) {
 //		verbose(left);
 //	}
-	
+
 //	on_voices = on_voices > 0 ? on_voices : 1;
 	
 	output_left = scale(left, on_voices);
@@ -51,9 +52,9 @@ float AutoMaster::scale(long sample, uint8_t number_of_voices) {
 }
 
 float AutoMaster::getLeftChannel () {
-	return output_left;
+	return output_left * volume->value;
 }
 
 float AutoMaster::getRightChannel () {
-	return output_right;
+	return output_right * volume->value;
 }

@@ -14,7 +14,7 @@ Source::~Source() {}
 
 void Source::process() {}
 void Source::refresh() {}
-void Source::fm(float val) {}
+void Source::fm(float val, float amount) {}
 
 void Source::pitch(uint8_t midi_note) {
 	frequency = mtof(midi_note);

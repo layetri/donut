@@ -9,13 +9,13 @@
 #include "Global.h"
 #include "Buffer.h"
 #include "Voice.h"
-#include <curses.h>
+#include "ParameterStore.h"
 
 using namespace std;
 
 class AutoMaster {
 	public:
-		AutoMaster(vector<Voice*>* voices);
+		AutoMaster(vector<Voice*>* voices, Parameter* volume);
 		~AutoMaster();
 		
 		void process();
@@ -27,6 +27,7 @@ class AutoMaster {
 		
 	private:
 		vector<Voice*>* voices;
+		Parameter* volume;
 		float output_left, output_right;
 		
 		uint8_t on_voices;

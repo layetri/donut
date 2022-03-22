@@ -7,6 +7,7 @@
 
 #include <string>
 #include "Global.h"
+#include "ParameterStore.h"
 
 #if defined(PLATFORM_TEENSY_40)
   #include <Arduino.h>
@@ -30,6 +31,7 @@ public:
     void wipe();
     void setPosition(int position);
 	void setMultiplier(float multiplier);
+	void attachMultiplier(Parameter* multiplier);
 
     uint getPosition();
     uint getSize();
@@ -52,6 +54,7 @@ private:
     uint position;
     std::string name;
 	float multiplier;
+	Parameter* multiplier_src;
 
     bool full_cycle_flag;
 };

@@ -10,20 +10,26 @@
 #include "Tables.h"
 #include "ParameterStore.h"
 
+using namespace std;
+
 class LFO : public Modulator {
   public:
-    LFO(float frequency, Tables* tables, ParameterPool* params, uint8_t voice_id);
+    LFO(Parameter* frequency, Parameter* sync_amt, Tables* tables, ModID mod_id, string name, uint8_t voice_id);
     ~LFO();
 	
-	void tick();
-	void refresh();
-    void process();
+	void tick() override;
+	void refresh() override;
+    void process() override;
+	void sync() override;
+	void beatSync();
 
   private:
 	Buffer* wave;
-	float position, frequency;
+	Parameter *frequency;
 	
+	float position;
 	uint16_t fl_position;
+	sample_t sample;
 };
 
 

@@ -16,7 +16,7 @@ class WaveShaper : public Source {
 		void tick() override;
 		void refresh() override;
 		void pitch(uint8_t midi_note) override;
-		void fm(float val) override;
+		void fm(float val, float amount) override;
 		
 		void setFrequency(float frequency) override;
 

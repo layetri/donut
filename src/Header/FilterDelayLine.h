@@ -8,6 +8,7 @@
 #include "Buffer.h"
 #include "Global.h"
 #include "ParameterStore.h"
+#include "LowPassFilter.h"
 
 #if defined(PLATFORM_TEENSY_40)
   #include <Arduino.h>
@@ -16,19 +17,17 @@
   #include <cstdint>
 #endif
 
-class DelayLine {
+class FilterDelayLine {
   public:
-    DelayLine(Parameter* delayTime, Parameter* feedback, Buffer *input);
-    ~DelayLine();
+    FilterDelayLine(Parameter* delayTime, Parameter* feedback, Parameter* cutoff, Buffer *input, Buffer* output);
+    ~FilterDelayLine();
 
     void process();
     void tick();
-	Buffer* getBuffer();
-
   protected:
-    Buffer *x;
-    Buffer *y;
-	Parameter *feedback, *delayTime;
+    Buffer *x, *y, *z;
+	Parameter *feedback, *delayTime, *cutoff;
+	LowPassFilter* filter;
 
     int position;
 };

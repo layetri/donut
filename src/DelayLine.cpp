@@ -3,9 +3,8 @@
 //
 
 #include "Header/DelayLine.h"
-#include <iostream>
 
-DelayLine::DelayLine(int delayTime, float feedback, Buffer *input) {
+DelayLine::DelayLine(Parameter* delayTime, Parameter* feedback, Buffer *input) {
   this->delayTime = delayTime;
   this->feedback = feedback;
   position = 0;
@@ -27,28 +26,18 @@ void DelayLine::tick() {
   }
 }
 
-sample_t DelayLine::process() {
+void DelayLine::process() {
   sample_t sample;
   // Run the delay line
-  sample = 0.3 * x->getSample(position - delayTime) + 0.7 * x->getSample(position - delayTime - 1) + ((y->getSample(position - delayTime - 1) + y->getSample(position - delayTime)) * 0.5 * feedback);
+  sample = 0.3 * x->getSample((int) (position - delayTime->value)) +
+		0.7 * x->getSample((int) (position - delayTime->value) - 1) +
+		((y->getSample((int) (position - delayTime->value) - 1) +
+		y->getSample((int) (position - delayTime->value))) * 0.5 * feedback->value);
 
   // Store the sample in the output buffer
   y->write(sample);
-  y->tick();
-
-  // Return the sample
-  return sample;
 }
 
-void DelayLine::setDelayTime(int delayTime) {
-  this->delayTime = delayTime;
-}
-
-void DelayLine::setdf(int delayTime, float feedback) {
-  this->delayTime = delayTime;
-  this->feedback = feedback;
-}
-
-int DelayLine::getDelayTime() {
-  return delayTime;
+Buffer* DelayLine::getBuffer() {
+	return y;
 }

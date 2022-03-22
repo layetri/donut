@@ -18,6 +18,7 @@
 #include "ControlMap.h"
 #include "Tables.h"
 #include "AutoMaster.h"
+#include "ModMatrix.h"
 
 #include <vector>
 #include <string>
@@ -35,5 +36,6 @@ void program();
 void switchMidiInputs(RtMidiIn*, uint);
 void switchMidiOutputs(RtMidiOut*, uint);
 void listMidiDevices(RtMidiIn*, RtMidiOut*);
+void printAtLocation(int, int, string, int c=0);
 
 #endif //DONUT_MAIN_DARWIN_H

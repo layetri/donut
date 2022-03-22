@@ -8,24 +8,22 @@
 
 #include "Buffer.h"
 #include <vector>
+#include "ParameterStore.h"
 
 using namespace std;
 
 class AddAndDivide {
   public:
-    AddAndDivide(vector<Buffer*>* inputs, int num_channels, Buffer* output);
+    AddAndDivide(vector<Buffer*>* inputs, ParameterPool* params, uint8_t voice_id, Buffer* output);
     ~AddAndDivide();
 
     void process();
-    void setMultiplier(double mult);
-	void setChannels(int);
-	int getChannels();
 
   private:
     Buffer* output;
     vector<Buffer*>* inputs;
-    int num_channels;
-    double multiplier = 0.0;
+	ParameterPool* parameters;
+	Parameter *ws1, *ws2, *wt1, *wt2, *ks, *master;
 };
 
 

@@ -4,20 +4,31 @@
 
 #include "Header/LFO.h"
 
-LFO::LFO (float frequency, Tables *tables, ParameterPool *params, uint8_t voice_id) : Modulator(params, voice_id) {
+LFO::LFO (Parameter* frequency, Parameter* sync_amt, Tables *tables, ModID mod_id, string name, uint8_t voice_id) : Modulator(mod_id, name, voice_id) {
 	wave = tables->getSine();
+	sample = 0;
+	
+	this->frequency = frequency;
+	this->sync_amt = sync_amt;
+	this->mod_id = mod_id;
 }
+
+void LFO::sync() {
+	// If sync is enabled, reset the position
+	position = !sync_amt->value * position;
+}
+
+void LFO::beatSync() {}
 
 void LFO::process () {
-
+	sample = (sample_t) (0.3 * wave->getSample(fl_position) + 0.7 * sample);
+	buffer->write((float) (sample / SAMPLE_MAX_VALUE));
 }
 
-void LFO::refresh() {
-
-}
+void LFO::refresh() {}
 
 void LFO::tick() {
-	position += frequency;
+	position += frequency->value;
 	position = (ceil(position) < wave->getSize()) * position + (ceil(position) >= wave->getSize()) * (position - wave->getSize());
 	fl_position = floor(position);
 }

@@ -56,6 +56,7 @@ enum SourceID {
 	s_WS2,
 	s_WT1,
 	s_WT2,
+	s_KS,
 	s_Sub,
 	s_Global
 };
@@ -68,45 +69,57 @@ enum ModID {
 };
 
 enum ParameterID {
-	p_AMP_Attack,
-	p_AMP_Decay,
-	p_AMP_Sustain,
-	p_AMP_Release,
+	p_ADSR1_Attack,
+	p_ADSR1_Decay,
+	p_ADSR1_Sustain,
+	p_ADSR1_Release,
 	
 	p_FM_Amount,
 	p_FM_KeyTrack,
 	
 	p_LFO1_Rate,
+	p_LFO1_Sync,
 	
 	p_Filter_Cutoff,
 	p_Filter_Resonance,
 	p_Filter_KeyTrack,
 	p_Filter_Type,
 	
-	p_MOD_Attack,
-	p_MOD_Decay,
-	p_MOD_Sustain,
-	p_MOD_Release,
+	p_ADSR2_Attack,
+	p_ADSR2_Decay,
+	p_ADSR2_Sustain,
+	p_ADSR2_Release,
 	
 	p_MIDI_List,
 	p_MIDI_In,
 	p_MIDI_Out,
 	
+	p_WT1_Amount,
+	p_WT2_Amount,
 	p_WT_Toggle,
 	p_WT_Shape,
 	p_WT_BaseFrequency,
 	p_WT_Detune,
 	
+	p_WS1_Amount,
+	p_WS2_Amount,
 	p_WS_Toggle,
 	p_WS_BaseFrequency,
 	p_WS_Harmonics,
 	p_WS_Detune,
 	p_WS_Detune_Range,
 	
+	p_KS_Amount,
+	p_KS_DelayTime,
+	p_KS_Feedback,
+	p_KS_FilterCutoff,
+	
 	p_Sub_Toggle,
 	
 	p_KeyboardSplit,
 	
+	p_VoiceMaster,
+	p_Master,
 	p_Generic,
 	p_NotFound,
 	p_Exit

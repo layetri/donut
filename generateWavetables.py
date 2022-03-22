@@ -17,6 +17,7 @@ for samplerate in samplerates:
     sine = np.zeros(samplerate)
     square = np.zeros(samplerate)
     triangle = np.zeros(samplerate)
+    adsr = np.zeros(samplerate)
 
     for i in range(samplerate):
         tri_tmp = 0
@@ -55,3 +56,7 @@ for samplerate in samplerates:
     with open(".donut_runtime/wavetable/triangle_" + str(samplerate) + ".txt", "w") as tr:
         for val in triangle:
             tr.write(str(math.trunc(val)) + " ")
+
+    with open(".donut_runtime/wavetable/adsr_" + str(samplerate) + ".txt", "w") as env:
+        for val in adsr:
+            env.write(str(val) + " ")

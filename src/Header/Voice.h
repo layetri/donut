@@ -3,15 +3,23 @@
 #include "Buffer.h"
 #include "WaveShaper.h"
 #include "WaveTable.h"
-#include "Sine.h"
+#include "Tensions.h"
+
 #include "Square.h"
 #include "Note.h"
 #include "FloatBuffer.h"
 #include "AddAndDivide.h"
+
 #include "ADSR.h"
+#include "LFO.h"
+#include "Modulator.h"
+#include "ModMatrix.h"
+
 #include "LowPassFilter.h"
 #include "ParameterStore.h"
 #include "Tables.h"
+
+#include <curses.h>
 
 #include <vector>
 #define WS
@@ -20,7 +28,7 @@ using namespace std;
 
 class Voice {
   public:
-    Voice(Buffer* output, ParameterPool* params, Tables* tables, uint8_t v_id=0);
+    Voice(Buffer* output, ParameterPool* params, ModMatrix* mm, Tables* tables, uint8_t v_id=0);
     ~Voice();
 
     void assign(Note* note);
@@ -36,32 +44,32 @@ class Voice {
 	sample_t getSample();
 	clock_t getTime() const;
 	Note* getNote();
-	uint8_t voice_id;
   private:
-    vector<Modulator*> mods;
+	vector<Modulator*> modulators;
 	vector<Buffer*> lfo_buf;
 	vector<Source*> sources;
 	vector<Buffer*> buffers;
-
 	ParameterPool* parameters;
-
-	LowPassFilter* lpf;
-    Buffer* output;
-	Buffer* mixbus;
-    AddAndDivide* mixer;
-	Note* midi_note;
-	ADSR2* envelope;
-
-	float crossmod = 0.5;
-    bool available;
-	clock_t last_used;
 	
-	short unsigned int pitch = 0;
-	Tables* tables;
-
+	Parameter *filter_cutoff, *ws_fm_amount;
+	
+	LowPassFilter *lpf;
+	
+	Buffer *output, *mixbus;
+	AddAndDivide *mixer;
+	Note *midi_note;
+	ADSR2 *envelope, *mod_envelope;
+	Tables *tables;
+	
+	bool available;
+	uint8_t voice_id;
+	clock_t last_used;
 	int8_t harmonics_knob = 0;
-
-
+	uint8_t pitch = 0;
+	
+	float crossmod = 0.5;
+	
+	
 	// TMP
 	bool enableWaveTables = true;
 	bool enableWaveShaper = false;
