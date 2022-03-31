@@ -4,12 +4,14 @@
 
 #include "Header/WaveTable.h"
 
-WaveTableOscillator::WaveTableOscillator(Tables* tables, ParameterPool* params, SourceID sid, uint8_t voice_id) : Source(params, voice_id) {
+WaveTableOscillator::WaveTableOscillator(Tables* tables, ParameterPool* params, Parameter* detune, Parameter* shape, Parameter* transpose, SourceID sid, uint8_t voice_id) : Source(params, voice_id) {
 	square = tables->getSquare();
 	sine = tables->getSine();
 	triangle = tables->getTriangle();
-	parameters = params;
+	this->detune = detune;
+	this->shape = shape;
 	this->sid = sid;
+	this->transpose = transpose;
 
 	// Set initial values
 	position = 0.0;
@@ -40,24 +42,31 @@ void WaveTableOscillator::process() {
 
 void WaveTableOscillator::tick() {
 	position += frequency;
-	position = (ceil(position) < square->getSize()) * position + (ceil(position) >= square->getSize()) * (position - square->getSize());
+	position = (position < square->getSize()) * position + (position >= square->getSize()) * (position - square->getSize());
+//	position = bind(position);
 	fl_position = floor(position);
 	
-	output->tick();
+//	output->tick();
 }
 
 void WaveTableOscillator::refresh() {
-	mixer = 0.8 * mixer + 0.2 * parameters->get(p_WT_Shape, voice_id)->value;
+	mixer = 0.8 * mixer + 0.2 * shape->value;
 
 	mix_square = 1.0 - clip(mixer, 0.0, 1.0);
 	mix_sine = clip(mixer, 0.0, 1.0) - clip(mixer-1.0, 0.0, 1.0);
 	mix_triangle = clip(mixer-1.0, 0.0, 1.0);
 	
-	if(sid == s_WT2) {
-		this->base_frequency = parameters->get(p_WS_Detune, voice_id)->value;
-	}
+	this->base_frequency = detune->value;
 }
 
 void WaveTableOscillator::pitch(uint8_t midi_note) {
-	frequency = (samplerate / TABLE_FREQUENCY) / mtof(127-(midi_note+2), base_frequency);
+	frequency = (samplerate / TABLE_FREQUENCY) / mtof(127-(midi_note + 2 + (uint8_t) transpose->value), base_frequency);
+}
+
+float WaveTableOscillator::bind(float value) {
+	if(value >= square->getSize()) {
+		return bind(value - square->getSize());
+	} else {
+		return value;
+	}
 }

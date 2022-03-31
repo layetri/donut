@@ -45,7 +45,7 @@ private:
 	FilterDelayLine* delayLine;
 	Exciter* exciter;
 	
-	Parameter *ks_feedback, *ks_delaytime, *ks_dampening, *ks_exciter;
+	Parameter *ks_feedback, *ks_delaytime, *ks_dampening, *ks_exciter, *transpose;
 	
 	uint8_t trigger_time, remaining_trigger_time;
 };

@@ -27,7 +27,7 @@ donut: $(OBJECTS)
 	$(CC) -o $@ $(CFLAGS) $^ $(LDFLAGS)
 
 # Separate rule for main.cpp since it doesn't have a header
-obj/main.o: src/main.cpp src/Header/Global.h src/Header/TestSynth.h
+obj/main.o: src/main.cpp src/Header/Global.h
 	mkdir -p $(OBJ_DIR)
 	$(CC) -c $< $(CFLAGS) -o $@
 

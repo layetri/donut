@@ -4,10 +4,6 @@
 
 #include "Header/main_darwin.h"
 
-#ifdef DEVMODE
-	#include "Header/TestSynth.h"
-#endif
-
 mutex mtx;
 
 void ui(bool& running, queue<Event *>& events, ParameterPool& parameters, PresetEngine& presetEngine, ApplicationState* app, vector<Voice*>& voices) {
@@ -95,7 +91,7 @@ void event(vector<Voice*>& voices, NoteHandler& nh, ParameterPool& parameters, q
 						// Set the master volume
 						parameters.set(p_Master, 0, e->value / 127.0f);
 						
-					} else if((e->cc >= 21 && e->cc <= 28) || (e->cc >= 41 && e->cc <= 48)) {
+					} else {
 						// Display the value
 						printAtLocation(0, 1, parameters.translate(cm.getPID(e->cc)) + ": " + to_string(e->value));
 						// Send the event's value to the NoteHandler to, well, handle it

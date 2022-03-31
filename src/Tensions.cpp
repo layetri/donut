@@ -9,6 +9,8 @@ Tensions::Tensions(Tables* tables, ParameterPool* params, uint8_t voice_id) : So
 	ks_feedback = parameters->get(p_KS_Feedback, voice_id);
 	ks_dampening = parameters->get(p_KS_FilterCutoff, voice_id);
 	
+	this->transpose = parameters->get(p_KS_Transpose, voice_id);
+	
 	dl_in = new Buffer(samplerate/4.0);
 	delayLine = new FilterDelayLine(ks_delaytime, ks_feedback, ks_dampening, dl_in, output);
 	
@@ -24,7 +26,7 @@ Tensions::~Tensions() {
 }
 
 void Tensions::pitch(uint8_t note) {
-	ks_delaytime->value = mtof(note, 440.0);
+	ks_delaytime->value = mtof(note + (uint8_t) transpose->value, 440.0);
 	
 	// Handle excitation via an interface struct
 	exciter->excite("pulse", trigger_time);

@@ -4,11 +4,12 @@
 
 #include "Header/WaveShaper.h"
 
-WaveShaper::WaveShaper(ParameterPool* parameters, SourceID sid, uint8_t voice_id) : Source(parameters, voice_id) {
+WaveShaper::WaveShaper(ParameterPool* parameters, Parameter* detune, Parameter* harmonics, Parameter* transpose, SourceID sid, uint8_t voice_id) : Source(parameters, voice_id) {
 	this->sid = sid;
 	base_frequency = 440.0;
-	harmonics = 2;
-	detune = 0.0;
+	this->harmonics = harmonics;
+	this->detune = detune;
+	this->transpose = transpose;
 }
 
 WaveShaper::~WaveShaper() {}
@@ -17,13 +18,13 @@ void WaveShaper::process() {
 	phase = (phase + phase_step < 1.0) * (phase + phase_step);
 	
   	output->flush();
-  	if(harmonics < 0) {
-		for (int i = 0; i < harmonics * -1; i++) {
+  	if(harmonics->value < 0) {
+		for (int i = 0; i < harmonics->value * -1; i++) {
 			int n = (2 * (i+1)) - 1;
 			output->writeAddition(((sin(TWO_PI * n * phase) / n) * SAMPLE_MAX_VALUE));
 		}
-	} else if(harmonics > 0) {
-	  	for(int i = 0; i < harmonics; i++) {
+	} else if(harmonics->value > 0) {
+	  	for(int i = 0; i < harmonics->value; i++) {
 			output->writeAddition(((sin(TWO_PI * i * phase) / i) * SAMPLE_MAX_VALUE));
 		}
 	} else {
@@ -32,26 +33,14 @@ void WaveShaper::process() {
 }
 
 void WaveShaper::pitch (uint8_t midi_note) {
-	frequency = mtof(midi_note, 440.0 + detune);
+	frequency = mtof((midi_note + (uint8_t) transpose->value), 440.0 + detune->value);
 	phase_step = frequency / samplerate;
 	base_frequency = frequency;
-}
-
-void WaveShaper::tick () {
-
 }
 
 void WaveShaper::setFrequency (float frequency) {
 	this->frequency = frequency;
 	phase_step = frequency / samplerate;
-}
-
-void WaveShaper::refresh () {
-	this->harmonics = parameters->get(p_WS_Harmonics, voice_id)->value;
-	
-	if(sid == s_WS2) {
-		this->detune = parameters->get(p_WS_Detune, voice_id)->value;
-	}
 }
 
 /**

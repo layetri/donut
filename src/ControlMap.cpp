@@ -9,11 +9,14 @@ ControlMap::ControlMap() {
 	selected_controller = 1;
 
 	// Map modwheel
-	addCC(p_WS_Detune, 1);
+	addCC(p_WS1_Detune, 1);
+	addCC(p_WS2_Detune, 1);
 	// Map knobs
-	addCC(p_WS_Harmonics, 21);
+	addCC(p_WS1_Harmonics, 21);
+	addCC(p_WS2_Harmonics, 21);
 	addCC(p_FM_Amount, 22);
-	addCC(p_WT_Shape, 23);
+	addCC(p_WT1_Shape, 23);
+	addCC(p_WT2_Shape, 23);
 	addCC(p_Filter_Cutoff, 24);
 	addCC(p_Filter_Resonance, 25);
 	addCC(p_LFO1_Rate, 26);

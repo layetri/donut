@@ -15,7 +15,7 @@ LFO::LFO (Parameter* frequency, Parameter* sync_amt, Tables *tables, ModID mod_i
 
 void LFO::sync() {
 	// If sync is enabled, reset the position
-	position = !sync_amt->value * position;
+	position = (sync_amt->value > 0.0) * position;
 }
 
 void LFO::beatSync() {}
@@ -29,6 +29,16 @@ void LFO::refresh() {}
 
 void LFO::tick() {
 	position += frequency->value;
-	position = (ceil(position) < wave->getSize()) * position + (ceil(position) >= wave->getSize()) * (position - wave->getSize());
+//	position = wrap(position);
+	position = (position < wave->getSize()) * position + (position >= wave->getSize()) * (position - wave->getSize());
 	fl_position = floor(position);
+	buffer->tick();
+}
+
+float LFO::wrap(float position) {
+	if(position < wave->getSize()) {
+		return position;
+	} else {
+		return wrap(position - wave->getSize());
+	}
 }

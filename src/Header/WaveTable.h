@@ -17,13 +17,14 @@ using namespace std;
 
 class WaveTableOscillator : public Source {
 	public:
-		WaveTableOscillator(Tables* tables, ParameterPool*, SourceID, uint8_t voice_id);
+		WaveTableOscillator(Tables* tables, ParameterPool*, Parameter*, Parameter*, Parameter*, SourceID, uint8_t voice_id);
 		~WaveTableOscillator();
 
 		void process() override;
 		void refresh() override;
 		void tick() override;
 		void pitch(uint8_t) override;
+		float bind(float);
 
 	private:
 		Buffer* square;
@@ -32,7 +33,7 @@ class WaveTableOscillator : public Source {
 
 		float position;
 		int fl_position;
-		ParameterPool* parameters;
+		Parameter *detune, *shape, *transpose;
 		SourceID sid;
 
 		sample_t prev_square, prev_sine, prev_triangle;

@@ -3,7 +3,6 @@
 Voice::Voice(Buffer* output, ParameterPool* params, ModMatrix* mm, Tables* tables, uint8_t v_id) {
 	// Do various setup things
 	this->voice_id = v_id;
-	this->tables = tables;
 	this->last_used = clock();
 	this->available = true;
 	this->parameters = params;
@@ -13,12 +12,11 @@ Voice::Voice(Buffer* output, ParameterPool* params, ModMatrix* mm, Tables* table
 	this->output = output;
 
 	// Initialize oscillators
-	sources.push_back(new WaveShaper(params, s_WS1, v_id)); // WS1
-	sources.push_back(new WaveShaper(params, s_WS2, v_id)); // WS2
-	sources.push_back(new WaveTableOscillator(tables, params, s_WT1, v_id)); // WT
-	sources.push_back(new WaveTableOscillator(tables, params, s_WT2, v_id)); // WT
+	sources.push_back(new WaveShaper(params, params->get(p_WS1_Detune, v_id), params->get(p_WS1_Harmonics, v_id), params->get(p_WS1_Transpose, v_id), s_WS1, v_id)); // WS1
+	sources.push_back(new WaveShaper(params, params->get(p_WS1_Detune, v_id), params->get(p_WS1_Harmonics, v_id), params->get(p_WS2_Transpose, v_id), s_WS2, v_id)); // WS2
+	sources.push_back(new WaveTableOscillator(tables, params, params->get(p_WT1_Detune, v_id), params->get(p_WT1_Shape, v_id), params->get(p_WT1_Transpose, v_id), s_WT1, v_id)); // WT
+	sources.push_back(new WaveTableOscillator(tables, params, params->get(p_WT2_Detune, v_id), params->get(p_WT2_Shape, v_id), params->get(p_WT2_Transpose, v_id), s_WT2, v_id)); // WT
 	sources.push_back(new Tensions(tables, params, v_id));
-//	sources.push_back(new Square(220.0, params, v_id)); // Sub
 
 	// Grab source buffers
 	for(auto& s : sources) {
@@ -36,7 +34,7 @@ Voice::Voice(Buffer* output, ParameterPool* params, ModMatrix* mm, Tables* table
 	mm->store(modulators[m_LFO1]);
 	mm->store(modulators[m_LFO2]);
 	
-	mm->link(params->get(p_WS_Harmonics, v_id), modulators[m_LFO1], v_id);
+//	mm->link(params->get(p_WS1_Harmonics, v_id), modulators[m_LFO1], v_id);
 	
 	
 	// Initialize envelope
@@ -48,15 +46,19 @@ Voice::Voice(Buffer* output, ParameterPool* params, ModMatrix* mm, Tables* table
 		  m_ADSR1, "adsr1", v_id));
 	
 	modulators.push_back(new ADSR2(
-		  params->get(p_ADSR1_Attack, v_id),
-		  params->get(p_ADSR1_Decay, v_id),
-		  params->get(p_ADSR1_Sustain, v_id),
-		  params->get(p_ADSR1_Release, v_id),
+		  params->get(p_ADSR2_Attack, v_id),
+		  params->get(p_ADSR2_Decay, v_id),
+		  params->get(p_ADSR2_Sustain, v_id),
+		  params->get(p_ADSR2_Release, v_id),
 		  m_ADSR2, "adsr2", v_id));
 	
 	mm->store(modulators[m_ADSR1]);
 	mm->store(modulators[m_ADSR2]);
 	
+//	mm->link(params->get(p_WS1_Amount, v_id), modulators[m_ADSR1], v_id);
+//	mm->link(params->get(p_WS2_Amount, v_id), modulators[m_ADSR1], v_id);
+//	mm->link(params->get(p_WT1_Amount, v_id), modulators[m_ADSR1], v_id);
+//	mm->link(params->get(p_WT2_Amount, v_id), modulators[m_ADSR1], v_id);
 	mm->link(params->get(p_VoiceMaster, v_id), modulators[m_ADSR1], v_id);
 
 	// Initialize voice mixer
@@ -78,6 +80,7 @@ Voice::~Voice() {
 }
 
 void Voice::process() {
+//	verbose("start process " + to_string(voice_id));
 	for(auto& m : modulators) {
 		m->process();
 	}
@@ -89,12 +92,14 @@ void Voice::process() {
 	for(auto& s : sources) {
 		s->process();
 	}
-
+//	verbose("check");
+	
 	// Apply amplitude envelope
 	mixer->process();
 	
-	lpf->setFrequency(filter_cutoff->value * modulators[m_ADSR2]->getCurrentValue());
+	lpf->setFrequency(filter_cutoff->value);
 	lpf->process();
+//	verbose("end process " + to_string(voice_id));
 }
 
 void Voice::tick() {
@@ -103,7 +108,7 @@ void Voice::tick() {
 	for(auto& s : sources) {
 		s->tick();
 	}
-	
+
 	for(auto& m : modulators) {
 		m->tick();
 	}
@@ -136,6 +141,7 @@ void Voice::assign(Note* note) {
 
 void Voice::release() {
 	modulators[m_ADSR1]->noteOff();
+	modulators[m_ADSR2]->noteOff();
 	available = true;
 }
 
@@ -169,19 +175,25 @@ Note* Voice::getNote() {
 
 void Voice::set(ParameterID parameter, int value) {
 	switch(parameter) {
-		case p_WS_Harmonics:
-			parameters->set(p_WS_Harmonics, voice_id, ((value + 1) / 4) - 16);
-			sources[s_WS1]->refresh();
-			sources[s_WS2]->refresh();
+		case p_WS1_Harmonics:
+			parameters->set(p_WS1_Harmonics, voice_id, ((value + 1) / 4) - 16);
 			break;
-		case p_WS_Detune:
-			parameters->set(p_WS_Detune, voice_id,
-				(value / parameters->value(p_WS_Detune_Range, voice_id)) + 440.0);
-			sources[s_WS2]->refresh();
-//			sources[s_WT2]->refresh();
+		case p_WS2_Harmonics:
+			parameters->set(p_WS2_Harmonics, voice_id, ((value + 1) / 4) - 16);
 			break;
-		case p_WS_Detune_Range:
-			parameters->set(p_WS_Detune_Range, voice_id, 1.0f - (127.0f / value));
+		case p_WS1_Detune:
+			parameters->set(p_WS1_Detune, voice_id,
+				(value / parameters->value(p_WS1_Detune_Range, voice_id)) + 440.0);
+			break;
+		case p_WS2_Detune:
+			parameters->set(p_WS2_Detune, voice_id,
+				(value / parameters->value(p_WS2_Detune_Range, voice_id)) + 440.0);
+			break;
+		case p_WS1_Detune_Range:
+			parameters->set(p_WS1_Detune_Range, voice_id, 1.0f - (127.0f / value));
+			break;
+		case p_WS2_Detune_Range:
+			parameters->set(p_WS2_Detune_Range, voice_id, 1.0f - (127.0f / value));
 			break;
 		case p_Filter_Cutoff:
 			parameters->set(p_Filter_Cutoff, voice_id, (value / 127.0f) * 16000.0);
@@ -226,10 +238,28 @@ void Voice::set(ParameterID parameter, int value) {
 		case p_KS_Amount:
 			parameters->set(p_KS_Amount, voice_id, value / 127.0f);
 			break;
-		case p_WT_Shape:
-			parameters->set(p_WT_Shape, voice_id, value / 63.5f);
+		case p_WT1_Shape:
+			parameters->set(p_WT1_Shape, voice_id, value / 63.5f);
 			sources[s_WT1]->refresh();
+			break;
+		case p_WT2_Shape:
+			parameters->set(p_WT2_Shape, voice_id, value / 63.5f);
 			sources[s_WT2]->refresh();
+			break;
+		case p_WT1_Transpose:
+			parameters->set(p_WT1_Transpose, voice_id, value - 64);
+			break;
+		case p_WT2_Transpose:
+			parameters->set(p_WT2_Transpose, voice_id, value - 64);
+			break;
+		case p_WS1_Transpose:
+			parameters->set(p_WS1_Transpose, voice_id, value - 64);
+			break;
+		case p_WS2_Transpose:
+			parameters->set(p_WS2_Transpose, voice_id, value - 64);
+			break;
+		case p_KS_Transpose:
+			parameters->set(p_KS_Transpose, voice_id, value - 64);
 			break;
 		default:
 			printw("Parameter doesn't exist");

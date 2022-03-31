@@ -22,6 +22,7 @@ class LFO : public Modulator {
     void process() override;
 	void sync() override;
 	void beatSync();
+	float wrap(float);
 
   private:
 	Buffer* wave;

@@ -59,7 +59,6 @@ class Voice {
 	AddAndDivide *mixer;
 	Note *midi_note;
 	ADSR2 *envelope, *mod_envelope;
-	Tables *tables;
 	
 	bool available;
 	uint8_t voice_id;

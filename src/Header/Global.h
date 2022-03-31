@@ -80,6 +80,9 @@ enum ParameterID {
 	p_LFO1_Rate,
 	p_LFO1_Sync,
 	
+	p_LFO2_Rate,
+	p_LFO2_Sync,
+	
 	p_Filter_Cutoff,
 	p_Filter_Resonance,
 	p_Filter_KeyTrack,
@@ -95,24 +98,41 @@ enum ParameterID {
 	p_MIDI_Out,
 	
 	p_WT1_Amount,
+	p_WT1_Shape,
+	p_WT1_BaseFrequency,
+	p_WT1_Detune,
+	p_WT1_Transpose,
+	
 	p_WT2_Amount,
-	p_WT_Toggle,
-	p_WT_Shape,
-	p_WT_BaseFrequency,
-	p_WT_Detune,
+	p_WT2_Shape,
+	p_WT2_BaseFrequency,
+	p_WT2_Detune,
+	p_WT2_Transpose,
 	
 	p_WS1_Amount,
+	p_WS1_BaseFrequency,
+	p_WS1_Harmonics,
+	p_WS1_Detune,
+	p_WS1_Detune_Range,
+	p_WS1_Transpose,
+	
 	p_WS2_Amount,
-	p_WS_Toggle,
-	p_WS_BaseFrequency,
-	p_WS_Harmonics,
-	p_WS_Detune,
-	p_WS_Detune_Range,
+	p_WS2_BaseFrequency,
+	p_WS2_Harmonics,
+	p_WS2_Detune,
+	p_WS2_Detune_Range,
+	p_WS2_Transpose,
 	
 	p_KS_Amount,
 	p_KS_DelayTime,
 	p_KS_Feedback,
 	p_KS_FilterCutoff,
+	p_KS_Transpose,
+	
+	p_Sampler_Start,
+	p_Sampler_Length,
+	p_Sampler_Speed,
+	p_Sampler_Direction,
 	
 	p_Sub_Toggle,
 	

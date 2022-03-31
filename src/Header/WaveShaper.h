@@ -9,20 +9,17 @@
 
 class WaveShaper : public Source {
   	public:
-		WaveShaper(ParameterPool*, SourceID, uint8_t);
+		WaveShaper(ParameterPool*, Parameter*, Parameter*, Parameter*, SourceID, uint8_t);
 		~WaveShaper();
 
 		void process() override;
-		void tick() override;
-		void refresh() override;
 		void pitch(uint8_t midi_note) override;
 		void fm(float val, float amount) override;
 		
 		void setFrequency(float frequency) override;
 
 	private:
-		int harmonics;
-		float detune;
+		Parameter *detune, *harmonics, *transpose;
 		SourceID sid;
 };
 

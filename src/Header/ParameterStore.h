@@ -15,7 +15,6 @@ struct Parameter {
 	uint8_t voice_id;
 	float value;
 	float base_value;
-	vector<float> lfo_amount;
 };
 
 struct ParameterPreset {
@@ -38,7 +37,7 @@ class ParameterPool {
 		Parameter* get(ParameterID pid, uint8_t voice_id);
 		void set(ParameterID pid, uint8_t voice_id, float value);
 		void add(ParameterID pid, uint8_t voice_id, float value);
-		void store(ParameterID pid, uint8_t voice_id, string key, float value);
+		void store(ParameterID pid, uint8_t voice_id, string key, float value, float base_value=1.0);
 		void load(vector<ParameterPreset*>* params);
 
 		ParameterID translate(string key);
