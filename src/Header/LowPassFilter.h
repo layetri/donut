@@ -17,7 +17,7 @@ using namespace std;
 
 class LowPassFilter : public Filter {
   public:
-    LowPassFilter(float frequency, Buffer* input, Buffer* output);
+    LowPassFilter(Parameter* frequency, Buffer* input, Buffer* output);
     ~LowPassFilter();
 
     void process();
@@ -31,5 +31,6 @@ class LowPassFilter : public Filter {
 private:
     // Filter coefficients, butterworth-style
     double b0, b1, b2, a0, a1, a2, q;
-    float frequency;
+    Parameter* frequency;
+	float old_f;
 };

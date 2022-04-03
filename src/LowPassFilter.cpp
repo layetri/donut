@@ -7,16 +7,17 @@
 Coefficients coef = {1.0};
 extern unsigned int samplerate;
 
-LowPassFilter::LowPassFilter(float frequency, Buffer *input, Buffer *output) : Filter(1, &coef, input, output) {
+LowPassFilter::LowPassFilter(Parameter* frequency, Buffer *input, Buffer *output) : Filter(1, &coef, input, output) {
   this->frequency = frequency;
   this->q = 0.5;
+  this->old_f = 0.0;
   frequencyHandler_RBJ();
 }
 
 LowPassFilter::~LowPassFilter() {}
 
 void LowPassFilter::frequencyHandler() {
-  const double ita = 1.0/ tan(M_PI*(frequency / samplerate));
+  const double ita = 1.0/ tan(M_PI*(frequency->value / samplerate));
   const double q = sqrt(2.0);
 
 	// Set coefficients
@@ -31,7 +32,7 @@ void LowPassFilter::frequencyHandler() {
 }
 
 void LowPassFilter::frequencyHandler_RBJ() {
-	const double w0 = 2 * M_PI * frequency / samplerate;
+	const double w0 = 2 * M_PI * frequency->value / samplerate;
 	const double cw0 = cos(w0);
 	const double sw0 = sin(w0);
 	const double alpha = sw0 / (2 * q);
@@ -45,11 +46,14 @@ void LowPassFilter::frequencyHandler_RBJ() {
 }
 
 void LowPassFilter::setFrequency(float frequency) {
-	this->frequency = frequency;
 	frequencyHandler_RBJ();
 }
 
 void LowPassFilter::process() {
+	if(frequency->value != old_f) {
+		frequencyHandler_RBJ();
+		old_f = frequency->value;
+	}
 //	output->flush();
 	sample_t s = input->getCurrentSample() * b0 +
 		input->readBack(1) * b1 +

@@ -5,8 +5,7 @@
 #include "Header/FilterDelayLine.h"
 #include <iostream>
 
-FilterDelayLine::FilterDelayLine (Parameter *delayTime, Parameter *feedback, Parameter *cutoff, Buffer *input,
-								  Buffer *output) {
+FilterDelayLine::FilterDelayLine (Parameter *delayTime, Parameter *feedback, Parameter *cutoff, Buffer *input, Buffer *output) {
 	this->delayTime = delayTime;
 	this->feedback = feedback;
 	this->cutoff = cutoff;
@@ -16,7 +15,7 @@ FilterDelayLine::FilterDelayLine (Parameter *delayTime, Parameter *feedback, Par
 	y = new Buffer(input->getSize(), "FilterDelayLine");
 	z = output;
 	
-	filter = new LowPassFilter(6000.0, y, z);
+	filter = new LowPassFilter(cutoff, y, z);
 }
 
 FilterDelayLine::~FilterDelayLine () {
@@ -37,5 +36,5 @@ void FilterDelayLine::process () {
 	
 	// Store the sample in the output buffer
 	filter->process();
-	z->write((y->readBack((int) delayTime->value) + z->getCurrentSample()) * 0.5);
+	z->write(y->readBack((int) delayTime->value) + z->getCurrentSample());
 }

@@ -199,6 +199,14 @@ void midi(NoteHandler& handler, queue<Event*>& event_queue, RtMidiIn* midi_in, R
 	}
 }
 
+void jackd() {
+
+}
+
+void pyUI() {
+
+}
+
 void printAtLocation(int x, int y, string text, int c) {
 	int winx, winy;
 	getyx(stdscr,winy,winx);
@@ -384,11 +392,12 @@ void program() {
 
 	thread midi_handler(midi, ref(handle), ref(event_queue), ref(midi_in), ref(midi_out), ref(running));
 	thread event_handler(event, ref(voices), ref(handle), ref(parameters), ref(event_queue), ref(midi_in), ref(midi_out), ref(running));
+	
 	ui(running, event_queue, ref(parameters), ref(pe), &app, voices);
 
 	midi_handler.join();
 	event_handler.join();
-
+	
 	delete midi_in;
 	delete midi_out;
 

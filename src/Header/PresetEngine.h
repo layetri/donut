@@ -33,7 +33,7 @@
 using namespace std;
 
 struct Preset {
-    vector<ParameterPreset*>* parameters;
+    vector<ParameterPreset*> parameters;
 	string name = "default";
 };
 

@@ -12,7 +12,6 @@ PresetEngine::PresetEngine(ParameterPool* parameters, ModMatrix* mm) {
 	presets = new vector<Preset*>;
 
 	filesystem::path path = filesystem::current_path() / ".donut_runtime/presets";
-	cout << path << endl;
 	for (const auto & entry : filesystem::directory_iterator(path)) {
 		printw("%s\n", entry.path().c_str());
 		refresh();
@@ -51,7 +50,7 @@ void PresetEngine::load(string name) {
 			preset.name = name;
 			
 			for(auto& p : filecontents["parameters"]) {
-				preset.parameters->push_back(new ParameterPreset {
+				preset.parameters.push_back(new ParameterPreset {
 					p["key"], p["voice"], p["base_value"]
 				});
 			}
@@ -60,14 +59,15 @@ void PresetEngine::load(string name) {
 				modmatrix->link(
 					  pool->get(pool->translate((string) m["destination"]), m["voice"]),
 					  modmatrix->get(m["source"], m["voice"]),
-					  m["voice"]
-					  );
+					  m["voice"]);
 			}
+			verbose("push finished");
 			
 			presets->push_back(&preset);
 			
+			
 			// Write to ParameterPool
-			pool->load(preset.parameters);
+			pool->load(&preset.parameters);
 			return;
 		}
 	}

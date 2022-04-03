@@ -65,7 +65,7 @@ Voice::Voice(Buffer* output, ParameterPool* params, ModMatrix* mm, Tables* table
 	mixer = new AddAndDivide(&buffers, params, v_id, mixbus);
 	
 	// Initialize voice filter
-	this->lpf = new LowPassFilter(16000.0, mixbus, output);
+	this->lpf = new LowPassFilter(parameters->get(p_Filter_Cutoff, voice_id), mixbus, output);
 	
 	filter_cutoff = parameters->get(p_Filter_Cutoff, voice_id);
 	ws_fm_amount = parameters->get(p_FM_Amount, voice_id);
@@ -96,8 +96,6 @@ void Voice::process() {
 	
 	// Apply amplitude envelope
 	mixer->process();
-	
-	lpf->setFrequency(filter_cutoff->value);
 	lpf->process();
 //	verbose("end process " + to_string(voice_id));
 }

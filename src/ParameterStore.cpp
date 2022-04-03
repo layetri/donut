@@ -53,7 +53,7 @@ ParameterPool::ParameterPool() {
 		store(p_KS_Amount, i, "ks_amount", 1.0, 0.0);
 		store(p_KS_DelayTime, i, "ks_delay", 440.0);
 		store(p_KS_Feedback, i, "ks_feedback", 0.999999);
-		store(p_KS_FilterCutoff, i, "ks_dampening", 0.5);
+		store(p_KS_FilterCutoff, i, "ks_dampening", 10000.0);
 		store(p_KS_Transpose, i, "ks_transpose", 0.0);
 
 		store(p_LFO1_Rate, i, "lfo1_rate", 1.0);
