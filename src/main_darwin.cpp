@@ -224,12 +224,15 @@ void printAtLocation(int x, int y, string text, int c) {
 void init_midi(RtMidiIn *midi_in) {
 	// Check inputs.
 	unsigned int nPorts = midi_in->getPortCount();
-	#ifdef DEVMODE
-		midi_in->openPort(1);
-	#else
+	if(nPorts > 0) {
+		for(int i = 0; i < nPorts; i++) {
+			if(midi_in->getPortName(i).compare("Launchkey 61 Launchkey MIDI")) {
+				midi_in->openPort(i);
+			}
+		}
 		midi_in->openPort(0);
-	#endif
-	midi_in->ignoreTypes(false, false, false);
+		midi_in->ignoreTypes(false, false, false);
+	}
 }
 
 void listMidiDevices(RtMidiIn* midi_in, RtMidiOut* midi_out) {
@@ -325,6 +328,7 @@ void program() {
 
 	bool running = true;
 	extern unsigned int samplerate;
+	
 	ApplicationState app = app_Idle;
 	ParameterPool parameters;
 	ModMatrix mm;
@@ -347,6 +351,7 @@ void program() {
 	vector<Voice *> voices;
 	vector<Buffer *> voice_buffers;
 
+	mtx.lock();
 	voices.reserve(NUMBER_OF_VOICES);
 	voice_buffers.reserve(NUMBER_OF_VOICES);
 	for (int i = 0; i < NUMBER_OF_VOICES; i++) {
@@ -359,11 +364,13 @@ void program() {
 	handle.setSplit(0);
 	
 	AutoMaster sensei(&voices, parameters.get(p_Master, 0));
+	mtx.unlock();
 
 	#ifdef ENGINE_JACK
 		// Assign the Jack callback function
 		jack.onProcess = [&sensei, &mm](jack_default_audio_sample_t **inBufs,jack_default_audio_sample_t *outBuf_L,jack_default_audio_sample_t *outBuf_R,
 			jack_nframes_t nframes) {
+			mtx.lock();
 			for (unsigned int i = 0; i < nframes; i++) {
 				mm.process();
 				sensei.process();
@@ -373,6 +380,7 @@ void program() {
 
 				sensei.tick();
 			}
+			mtx.unlock();
 
 			return 0;
 		};

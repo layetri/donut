@@ -6,6 +6,8 @@ Voice::Voice(Buffer* output, ParameterPool* params, ModMatrix* mm, Tables* table
 	this->last_used = clock();
 	this->available = true;
 	this->parameters = params;
+	verbose("start voice " + to_string(voice_id));
+	
 	
 	// Initialize buffers
 	this->mixbus = new Buffer(500);
@@ -31,12 +33,8 @@ Voice::Voice(Buffer* output, ParameterPool* params, ModMatrix* mm, Tables* table
 	
 	modulators.push_back(new LFO(params->get(p_LFO1_Rate, v_id), params->get(p_LFO1_Sync, v_id), tables, m_LFO1, "lfo1", v_id));
 	modulators.push_back(new LFO(params->get(p_LFO1_Rate, v_id), params->get(p_LFO1_Sync, v_id), tables, m_LFO2, "lfo2", v_id));
-	mm->store(modulators[m_LFO1]);
-	mm->store(modulators[m_LFO2]);
-	
-//	mm->link(params->get(p_WS1_Harmonics, v_id), modulators[m_LFO1], v_id);
-	
-	
+
+
 	// Initialize envelope
 	modulators.push_back(new ADSR2(
 		  params->get(p_ADSR1_Attack, v_id),
@@ -44,17 +42,20 @@ Voice::Voice(Buffer* output, ParameterPool* params, ModMatrix* mm, Tables* table
 		  params->get(p_ADSR1_Sustain, v_id),
 		  params->get(p_ADSR1_Release, v_id),
 		  m_ADSR1, "adsr1", v_id));
-	
+
 	modulators.push_back(new ADSR2(
 		  params->get(p_ADSR2_Attack, v_id),
 		  params->get(p_ADSR2_Decay, v_id),
 		  params->get(p_ADSR2_Sustain, v_id),
 		  params->get(p_ADSR2_Release, v_id),
 		  m_ADSR2, "adsr2", v_id));
-	
-	mm->store(modulators[m_ADSR1]);
-	mm->store(modulators[m_ADSR2]);
-	
+
+	for(auto& m : modulators) {
+		mm->store(m);
+	}
+
+//	mm->link(params->get(p_WS1_Harmonics, v_id), modulators[m_LFO1], v_id);
+
 //	mm->link(params->get(p_WS1_Amount, v_id), modulators[m_ADSR1], v_id);
 //	mm->link(params->get(p_WS2_Amount, v_id), modulators[m_ADSR1], v_id);
 //	mm->link(params->get(p_WT1_Amount, v_id), modulators[m_ADSR1], v_id);
@@ -67,8 +68,8 @@ Voice::Voice(Buffer* output, ParameterPool* params, ModMatrix* mm, Tables* table
 	// Initialize voice filter
 	this->lpf = new LowPassFilter(parameters->get(p_Filter_Cutoff, voice_id), mixbus, output);
 	
-	filter_cutoff = parameters->get(p_Filter_Cutoff, voice_id);
 	ws_fm_amount = parameters->get(p_FM_Amount, voice_id);
+	verbose("done voice " + to_string(voice_id));
 }
 
 Voice::~Voice() {

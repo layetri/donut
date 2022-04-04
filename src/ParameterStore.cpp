@@ -88,6 +88,7 @@ Parameter* ParameterPool::get(ParameterID pid, uint8_t voice_id) {
 			return p;
 		}
 	}
+	return parameters[0];
 }
 
 ParameterID ParameterPool::translate(string key) {

@@ -280,47 +280,6 @@ protected:
 
 // =======================================================================
 
-struct handleTranspose : public Command {
-	explicit handleTranspose (queue<Event *> *event_queue, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, parameters, presetEngine, running) {};
-	
-	bool handleIfMatch (string command) override {
-		if (ctre::match<pattern>(command)) {
-			handle(command);
-			return true;
-		}
-		return false;
-	}
-	
-	HelpItem getHelpText () override {
-		return helpText;
-	}
-	
-	void handle (string command) override {
-		if (auto m = ctre::match<pattern>(command)) {
-			string source = m.get<1>().to_string();
-			uint16_t semis = m.get<2>().to_number();
-			
-			SourceID src;
-			if (source.compare("shaper_1")) {
-//				src = s_WS1;
-			} else if (source.compare("shaper_2")) {
-//				src = s_WS2;
-			} else if (source.compare("wavetable")) {
-				src = s_WT1;
-			} else if (source.compare("sub")) {
-				src = s_Sub;
-			}
-			event_queue->push(new Event{e_Control, 0, semis, c_Transpose, src});
-		}
-	}
-
-protected:
-	static constexpr auto pattern = ctll::fixed_string{R"(^transpose\s([a-z0-9_]+)\s([0-9]+)$)"};
-	HelpItem helpText = {"source <name> <on/off>", "Toggle a specified sound source."};
-};
-
-// =======================================================================
-
 struct handleStorePreset : public Command {
 	explicit handleStorePreset (queue<Event *> *event_queue, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, parameters, presetEngine, running) {};
 	

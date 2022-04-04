@@ -33,4 +33,5 @@ Modulator *ModMatrix::get (string name, uint8_t voice_id) {
 			return m;
 		}
 	}
+	return modulators[0];
 }

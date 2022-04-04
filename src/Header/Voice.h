@@ -20,7 +20,7 @@
 #include "Tables.h"
 
 #include <curses.h>
-
+#include <unistd.h>
 #include <vector>
 #define WS
 
@@ -46,7 +46,6 @@ class Voice {
 	Note* getNote();
   private:
 	vector<Modulator*> modulators;
-	vector<Buffer*> lfo_buf;
 	vector<Source*> sources;
 	vector<Buffer*> buffers;
 	ParameterPool* parameters;
@@ -58,19 +57,9 @@ class Voice {
 	Buffer *output, *mixbus;
 	AddAndDivide *mixer;
 	Note *midi_note;
-	ADSR2 *envelope, *mod_envelope;
 	
 	bool available;
 	uint8_t voice_id;
 	clock_t last_used;
-	int8_t harmonics_knob = 0;
 	uint8_t pitch = 0;
-	
-	float crossmod = 0.5;
-	
-	
-	// TMP
-	bool enableWaveTables = true;
-	bool enableWaveShaper = false;
-	bool enableSub = false;
 };
