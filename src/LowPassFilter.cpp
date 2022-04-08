@@ -2,7 +2,7 @@
 // Created by Daniël Kamp on 25/02/2021.
 //
 
-#include "Header/LowPassFilter.h"
+#include <DSP/LowPassFilter.h>
 
 Coefficients coef = {1.0};
 extern unsigned int samplerate;

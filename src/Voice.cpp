@@ -1,25 +1,25 @@
-#include "Header/Voice.h"
+#include <System/Voice.h>
 
 Voice::Voice(Buffer* output, ParameterPool* params, ModMatrix* mm, Tables* tables, uint8_t v_id) {
+	verbose("start " + to_string(v_id));
 	// Do various setup things
 	this->voice_id = v_id;
 	this->last_used = clock();
 	this->available = true;
 	this->parameters = params;
-	verbose("start voice " + to_string(voice_id));
 	
 	
 	// Initialize buffers
 	this->mixbus = new Buffer(500);
 	this->output = output;
-
+	
 	// Initialize oscillators
 	sources.push_back(new WaveShaper(params, params->get(p_WS1_Detune, v_id), params->get(p_WS1_Harmonics, v_id), params->get(p_WS1_Transpose, v_id), s_WS1, v_id)); // WS1
-	sources.push_back(new WaveShaper(params, params->get(p_WS1_Detune, v_id), params->get(p_WS1_Harmonics, v_id), params->get(p_WS2_Transpose, v_id), s_WS2, v_id)); // WS2
+	sources.push_back(new WaveShaper(params, params->get(p_WS2_Detune, v_id), params->get(p_WS2_Harmonics, v_id), params->get(p_WS2_Transpose, v_id), s_WS2, v_id)); // WS2
 	sources.push_back(new WaveTableOscillator(tables, params, params->get(p_WT1_Detune, v_id), params->get(p_WT1_Shape, v_id), params->get(p_WT1_Transpose, v_id), s_WT1, v_id)); // WT
 	sources.push_back(new WaveTableOscillator(tables, params, params->get(p_WT2_Detune, v_id), params->get(p_WT2_Shape, v_id), params->get(p_WT2_Transpose, v_id), s_WT2, v_id)); // WT
 	sources.push_back(new Tensions(tables, params, v_id));
-
+	
 	// Grab source buffers
 	for(auto& s : sources) {
 		buffers.push_back(s->getBuffer());
@@ -32,7 +32,7 @@ Voice::Voice(Buffer* output, ParameterPool* params, ModMatrix* mm, Tables* table
 	buffers[s_KS]->attachMultiplier(params->get(p_KS_Amount, v_id));
 	
 	modulators.push_back(new LFO(params->get(p_LFO1_Rate, v_id), params->get(p_LFO1_Sync, v_id), tables, m_LFO1, "lfo1", v_id));
-	modulators.push_back(new LFO(params->get(p_LFO1_Rate, v_id), params->get(p_LFO1_Sync, v_id), tables, m_LFO2, "lfo2", v_id));
+	modulators.push_back(new LFO(params->get(p_LFO2_Rate, v_id), params->get(p_LFO2_Sync, v_id), tables, m_LFO2, "lfo2", v_id));
 
 
 	// Initialize envelope
@@ -54,12 +54,7 @@ Voice::Voice(Buffer* output, ParameterPool* params, ModMatrix* mm, Tables* table
 		mm->store(m);
 	}
 
-//	mm->link(params->get(p_WS1_Harmonics, v_id), modulators[m_LFO1], v_id);
-
-//	mm->link(params->get(p_WS1_Amount, v_id), modulators[m_ADSR1], v_id);
-//	mm->link(params->get(p_WS2_Amount, v_id), modulators[m_ADSR1], v_id);
-//	mm->link(params->get(p_WT1_Amount, v_id), modulators[m_ADSR1], v_id);
-//	mm->link(params->get(p_WT2_Amount, v_id), modulators[m_ADSR1], v_id);
+//	mm->link(params->get(p_FM_Amount, v_id), modulators[m_LFO1], v_id);
 	mm->link(params->get(p_VoiceMaster, v_id), modulators[m_ADSR1], v_id);
 
 	// Initialize voice mixer
@@ -69,7 +64,6 @@ Voice::Voice(Buffer* output, ParameterPool* params, ModMatrix* mm, Tables* table
 	this->lpf = new LowPassFilter(parameters->get(p_Filter_Cutoff, voice_id), mixbus, output);
 	
 	ws_fm_amount = parameters->get(p_FM_Amount, voice_id);
-	verbose("done voice " + to_string(voice_id));
 }
 
 Voice::~Voice() {
@@ -81,7 +75,6 @@ Voice::~Voice() {
 }
 
 void Voice::process() {
-//	verbose("start process " + to_string(voice_id));
 	for(auto& m : modulators) {
 		m->process();
 	}
@@ -93,12 +86,10 @@ void Voice::process() {
 	for(auto& s : sources) {
 		s->process();
 	}
-//	verbose("check");
 	
 	// Apply amplitude envelope
 	mixer->process();
 	lpf->process();
-//	verbose("end process " + to_string(voice_id));
 }
 
 void Voice::tick() {
@@ -178,7 +169,7 @@ void Voice::set(ParameterID parameter, int value) {
 			parameters->set(p_WS1_Harmonics, voice_id, ((value + 1) / 4) - 16);
 			break;
 		case p_WS2_Harmonics:
-			parameters->set(p_WS2_Harmonics, voice_id, ((value + 1) / 4) - 16);
+			parameters->set(p_WS2_Harmonics, voice_id, value / 127.0f);
 			break;
 		case p_WS1_Detune:
 			parameters->set(p_WS1_Detune, voice_id,
@@ -213,9 +204,9 @@ void Voice::set(ParameterID parameter, int value) {
 		case p_ADSR1_Release:
 			parameters->set(p_ADSR1_Release, voice_id, ((value / 127.0f) * 220500));
 			break;
-//		case p_LFO1_Rate:
-//			lfo[0]->setFrequency((value / 127.0f) * 220.0);
-//			break;
+		case p_LFO1_Rate:
+			parameters->set(p_LFO1_Rate, voice_id, (value / 127.0f) * 220.0);
+			break;
 		case p_FM_Amount:
 			parameters->set(p_FM_Amount, voice_id, value / 127.0f);
 			break;

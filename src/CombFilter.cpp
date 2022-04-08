@@ -1,4 +1,4 @@
-#include "Header/CombFilter.h"
+#include <DSP/CombFilter.h>
 
 CombFilter::CombFilter(int delay, Coefficients* coefficients, Buffer* input, Buffer* output) : Filter(delay, coefficients, input, output) {}
 

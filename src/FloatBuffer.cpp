@@ -1,9 +1,13 @@
-#include "Header/FloatBuffer.h"
+#include <DSP/FloatBuffer.h>
 
 FloatBuffer::FloatBuffer(int length) {
     this->length = length;
     data = new float[length];
 	position = 0;
+	
+	for(int i = 0; i < length; i++) {
+		data[i] = 0.0;
+	}
 }
 
 FloatBuffer::~FloatBuffer() {

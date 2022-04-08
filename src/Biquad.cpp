@@ -1,4 +1,4 @@
-#include "Header/Biquad.h"
+#include <DSP/Biquad.h>
 
 void Biquad::process() {
     sample_t s = (c->a0 * input->getCurrentSample()) +

@@ -2,7 +2,7 @@
 // Created by Daniël Kamp on 09/11/2021.
 //
 
-#include "Header/Square.h"
+#include <Source/Square.h>
 
 Square::Square(float frequency, ParameterPool* params, uint8_t voice_id) : Oscillator(frequency, params, voice_id) {
 

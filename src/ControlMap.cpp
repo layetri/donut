@@ -2,7 +2,7 @@
 // Created by Daniël Kamp on 29/11/2021.
 //
 
-#include "Header/ControlMap.h"
+#include <System/ControlMap.h>
 
 ControlMap::ControlMap() {
 	current_map = new Map {"default_controls"};
@@ -30,6 +30,8 @@ ControlMap::ControlMap() {
 	addCC(p_WT1_Amount, 43);
 	addCC(p_WT2_Amount, 44);
 	addCC(p_KS_Amount, 45);
+	addCC(p_FX_Delay_DTLeft, 46);
+	addCC(p_FX_Delay_FBLeft, 47);
 	
 	addCC(p_Master, 7);
 }

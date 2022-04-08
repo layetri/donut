@@ -6,7 +6,7 @@
 #
 */
 
-#include "Header/Global.h"
+#include <Global.h>
 
 #if defined(PLATFORM_DARWIN_X86)
   #include <iostream>
@@ -14,7 +14,7 @@
   #include <unistd.h> // usleep
   //TEMP - remove
   #include <cmath>
-  #include "Header/jack_module.h"
+  #include <ext/jack_module.h>
 
   // prototypes & globals
   static void jack_shutdown(void *);

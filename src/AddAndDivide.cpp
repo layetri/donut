@@ -2,7 +2,7 @@
 // Created by Daniël Kamp on 17/11/2021.
 //
 
-#include "Header/AddAndDivide.h"
+#include <DSP/AddAndDivide.h>
 
 AddAndDivide::AddAndDivide(vector<Buffer*>* inputs, ParameterPool* params, uint8_t voice_id, Buffer* output) {
   	this->inputs = inputs;

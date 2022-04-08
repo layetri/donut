@@ -2,7 +2,7 @@
 // Created by Daniël Kamp on 13/03/2022.
 //
 
-#include "Header/Tables.h"
+#include <System/Tables.h>
 
 Tables::Tables() {
 

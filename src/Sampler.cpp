@@ -2,7 +2,7 @@
 // Created by Daniël Kamp on 28/03/2022.
 //
 
-#include "Header/Sampler.h"
+#include <Source/Sampler.h>
 
 Sampler::Sampler(Buffer* sample, ParameterPool* params, uint8_t voice_id) : Source(params, voice_id) {
 	// Global sample buffer: DO NOT TICK

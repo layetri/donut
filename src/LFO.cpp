@@ -2,7 +2,7 @@
 // Created by Daniël Kamp on 09/11/2021.
 //
 
-#include "Header/LFO.h"
+#include <Modulator/LFO.h>
 
 LFO::LFO (Parameter* frequency, Parameter* sync_amt, Tables *tables, ModID mod_id, string name, uint8_t voice_id) : Modulator(mod_id, name, voice_id) {
 	wave = tables->getSine();

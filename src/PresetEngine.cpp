@@ -2,7 +2,7 @@
 // Created by Daniël Kamp on 31/01/2022.
 //
 
-#include "Header/PresetEngine.h"
+#include <System/PresetEngine.h>
 
 PresetEngine::PresetEngine(ParameterPool* parameters, ModMatrix* mm) {
 	pool = parameters;
@@ -13,8 +13,6 @@ PresetEngine::PresetEngine(ParameterPool* parameters, ModMatrix* mm) {
 
 	filesystem::path path = filesystem::current_path() / ".donut_runtime/presets";
 	for (const auto & entry : filesystem::directory_iterator(path)) {
-		printw("%s\n", entry.path().c_str());
-		refresh();
 		available_presets->push_back(entry.path().c_str());
 	}
 	selected = 0;

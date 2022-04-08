@@ -1,4 +1,4 @@
-#include "Header/ADSR.h"
+#include <Modulator/ADSR.h>
 
 ADSR2::ADSR2(Parameter* attack, Parameter* decay, Parameter* sustain, Parameter* release, ModID mod_id, string name, uint8_t voice_id) : Modulator(mod_id, name, voice_id) {
 	this->attack = attack;
@@ -29,6 +29,7 @@ void ADSR2::start(float velocity) {
 	phase = ph_attack;
 	this->velocity = velocity;
 	position = 0;
+	multiplier = 0;
 }
 
 void ADSR2::noteOff() {

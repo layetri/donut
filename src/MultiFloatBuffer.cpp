@@ -2,7 +2,7 @@
 // Created by Daniël Kamp on 06/12/2021.
 //
 
-#include "Header/MultiFloatBuffer.h"
+#include <DSP/MultiFloatBuffer.h>
 
 MultiFloatBuffer::MultiFloatBuffer(int length, int buffers) : FloatBuffer(length) {
 	for(int i = 0; i < buffers; i++) {

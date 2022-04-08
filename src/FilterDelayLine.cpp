@@ -2,14 +2,13 @@
 // Created by Daniël Kamp on 25/02/2021.
 //
 
-#include "Header/FilterDelayLine.h"
+#include <DSP/FilterDelayLine.h>
 #include <iostream>
 
 FilterDelayLine::FilterDelayLine (Parameter *delayTime, Parameter *feedback, Parameter *cutoff, Buffer *input, Buffer *output) {
 	this->delayTime = delayTime;
 	this->feedback = feedback;
 	this->cutoff = cutoff;
-	position = 0;
 	
 	x = input;
 	y = new Buffer(input->getSize(), "FilterDelayLine");

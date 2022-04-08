@@ -1,4 +1,4 @@
-#include "Header/Sine.h"
+#include <Source/Sine.h>
 
 Sine::Sine(float frequency, ParameterPool* params, uint8_t voice_id) : Oscillator(frequency, params, voice_id) {
 

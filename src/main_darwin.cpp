@@ -2,7 +2,8 @@
 // Created by Daniël Kamp on 09/11/2021.
 //
 
-#include "Header/main_darwin.h"
+#include <main_darwin.h>
+#include <assert.h>
 
 mutex mtx;
 
@@ -62,7 +63,7 @@ void ui(bool& running, queue<Event *>& events, ParameterPool& parameters, Preset
 		refresh();
 
 		mtx.unlock();
-		usleep(100);
+		usleep(1000);
 	}
 
 }
@@ -83,13 +84,22 @@ void event(vector<Voice*>& voices, NoteHandler& nh, ParameterPool& parameters, q
 				case e_Midi:
 					if(remap_mode) {
 						cm.changeCC(ParameterID(remap_cc), (uint16_t) e->cc);
-						cout << "Remapped " << remap_cc << " to " << CommandPool::color(to_string(e->cc), 36)
-							 << endl;
+						cout << "Remapped " << remap_cc << " to " << CommandPool::color(to_string(e->cc), 36) << endl;
 						remap_mode = false;
 						
 					} else if(cm.getPID(e->cc) == p_Master) {
 						// Set the master volume
 						parameters.set(p_Master, 0, e->value / 127.0f);
+						
+					} else if(cm.getPID(e->cc) == p_FX_Delay_DTLeft) {
+						// Set the master volume
+						parameters.set(p_FX_Delay_DTLeft, 0, (e->value / 127.0f) * 10000);
+						parameters.set(p_FX_Delay_DTRight, 0, (e->value / 127.0f) * 10000);
+						
+					} else if(cm.getPID(e->cc) == p_FX_Delay_FBLeft) {
+						// Set the master volume
+						parameters.set(p_FX_Delay_FBLeft, 0, (e->value / 127.0f) * 0.99);
+						parameters.set(p_FX_Delay_FBRight, 0, (e->value / 127.0f) * 0.99);
 						
 					} else {
 						// Display the value
@@ -199,14 +209,6 @@ void midi(NoteHandler& handler, queue<Event*>& event_queue, RtMidiIn* midi_in, R
 	}
 }
 
-void jackd() {
-
-}
-
-void pyUI() {
-
-}
-
 void printAtLocation(int x, int y, string text, int c) {
 	int winx, winy;
 	getyx(stdscr,winy,winx);
@@ -225,12 +227,7 @@ void init_midi(RtMidiIn *midi_in) {
 	// Check inputs.
 	unsigned int nPorts = midi_in->getPortCount();
 	if(nPorts > 0) {
-		for(int i = 0; i < nPorts; i++) {
-			if(midi_in->getPortName(i).compare("Launchkey 61 Launchkey MIDI")) {
-				midi_in->openPort(i);
-			}
-		}
-		midi_in->openPort(0);
+		midi_in->openPort(1);
 		midi_in->ignoreTypes(false, false, false);
 	}
 }
@@ -309,6 +306,10 @@ void switchMidiOutputs(RtMidiOut* midi_out, uint port) {
 	}
 }
 
+void displayMidiStatus(RtMidiIn* midi_in, RtMidiOut* midi_out) {
+	// Display the status of the internal MIDI devices
+}
+
 void init_curses() {
 	initscr();
 
@@ -325,62 +326,63 @@ void init_curses() {
 
 void program() {
 	init_curses();
-
+	
 	bool running = true;
+	uint16_t voices_done = 0;
 	extern unsigned int samplerate;
 	
 	ApplicationState app = app_Idle;
 	ParameterPool parameters;
 	ModMatrix mm;
 	PresetEngine pe(&parameters, &mm);
-
+	
 	Tables tables;
 	tables.generateWaveforms();
 
 	#ifdef ENGINE_JACK
-		// Do Jack setup
-		JackModule jack;
-		jack.init("donut");
-		samplerate = jack.getSamplerate();
-		if (samplerate == 0) {
-			samplerate = 44100;
-		}
+	// Do Jack setup
+	JackModule jack;
+	jack.init("donut");
+	samplerate = jack.getSamplerate();
+	if (samplerate == 0) {
+		samplerate = 44100;
+	}
 	#endif
 	
+//	mtx.lock();
 	queue<Event *> event_queue;
 	vector<Voice *> voices;
 	vector<Buffer *> voice_buffers;
 
-	mtx.lock();
 	voices.reserve(NUMBER_OF_VOICES);
 	voice_buffers.reserve(NUMBER_OF_VOICES);
 	for (int i = 0; i < NUMBER_OF_VOICES; i++) {
-		voice_buffers.push_back(new Buffer(4410, "voice_"+to_string(i)));
-
+		voice_buffers.push_back(new Buffer(441, "voice_"+to_string(i)));
 		voices.push_back(new Voice(voice_buffers[i], &parameters, &mm, &tables, (uint8_t) i));
+		voices_done++;
 	}
-
-	NoteHandler handle(&voices);
-	handle.setSplit(0);
 	
-	AutoMaster sensei(&voices, parameters.get(p_Master, 0));
-	mtx.unlock();
-
+	NoteHandler handle(&voices);
+	AutoMaster sensei(&voices, &parameters, parameters.get(p_Master, 0));
+//	mtx.unlock();
+	
 	#ifdef ENGINE_JACK
 		// Assign the Jack callback function
-		jack.onProcess = [&sensei, &mm](jack_default_audio_sample_t **inBufs,jack_default_audio_sample_t *outBuf_L,jack_default_audio_sample_t *outBuf_R,
+		jack.onProcess = [&sensei, &mm, &voices_done](jack_default_audio_sample_t **inBufs,jack_default_audio_sample_t *outBuf_L,jack_default_audio_sample_t *outBuf_R,
 			jack_nframes_t nframes) {
-			mtx.lock();
-			for (unsigned int i = 0; i < nframes; i++) {
-				mm.process();
-				sensei.process();
-				
-				outBuf_L[i] = sensei.getLeftChannel();
-				outBuf_R[i] = sensei.getRightChannel();
+			if(voices_done == NUMBER_OF_VOICES) {
+				mtx.lock();
+				for (unsigned int i = 0; i < nframes; i++) {
+					mm.process();
+					sensei.process();
 
-				sensei.tick();
+					outBuf_L[i] = sensei.getLeftChannel();
+					outBuf_R[i] = sensei.getRightChannel();
+
+					sensei.tick();
+				}
+				mtx.unlock();
 			}
-			mtx.unlock();
 
 			return 0;
 		};

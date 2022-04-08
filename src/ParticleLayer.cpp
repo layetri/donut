@@ -2,7 +2,7 @@
 // Created by Daniël Kamp on 20/03/2022.
 //
 
-#include "Header/ParticleLayer.h"
+#include <Source/ParticleLayer.h>
 
 ParticleLayer::ParticleLayer (vector<Note *> *notes) {
 	this->notes = notes;

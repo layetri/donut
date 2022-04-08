@@ -1,4 +1,4 @@
-#include "Header/Filter.h"
+#include <DSP/Filter.h>
 
 Filter::Filter(int delay, Coefficients* coefficients, Buffer* input_buffer, Buffer* output_buffer) {
     input = input_buffer;

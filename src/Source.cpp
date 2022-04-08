@@ -2,7 +2,7 @@
 // Created by Daniël Kamp on 14/03/2022.
 //
 
-#include "Header/Source.h"
+#include <Source/Source.h>
 
 Source::Source(ParameterPool *parameters, uint8_t voice_id) {
 	this->output = new Buffer(500);

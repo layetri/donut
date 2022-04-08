@@ -1,7 +1,7 @@
-#include "Header/Global.h"
+#include <Global.h>
 // Enforce a sample rate of 44.1KHz
 unsigned int samplerate = 44100;
-#include "Header/main_darwin.h"
+#include <main_darwin.h>
 
 int main() {
 	program();

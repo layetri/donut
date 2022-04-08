@@ -2,7 +2,7 @@
 // Created by Daniël Kamp on 09/11/2021.
 //
 
-#include "Header/Modulator.h"
+#include <Modulator/Modulator.h>
 
 Modulator::Modulator (ModID mod_id, string name, uint8_t voice_id) {
 	this->mod_id = mod_id;

@@ -1,4 +1,4 @@
-#include "Header/Oscillator.h"
+#include <Source/Oscillator.h>
 
 Oscillator::Oscillator(float frequency, ParameterPool* params, uint8_t voice_id) : Source(params, voice_id) {
     this->frequency = frequency;

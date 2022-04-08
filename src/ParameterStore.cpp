@@ -2,7 +2,7 @@
 // Created by Daniël Kamp on 21/01/2022.
 //
 
-#include "Header/ParameterStore.h"
+#include <System/ParameterStore.h>
 
 ParameterPool::ParameterPool() {
 	for(int i = 0; i < NUMBER_OF_VOICES; i++) {
@@ -57,10 +57,17 @@ ParameterPool::ParameterPool() {
 		store(p_KS_Transpose, i, "ks_transpose", 0.0);
 
 		store(p_LFO1_Rate, i, "lfo1_rate", 1.0);
+		store(p_LFO1_Sync, i, "lfo1_sync", 0.0);
 		store(p_LFO2_Rate, i, "lfo2_rate", 1.0);
+		store(p_LFO2_Sync, i, "lfo2_sync", 0.0);
 		store(p_NotFound, i, "not_found", 0.0);
 		store(p_VoiceMaster, i, "voice_master", 1.0, 0.0);
 	}
+	
+	store(p_FX_Delay_DTLeft, 0, "fx_delay_time_left", 8000, 8000);
+	store(p_FX_Delay_DTRight, 0, "fx_delay_time_right", 8000, 8000);
+	store(p_FX_Delay_FBLeft, 0, "fx_delay_feedback_left", 0.5, 0.5);
+	store(p_FX_Delay_FBRight, 0, "fx_delay_feedback_right", 0.5, 0.5);
 	
 	store(p_Master, 0, "master", 1.0);
 }

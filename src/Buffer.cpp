@@ -2,7 +2,7 @@
 // Created by Daniël Kamp on 17/02/2021.
 //
 
-#include "Header/Buffer.h"
+#include <DSP/Buffer.h>
 
 Buffer::Buffer(uint length, std::string name) {
   data = new sample_t [length];

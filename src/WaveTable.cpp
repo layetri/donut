@@ -2,7 +2,7 @@
 // Created by Daniël Kamp on 13/03/2022.
 //
 
-#include "Header/WaveTable.h"
+#include <Source/WaveTable.h>
 
 WaveTableOscillator::WaveTableOscillator(Tables* tables, ParameterPool* params, Parameter* detune, Parameter* shape, Parameter* transpose, SourceID sid, uint8_t voice_id) : Source(params, voice_id) {
 	square = tables->getSquare();

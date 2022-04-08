@@ -2,7 +2,7 @@
 // Created by Daniël Kamp on 10/11/2021.
 //
 
-#include "Header/Sequencer.h"
+#include <Modulator/Sequencer.h>
 
 Sequencer::Sequencer(uint16_t len) {
 	steps = new Buffer(len);

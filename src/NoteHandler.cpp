@@ -2,13 +2,14 @@
 // Created by Daniël Kamp on 10/11/2021.
 //
 
-#include "Header/NoteHandler.h"
+#include <System/NoteHandler.h>
 
 NoteHandler::NoteHandler(vector<Voice*>* voices) {
   this->voices = voices;
   voices_upper = new KeyboardHalf;
   voices_lower = new KeyboardHalf;
   last_controlled = new vector<KeyboardHalf*>;
+  setSplit(0);
 }
 
 NoteHandler::~NoteHandler() {
@@ -156,7 +157,6 @@ void NoteHandler::intelliSplit() {
 		  (split_index > 0 && split_index < NUMBER_OF_VOICES) * split_index +
 		  (split_index == 0) * (split_key > 0) +
 		  (split_index == NUMBER_OF_VOICES) * (NUMBER_OF_VOICES - (split_key < 127));
-	cout << "split: " << split_index << endl;
 }
 
 KeyboardHalf* NoteHandler::getHalf(Note* note) {

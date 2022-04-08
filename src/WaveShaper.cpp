@@ -2,7 +2,7 @@
 // Created by Daniël Kamp on 09/11/2021.
 //
 
-#include "Header/WaveShaper.h"
+#include <Source/WaveShaper.h>
 
 WaveShaper::WaveShaper(ParameterPool* parameters, Parameter* detune, Parameter* harmonics, Parameter* transpose, SourceID sid, uint8_t voice_id) : Source(parameters, voice_id) {
 	this->sid = sid;
@@ -10,21 +10,27 @@ WaveShaper::WaveShaper(ParameterPool* parameters, Parameter* detune, Parameter* 
 	this->harmonics = harmonics;
 	this->detune = detune;
 	this->transpose = transpose;
+	h = 0;
+	old_harmonics = 0.0;
+	
+	for(int i = 0; i < 16; i++) {
+		n[i] = (2 * (i+1)) - 1;
+	}
 }
 
 WaveShaper::~WaveShaper() {}
 
 void WaveShaper::process() {
 	phase = (phase + phase_step < 1.0) * (phase + phase_step);
-	
   	output->flush();
-  	if(harmonics->value < 0) {
-		for (int i = 0; i < harmonics->value * -1; i++) {
-			int n = (2 * (i+1)) - 1;
-			output->writeAddition(((sin(TWO_PI * n * phase) / n) * SAMPLE_MAX_VALUE));
+  	h = harmonics->value;
+	  
+  	if(h < 0) {
+		for (int i = 0; i < h * -1; i++) {
+			output->writeAddition(((sin(TWO_PI * n[i] * phase) / n[i]) * SAMPLE_MAX_VALUE));
 		}
-	} else if(harmonics->value > 0) {
-	  	for(int i = 0; i < harmonics->value; i++) {
+	} else if(h > 0) {
+	  	for(int i = 0; i < h; i++) {
 			output->writeAddition(((sin(TWO_PI * i * phase) / i) * SAMPLE_MAX_VALUE));
 		}
 	} else {
