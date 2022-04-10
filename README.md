@@ -28,6 +28,7 @@ Donut started as a passion-project-turned-dream-synth. The current outline of fe
 I made a few demos using the software prototype. They are listed here:
 - [devlog I](https://www.youtube.com/watch?v=OLlrPg6xvhI)
 - [devlog II](https://www.youtube.com/watch?v=XgsYKxt4CRc)
+- [devlog III](https://www.youtube.com/watch?v=7CKzSvlqjKY)
 
 ### Software
 The Donut firmware for EL-ONE is completely custom, written in C++, and can be compiled to run on macOS and Linux. Future releases will include hardware implementation, right now it only runs as a CLI application. Donut uses `jackd` as its audio backend.
