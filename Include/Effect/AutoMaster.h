@@ -29,7 +29,7 @@ class AutoMaster {
 		
 	private:
 		vector<Voice*>* voices;
-		Parameter* volume;
+		Parameter *volume, *delay_amount;
 		Buffer *output_left, *output_right, *master_left, *master_right;
 		StereoDelay *delay;
 	

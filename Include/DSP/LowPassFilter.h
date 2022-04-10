@@ -12,7 +12,7 @@
   #include <cstdint>
 #endif
 
-#include "Filter.h"
+#include <DSP/Filter.h>
 using namespace std;
 
 class LowPassFilter : public Filter {

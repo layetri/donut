@@ -91,6 +91,10 @@ void event(vector<Voice*>& voices, NoteHandler& nh, ParameterPool& parameters, q
 						// Set the master volume
 						parameters.set(p_Master, 0, e->value / 127.0f);
 						
+					} else if(cm.getPID(e->cc) == p_FX_Delay_Amount) {
+						// Set the master volume
+						parameters.set(p_FX_Delay_Amount, 0, e->value / 127.0f);
+						
 					} else if(cm.getPID(e->cc) == p_FX_Delay_DTLeft) {
 						// Set the master volume
 						parameters.set(p_FX_Delay_DTLeft, 0, (e->value / 127.0f) * 10000);

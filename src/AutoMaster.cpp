@@ -11,6 +11,7 @@ AutoMaster::AutoMaster(vector<Voice*>* voices, ParameterPool* params, Parameter*
 	output_right = new Buffer(samplerate/2);
 	
 	this->delay = new StereoDelay(params, output_left, output_right);
+	this->delay_amount = params->get(p_FX_Delay_Amount, 0);
 	
 	master_left = delay->getLeftChannel();
 	master_right = delay->getRightChannel();
@@ -62,11 +63,11 @@ float AutoMaster::scale(sample_t sample) {
 }
 
 float AutoMaster::getLeftChannel () {
-	return scale((output_left->getCurrentSample() + master_left->getCurrentSample())) * volume->value;
+	return scale((output_left->getCurrentSample() + (master_left->getCurrentSample()) * delay_amount->value)) * volume->value;
 //	return scale(master_left->getCurrentSample()) * volume->value;
 }
 
 float AutoMaster::getRightChannel () {
-	return scale((output_right->getCurrentSample() + master_right->getCurrentSample())) * volume->value;
+	return scale((output_right->getCurrentSample() + (master_right->getCurrentSample()) * delay_amount->value)) * volume->value;
 //	return scale(master_right->getCurrentSample()) * volume->value;
 }

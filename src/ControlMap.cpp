@@ -32,6 +32,7 @@ ControlMap::ControlMap() {
 	addCC(p_KS_Amount, 45);
 	addCC(p_FX_Delay_DTLeft, 46);
 	addCC(p_FX_Delay_FBLeft, 47);
+	addCC(p_FX_Delay_Amount, 48);
 	
 	addCC(p_Master, 7);
 }

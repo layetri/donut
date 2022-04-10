@@ -138,6 +138,7 @@ enum ParameterID {
 	
 	p_KeyboardSplit,
 	
+	p_FX_Delay_Amount,
 	p_FX_Delay_DTLeft,
 	p_FX_Delay_DTRight,
 	p_FX_Delay_FBLeft,

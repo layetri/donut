@@ -64,6 +64,7 @@ ParameterPool::ParameterPool() {
 		store(p_VoiceMaster, i, "voice_master", 1.0, 0.0);
 	}
 	
+	store(p_FX_Delay_Amount, 0, "fx_delay_amount", 0.5, 0.5);
 	store(p_FX_Delay_DTLeft, 0, "fx_delay_time_left", 8000, 8000);
 	store(p_FX_Delay_DTRight, 0, "fx_delay_time_right", 8000, 8000);
 	store(p_FX_Delay_FBLeft, 0, "fx_delay_feedback_left", 0.5, 0.5);

@@ -7,5 +7,6 @@
 
 # Files to ignore
 *.o
-/.idea/
+/.idea*/
 /donut
+/cmake-*/
