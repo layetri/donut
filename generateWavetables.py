@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 import math
 import matplotlib.pyplot as plt
@@ -17,6 +19,7 @@ for samplerate in samplerates:
     sine = np.zeros(samplerate)
     square = np.zeros(samplerate)
     triangle = np.zeros(samplerate)
+    noise = np.zeros(samplerate)
     adsr = np.zeros(samplerate)
 
     for i in range(samplerate):
@@ -36,6 +39,7 @@ for samplerate in samplerates:
         sine[i] = math.sin(math.pi * 2 * phase) * SAMPLE_MAX_VALUE
         square[i] = sqr_tmp
         triangle[i] = tri_tmp
+        noise[i] = random.randint(NEG_SAMPLE_MAX_VALUE, SAMPLE_MAX_VALUE)
 
         phase = (phase + phase_step < 1.0) * (phase + phase_step)
 
@@ -43,6 +47,7 @@ for samplerate in samplerates:
     plt.plot(square, "b")
     plt.plot(triangle, "r")
     plt.plot(sine, "g")
+    plt.plot(noise, "g")
     plt.show()
 
     with open(".donut_runtime/wavetable/square_" + str(samplerate) + ".txt", "w") as sq:
@@ -57,6 +62,6 @@ for samplerate in samplerates:
         for val in triangle:
             tr.write(str(math.trunc(val)) + " ")
 
-    with open(".donut_runtime/wavetable/adsr_" + str(samplerate) + ".txt", "w") as env:
-        for val in adsr:
-            env.write(str(val) + " ")
+    with open(".donut_runtime/wavetable/noise_" + str(samplerate) + ".txt", "w") as ns:
+        for val in noise:
+            ns.write(str(math.trunc(val)) + " ")

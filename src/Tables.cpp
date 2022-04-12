@@ -12,6 +12,7 @@ Tables::~Tables() {
 	delete sine;
 	delete square;
 	delete triangle;
+	delete noise;
 }
 
 void Tables::generateWaveforms() {
@@ -20,7 +21,8 @@ void Tables::generateWaveforms() {
 	square = new Buffer(max_t);
 	sine = new Buffer(max_t);
 	triangle = new Buffer(max_t);
-
+	noise = new Buffer(max_t);
+	
 	filesystem::path path = filesystem::current_path() / ".donut_runtime/wavetable";
 	for (const auto & entry : filesystem::directory_iterator(path)) {
 		ifstream file(entry.path().c_str());
@@ -42,6 +44,9 @@ void Tables::generateWaveforms() {
 					} else if (filename.find("triangle") != string::npos) {
 						triangle->write(val);
 						triangle->tick();
+					} else if (filename.find("noise") != string::npos) {
+						noise->write(val);
+						noise->tick();
 					}
 				}
 			}
@@ -59,4 +64,8 @@ Buffer* Tables::getSine() {
 
 Buffer* Tables::getTriangle() {
 	return triangle;
+}
+
+Buffer* Tables::getNoise() {
+	return noise;
 }

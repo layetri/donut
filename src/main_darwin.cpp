@@ -84,13 +84,13 @@ void event(vector<Voice*>& voices, GUI& gui, NoteHandler& nh, ParameterPool& par
 					break;
 				case e_System:
 					if((e->cc - 21) == p_MIDI_List) {
-						listMidiDevices(midiIn, midiOut);
+						listMidiDevices(midiIn, midiOut, &gui);
 						
 					} else if((e->cc - 21) == p_MIDI_In) {
-						switchMidiInputs(midiIn, e->value);
+						switchMidiInputs(midiIn, e->value, &gui);
 						
 					} else if((e->cc - 21) == p_MIDI_Out) {
-						switchMidiOutputs(midiOut, e->value);
+						switchMidiOutputs(midiOut, e->value, &gui);
 					}
 				default:
 					break;
@@ -176,11 +176,11 @@ void init_midi(RtMidiIn *midi_in) {
 	}
 }
 
-void listMidiDevices(RtMidiIn* midi_in, RtMidiOut* midi_out) {
+void listMidiDevices(RtMidiIn* midi_in, RtMidiOut* midi_out, GUI* gui) {
 	// Check inputs.
 	unsigned int nPorts = midi_in->getPortCount();
 	unsigned int nOutPorts = midi_out->getPortCount();
-	printw("\nThere are %u MIDI input sources available.\n", nPorts);
+	gui->output("\nThere are " + to_string(nPorts) + " MIDI input sources available.\n", false);
 
 	// List inputs
 	string portName;
@@ -192,17 +192,14 @@ void listMidiDevices(RtMidiIn* midi_in, RtMidiOut* midi_out) {
 			delete midi_in;
 			return;
 		}
-		printw("  Input Port #%u: %s\n", i, portName.c_str());
+		gui->output("  Input Port #" + to_string(i) + ": " + portName + "\n", false);
 	}
-	printw("\nUse ");
-	attron(COLOR_PAIR(5));
-	printw("midi in [device_number]");
-	attroff(COLOR_PAIR(5));
-	printw(" to select a MIDI input device.");
-	refresh();
+	gui->output("\nUse ", false);
+	gui->output("midi in [device_number]", false, -1, -1, 5);
+	gui->output(" to select a MIDI input device.", false);
 	
 	// List outputs
-	printw("\nThere are %u MIDI output destinations available.\n", nOutPorts);
+	gui->output("\nThere are " + to_string(nOutPorts) + " MIDI output destinations available.\n", false);
 	for (unsigned int i = 0; i < nOutPorts; i++) {
 		try {
 			portName = midi_out->getPortName(i);
@@ -211,17 +208,14 @@ void listMidiDevices(RtMidiIn* midi_in, RtMidiOut* midi_out) {
 			delete midi_out;
 			return;
 		}
-		printw("  Output Port #%u: %s\n", i, portName.c_str());
+		gui->output("  Output Port #" + to_string(i) + ": " + portName + "\n", false);
 	}
-	printw("\nUse ");
-	attron(COLOR_PAIR(5));
-	printw("midi out [device_number]");
-	attroff(COLOR_PAIR(5));
-	printw(" to select a MIDI output device.");
-	refresh();
+	gui->output("\nUse ", false);
+	gui->output("midi out [device_number]", false, -1, -1, 5);
+	gui->output(" to select a MIDI output device.", true);
 }
 
-void switchMidiInputs(RtMidiIn* midi_in, uint port) {
+void switchMidiInputs(RtMidiIn* midi_in, uint port, GUI* gui) {
 	// Check inputs.
 	unsigned int nPorts = midi_in->getPortCount();
 	if(port < nPorts) {
@@ -229,13 +223,13 @@ void switchMidiInputs(RtMidiIn* midi_in, uint port) {
 		midi_in->openPort(port);
 		
 		string name = midi_in->getPortName(port);
-		printw("Now using %s.", name.c_str());
+		gui->output("Now using " + name + ".");
 	} else {
-		printw("That MIDI input doesn't exist.");
+		gui->output("That MIDI input doesn't exist.");
 	}
 }
 
-void switchMidiOutputs(RtMidiOut* midi_out, uint port) {
+void switchMidiOutputs(RtMidiOut* midi_out, uint port, GUI* gui) {
 	// Check outputs.
 	unsigned int nPorts = midi_out->getPortCount();
 	if(port < nPorts) {
@@ -243,10 +237,9 @@ void switchMidiOutputs(RtMidiOut* midi_out, uint port) {
 		midi_out->openPort(port);
 		
 		string name = midi_out->getPortName(port);
-		printw("Now using %s.", name.c_str());
-		
+		gui->output("Now using " + name + ".");
 	} else {
-		printw("That MIDI output doesn't exist.");
+		gui->output("That MIDI output doesn't exist.");
 	}
 }
 
@@ -259,7 +252,6 @@ void program() {
 	gui.initgui();
 	
 	bool running = true;
-	uint16_t voices_done = 0;
 	extern unsigned int samplerate;
 	
 	#ifdef ENGINE_JACK
@@ -288,7 +280,6 @@ void program() {
 	for (int i = 0; i < NUMBER_OF_VOICES; i++) {
 		voice_buffers.push_back(new Buffer(441, "voice_"+to_string(i)));
 		voices.push_back(new Voice(voice_buffers[i], &parameters, &mm, &tables, &gui, (uint8_t) i));
-		voices_done++;
 	}
 	
 	NoteHandler handle(&voices);
@@ -296,21 +287,16 @@ void program() {
 	
 	#ifdef ENGINE_JACK
 		// Assign the Jack callback function
-		jack.onProcess = [&sensei, &mm, &voices_done](jack_default_audio_sample_t *outBuf_L,jack_default_audio_sample_t *outBuf_R,
-			jack_nframes_t nframes) {
-//			if(voices_done == NUMBER_OF_VOICES) {
-//				mtx.lock();
-				for (unsigned int i = 0; i < nframes; i++) {
-					mm.process();
-					sensei.process();
+		jack.onProcess = [&sensei, &mm](jack_default_audio_sample_t *outBuf_L, jack_default_audio_sample_t *outBuf_R, jack_nframes_t nframes) {
+			for (unsigned int i = 0; i < nframes; i++) {
+				mm.process();
+				sensei.process();
 
-					outBuf_L[i] = sensei.getLeftChannel();
-					outBuf_R[i] = sensei.getRightChannel();
+				outBuf_L[i] = sensei.getLeftChannel();
+				outBuf_R[i] = sensei.getRightChannel();
 
-					sensei.tick();
-				}
-//				mtx.unlock();
-//			}
+				sensei.tick();
+			}
 
 			return 0;
 		};

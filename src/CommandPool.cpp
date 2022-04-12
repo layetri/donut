@@ -31,13 +31,15 @@ void CommandPool::handleCommand (string command) {
 		printw("Here's what I can do:\n");
 		refresh();
 		
+		int winy, winx;
+		getyx(stdscr, winy, winx);
+		
 		for (auto &cmd: commands) {
 			auto line = cmd->getHelpText();
 			
-			int winy, winx;
-			getyx(stdscr, winy, winx);
 			gui->output(line.command, false, 4, winy, 5);
-			gui->output(line.description, true, 40, winy);
+			gui->output(line.description + "\n", false, 40, winy);
+			winy++;
 		}
 		return;
 	} else {

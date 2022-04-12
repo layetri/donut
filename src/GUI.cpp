@@ -83,8 +83,10 @@ void GUI::output(const string line, bool lb, int x, int y, int c) {
 	// This function displays a command's output on the screen
 	#if defined(BUILD_GUI_NCURSES)
 		curs_set(0);
-		clrtobot();
-		refresh();
+		if(lb) {
+			clrtobot();
+			refresh();
+		}
 		
 		if(x > -1 && y > -1) {
 			getyx(stdscr,winy,winx);
@@ -95,12 +97,15 @@ void GUI::output(const string line, bool lb, int x, int y, int c) {
 			attroff(COLOR_PAIR(c));
 			move(winy, winx);
 		} else {
+			attron(COLOR_PAIR(c));
 			printw(line.c_str());
+			attroff(COLOR_PAIR(c));
 			if(lb) {
 				printw("\n");
 			}
 		}
 		
+		curs_set(1);
 		refresh();
 	#elif defined(BUILD_GUI_COUT)
 		if(lb) {

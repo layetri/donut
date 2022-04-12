@@ -130,11 +130,13 @@
     // retrieve out buffers
     jack_default_audio_sample_t *outBuf_L = (jack_default_audio_sample_t *)jack_port_get_buffer(output_port_L,nframes);
     jack_default_audio_sample_t *outBuf_R = (jack_default_audio_sample_t *)jack_port_get_buffer(output_port_R,nframes);
-    //call the onProcess function, that is assigned to the object
-	if (((JackModule *)arg)->onProcess)
-	  {
-		  return ((JackModule *) arg)->onProcess(outBuf_L, outBuf_R, nframes);
-	  }
+	
+    // Make sure the onProcess function is available
+	// (calling onProcess before its initialization will lead to a bad_function_call exception)
+	if (((JackModule *)arg)->onProcess) {
+		// Run the process callback lambda function
+	  	return ((JackModule *) arg)->onProcess(outBuf_L, outBuf_R, nframes);
+	}
 	return 0;
   } // _wrap_jack_process_cb()
 

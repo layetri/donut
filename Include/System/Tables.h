@@ -26,11 +26,13 @@ class Tables {
 		Buffer* getSquare();
 		Buffer* getSine();
 		Buffer* getTriangle();
+		Buffer* getNoise();
 
 	private:
 		Buffer* square;
 		Buffer* sine;
 		Buffer* triangle;
+		Buffer* noise;
 };
 
 
