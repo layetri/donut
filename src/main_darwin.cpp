@@ -3,72 +3,24 @@
 //
 
 #include <main_darwin.h>
-#include <assert.h>
 
 mutex mtx;
 
-void ui(bool& running, queue<Event *>& events, ParameterPool& parameters, PresetEngine& presetEngine, ApplicationState* app, vector<Voice*>& voices) {
-	// Clear screen
-	cout << "\x1B[2J\x1B[H";
-	int row, col;
-	getmaxyx(stdscr, row, col);
-
+void ui(bool& running, GUI& gui, queue<Event *>& events, ParameterPool& parameters, PresetEngine& presetEngine, ApplicationState* app, vector<Voice*>& voices) {
 	// Setup UI
-	move(0, col-18);
-	attron(COLOR_PAIR(3));
-	printw("Donut");
-	attroff(COLOR_PAIR(3));
-	printw(" version 0.2");
-	refresh();
-	
-	move(4,0);
-	clrtoeol();
-	attron(COLOR_PAIR(2));
-	printw("Incoming MIDI:");
-	attroff(COLOR_PAIR(2));
-	refresh();
-
-	move(8, 0);
-	clrtoeol();
-	printw("[");
-	attron(COLOR_PAIR(3));
-	printw(">");
-	attroff(COLOR_PAIR(3));
-	printw("] ");
-	refresh();
-
-	CommandPool cmd_pool(&events, &parameters, &presetEngine, &running);
+	CommandPool cmd_pool(&events, &gui, &parameters, &presetEngine, &running);
 
 	while (running) {
+		auto m = gui.input();
+		
 		mtx.lock();
-
-		string cmd;
-
-		move(8, 4);
-		clrtoeol();
-		curs_set(1);
-
-		mtx.unlock();
-
-		char s[80];
-		getstr(s);
-		cmd = s;
-
-		mtx.lock();
-		curs_set(0);
-		clrtobot();
-		refresh();
-
-		cmd_pool.handleCommand(cmd);
-		refresh();
-
+		cmd_pool.handleCommand(m);
 		mtx.unlock();
 		usleep(1000);
 	}
-
 }
 
-void event(vector<Voice*>& voices, NoteHandler& nh, ParameterPool& parameters, queue<Event *>& events, RtMidiIn* midiIn, RtMidiOut* midiOut, bool& running) {
+void event(vector<Voice*>& voices, GUI& gui, NoteHandler& nh, ParameterPool& parameters, queue<Event *>& events, RtMidiIn* midiIn, RtMidiOut* midiOut, bool& running) {
 	bool remap_mode = false;
 	uint8_t remap_cc = 0;
 	ControlMap cm;
@@ -84,7 +36,7 @@ void event(vector<Voice*>& voices, NoteHandler& nh, ParameterPool& parameters, q
 				case e_Midi:
 					if(remap_mode) {
 						cm.changeCC(ParameterID(remap_cc), (uint16_t) e->cc);
-						cout << "Remapped " << remap_cc << " to " << CommandPool::color(to_string(e->cc), 36) << endl;
+						gui.output("Remapped " + to_string(remap_cc) + " to " + to_string(e->cc));
 						remap_mode = false;
 						
 					} else if(cm.getPID(e->cc) == p_Master) {
@@ -107,9 +59,12 @@ void event(vector<Voice*>& voices, NoteHandler& nh, ParameterPool& parameters, q
 						
 					} else {
 						// Display the value
-						printAtLocation(0, 1, parameters.translate(cm.getPID(e->cc)) + ": " + to_string(e->value));
-						// Send the event's value to the NoteHandler to, well, handle it
-						nh.set(cm.getPID(e->cc), e->value);
+						gui.output(parameters.translate(cm.getPID(e->cc)) + ": " + to_string(e->value), false, 0, 1);
+						// Handle all parameters assigned to this CC
+						for(auto& p : cm.getPIDs(e->cc)) {
+							// Send the event's value to the NoteHandler to, well, handle it
+							nh.set(p, e->value);
+						}
 					}
 					break;
 				case e_Control:
@@ -148,13 +103,13 @@ void event(vector<Voice*>& voices, NoteHandler& nh, ParameterPool& parameters, q
 }
 
 
-void midi(NoteHandler& handler, queue<Event*>& event_queue, RtMidiIn* midi_in, RtMidiOut* midi_out, bool& running) {
+void midi(NoteHandler& handler, GUI& gui, queue<Event*>& event_queue, RtMidiIn* midi_in, RtMidiOut* midi_out, bool& running) {
 	midi_message_t message;
 	vector<Note> sustained;
 	bool sustain = false;
 
 	size_t nBytes;
-	int winy, winx, row, col;
+	int row, col;
 	getmaxyx(stdscr, row, col);
 
 	// Periodically check input queue.
@@ -167,11 +122,8 @@ void midi(NoteHandler& handler, queue<Event*>& event_queue, RtMidiIn* midi_in, R
 			Note n = {message[1], message[2]};
 			int type = message[0] & 0b11110000;
 			int channel = message[0] & 0b00001111;
-
-			getyx(stdscr,winy,winx);
-			mvprintw(5, 0, "type: %u, channel: %u, control: %u, value: %u ", type, channel, message[1], message[2]);
-			move(winy, winx);
-			refresh();
+			
+			gui.output("type: " + to_string(type) + ", channel: " + to_string(channel) + ", control: " + to_string(message[1]) + ", value: " + to_string(message[2]), false, 0, 5);
 
 			if(type == 176) {
 				// Handle CC
@@ -197,33 +149,21 @@ void midi(NoteHandler& handler, queue<Event*>& event_queue, RtMidiIn* midi_in, R
 			} else if(type == 144) {
 				handler.noteOn(&n);
 			}
-
-			if(handler.inUse() < 10) {
-				mvprintw(1, col - 8, " %u / %u", handler.inUse(), NUMBER_OF_VOICES);
-			} else {
-				printAtLocation(col - 8, 1, to_string(handler.inUse()) + " / " + to_string(NUMBER_OF_VOICES), 2);
-			}
-			move(winy, winx);
-			refresh();
+			
+			#ifdef BUILD_GUI_NCURSES
+				if(handler.inUse() < 10) {
+					gui.output(to_string(handler.inUse()) + " / " + to_string(NUMBER_OF_VOICES), false, col - 7, 1);
+				} else {
+					gui.output(to_string(handler.inUse()) + " / " + to_string(NUMBER_OF_VOICES), false, col - 8, 1, 2);
+				}
+			#endif
+			
 			mtx.unlock();
 		}
 
 		// Sleep for 10 milliseconds.
 		usleep(100);
 	}
-}
-
-void printAtLocation(int x, int y, string text, int c) {
-	int winx, winy;
-	getyx(stdscr,winy,winx);
-	
-	move(y, x);
-	clrtoeol();
-	attron(COLOR_PAIR(c));
-	printw(text.c_str());
-	attroff(COLOR_PAIR(c));
-	
-	move(winy, winx);
 }
 
 
@@ -314,46 +254,31 @@ void displayMidiStatus(RtMidiIn* midi_in, RtMidiOut* midi_out) {
 	// Display the status of the internal MIDI devices
 }
 
-void init_curses() {
-	initscr();
-
-	curs_set(0);
-	use_default_colors();
-	start_color();
-	init_pair(0, COLOR_CYAN, -1);
-	init_pair(1, COLOR_MAGENTA, -1);
-	init_pair(2, COLOR_RED, -1);
-	init_pair(3, COLOR_GREEN, -1);
-	init_pair(4, COLOR_WHITE, -1);
-	init_pair(5, COLOR_CYAN, -1);
-}
-
 void program() {
-	init_curses();
+	GUI gui;
+	gui.initgui();
 	
 	bool running = true;
 	uint16_t voices_done = 0;
 	extern unsigned int samplerate;
 	
+	#ifdef ENGINE_JACK
+		// Do Jack setup
+		JackModule jack;
+		jack.init("donut");
+		samplerate = jack.getSamplerate();
+		if (samplerate == 0) {
+			samplerate = 44100;
+		}
+	#endif
+	
 	ApplicationState app = app_Idle;
 	ParameterPool parameters;
 	ModMatrix mm;
 	PresetEngine pe(&parameters, &mm);
-	
 	Tables tables;
 	tables.generateWaveforms();
-
-	#ifdef ENGINE_JACK
-	// Do Jack setup
-	JackModule jack;
-	jack.init("donut");
-	samplerate = jack.getSamplerate();
-	if (samplerate == 0) {
-		samplerate = 44100;
-	}
-	#endif
 	
-//	mtx.lock();
 	queue<Event *> event_queue;
 	vector<Voice *> voices;
 	vector<Buffer *> voice_buffers;
@@ -362,20 +287,19 @@ void program() {
 	voice_buffers.reserve(NUMBER_OF_VOICES);
 	for (int i = 0; i < NUMBER_OF_VOICES; i++) {
 		voice_buffers.push_back(new Buffer(441, "voice_"+to_string(i)));
-		voices.push_back(new Voice(voice_buffers[i], &parameters, &mm, &tables, (uint8_t) i));
+		voices.push_back(new Voice(voice_buffers[i], &parameters, &mm, &tables, &gui, (uint8_t) i));
 		voices_done++;
 	}
 	
 	NoteHandler handle(&voices);
 	AutoMaster sensei(&voices, &parameters, parameters.get(p_Master, 0));
-//	mtx.unlock();
 	
 	#ifdef ENGINE_JACK
 		// Assign the Jack callback function
-		jack.onProcess = [&sensei, &mm, &voices_done](jack_default_audio_sample_t **inBufs,jack_default_audio_sample_t *outBuf_L,jack_default_audio_sample_t *outBuf_R,
+		jack.onProcess = [&sensei, &mm, &voices_done](jack_default_audio_sample_t *outBuf_L,jack_default_audio_sample_t *outBuf_R,
 			jack_nframes_t nframes) {
-			if(voices_done == NUMBER_OF_VOICES) {
-				mtx.lock();
+//			if(voices_done == NUMBER_OF_VOICES) {
+//				mtx.lock();
 				for (unsigned int i = 0; i < nframes; i++) {
 					mm.process();
 					sensei.process();
@@ -385,8 +309,8 @@ void program() {
 
 					sensei.tick();
 				}
-				mtx.unlock();
-			}
+//				mtx.unlock();
+//			}
 
 			return 0;
 		};
@@ -404,19 +328,15 @@ void program() {
 	}
 	init_midi(midi_in);
 
-	thread midi_handler(midi, ref(handle), ref(event_queue), ref(midi_in), ref(midi_out), ref(running));
-	thread event_handler(event, ref(voices), ref(handle), ref(parameters), ref(event_queue), ref(midi_in), ref(midi_out), ref(running));
+	thread midi_handler(midi, ref(handle), ref(gui), ref(event_queue), ref(midi_in), ref(midi_out), ref(running));
+	thread event_handler(event, ref(voices), ref(gui), ref(handle), ref(parameters), ref(event_queue), ref(midi_in), ref(midi_out), ref(running));
 	
-	ui(running, event_queue, ref(parameters), ref(pe), &app, voices);
+	ui(running, ref(gui), event_queue, ref(parameters), ref(pe), &app, voices);
 
 	midi_handler.join();
 	event_handler.join();
 	
 	delete midi_in;
 	delete midi_out;
-
-	cout << "\x1B[2J\x1B[H";
-	curs_set(1);
-
 	exit(0);
 }

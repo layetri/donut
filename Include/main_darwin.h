@@ -5,20 +5,21 @@
 #ifndef DONUT_MAIN_DARWIN_H
 #define DONUT_MAIN_DARWIN_H
 
-#include "ext/jack_module.h"
-#include "ext/RtMidi.h"
+#include <ext/jack_module.h>
+#include <ext/RtMidi.h>
 #include <curses.h>
 
-#include "System/PresetEngine.h"
-#include "System/ParameterStore.h"
-#include "System/CommandPool.h"
-#include "DSP/Buffer.h"
-#include "System/NoteHandler.h"
-#include "System/Voice.h"
-#include "System/ControlMap.h"
-#include "System/Tables.h"
-#include "Effect/AutoMaster.h"
-#include "System/ModMatrix.h"
+#include <System/PresetEngine.h>
+#include <System/ParameterStore.h>
+#include <System/CommandPool.h>
+#include <DSP/Buffer.h>
+#include <System/NoteHandler.h>
+#include <System/Voice.h>
+#include <System/ControlMap.h>
+#include <System/Tables.h>
+#include <Effect/AutoMaster.h>
+#include <System/ModMatrix.h>
+#include <System/GUI.h>
 
 #include <vector>
 #include <string>
@@ -36,6 +37,5 @@ void program();
 void switchMidiInputs(RtMidiIn*, uint);
 void switchMidiOutputs(RtMidiOut*, uint);
 void listMidiDevices(RtMidiIn*, RtMidiOut*);
-void printAtLocation(int, int, string, int c=0);
 
 #endif //DONUT_MAIN_DARWIN_H

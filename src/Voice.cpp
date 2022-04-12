@@ -1,13 +1,12 @@
 #include <System/Voice.h>
 
-Voice::Voice(Buffer* output, ParameterPool* params, ModMatrix* mm, Tables* tables, uint8_t v_id) {
-	verbose("start " + to_string(v_id));
+Voice::Voice(Buffer* output, ParameterPool* params, ModMatrix* mm, Tables* tables, GUI* gui, uint8_t v_id) {
 	// Do various setup things
 	this->voice_id = v_id;
 	this->last_used = clock();
 	this->available = true;
 	this->parameters = params;
-	
+	this->gui = gui;
 	
 	// Initialize buffers
 	this->mixbus = new Buffer(500);
@@ -252,8 +251,7 @@ void Voice::set(ParameterID parameter, int value) {
 			parameters->set(p_KS_Transpose, voice_id, value - 64);
 			break;
 		default:
-			printw("Parameter doesn't exist");
-			refresh();
+			gui->output("Parameter doesn't exist");
 			break;
 	}
 }

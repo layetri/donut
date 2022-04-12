@@ -10,11 +10,12 @@ string CommandPool::color (const string &text, int color) {
 	return "\033[" + std::to_string(color) + "m" + text + "\033[0m";
 }
 
-Command::Command (queue<Event *> *e_q, ParameterPool *parameters, PresetEngine *presetEngine, bool *r) {
+Command::Command (queue<Event *> *e_q, GUI* gui, ParameterPool *parameters, PresetEngine *presetEngine, bool *r) {
 	this->event_queue = e_q;
 	this->running = r;
 	this->parameters = parameters;
 	this->presetEngine = presetEngine;
+	this->gui = gui;
 }
 
 
@@ -35,14 +36,9 @@ void CommandPool::handleCommand (string command) {
 			
 			int winy, winx;
 			getyx(stdscr, winy, winx);
-			move(winy, 4);
-			
-			attron(COLOR_PAIR(5));
-			printw(line.command.c_str());
-			attroff(COLOR_PAIR(5));
-			mvprintw(winy, 40, "%s\n", line.description.c_str());
+			gui->output(line.command, false, 4, winy, 5);
+			gui->output(line.description, true, 40, winy);
 		}
-		refresh();
 		return;
 	} else {
 		for (auto &cmd: commands) {
@@ -51,14 +47,14 @@ void CommandPool::handleCommand (string command) {
 			}
 		}
 	}
-	cout << "[" << color("x", 31) << "] Command does not exist." << endl;
+	gui->output("[x] Command does not exist.");
 }
 
 // ============================ //
 //		Command Handlers		//
 // ============================ //
 struct handleSet : public Command {
-	explicit handleSet (queue<Event *> *event_queue, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, parameters, presetEngine, running) {};
+	explicit handleSet (queue<Event *> *event_queue, GUI* gui, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, gui, parameters, presetEngine, running) {};
 	
 	bool handleIfMatch (string command) override {
 		if (ctre::match<pattern>(command)) {
@@ -81,15 +77,10 @@ struct handleSet : public Command {
 			
 			event_queue->push(new Event{e_Control, (uint16_t)(21 + param), value});
 			
-			printw("Setting ");
-			attron(COLOR_PAIR(5));
-			printw(p_name.c_str());
-			attroff(COLOR_PAIR(5));
-			printw(" to ");
-			attron(COLOR_PAIR(5));
-			printw(to_string(value).c_str());
-			attroff(COLOR_PAIR(5));
-			refresh();
+			gui->output("Setting ", false);
+			gui->output(p_name, false, -1, -1, 5);
+			gui->output(" to ");
+			gui->output(to_string(value), true, -1, -1, 5);
 		}
 	}
 
@@ -101,7 +92,7 @@ protected:
 // =======================================================================
 
 struct handleSequence : public Command {
-	explicit handleSequence (queue<Event *> *event_queue, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, parameters, presetEngine, running) {};
+	explicit handleSequence (queue<Event *> *event_queue, GUI* gui, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, gui, parameters, presetEngine, running) {};
 	
 	bool handleIfMatch (string command) override {
 		if (ctre::match<pattern>(command)) {
@@ -138,7 +129,7 @@ protected:
 // =======================================================================
 
 struct handleRemap : public Command {
-	explicit handleRemap (queue<Event *> *event_queue, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, parameters, presetEngine, running) {};
+	explicit handleRemap (queue<Event *> *event_queue, GUI* gui, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, gui, parameters, presetEngine, running) {};
 	
 	bool handleIfMatch (string command) override {
 		if (ctre::match<pattern>(command)) {
@@ -156,7 +147,7 @@ struct handleRemap : public Command {
 	void handle (string command) override {
 		if (auto m = ctre::match<pattern>(command)) {
 			string bunch = m.get<1>().to_string();
-			cout << "Remapping CC: " << bunch << endl;
+			gui->output("Remapping CC: " + bunch);
 			// Enable global remap mode
 			// Next incoming MIDI CC is saved as new controller
 			auto pid = parameters->translate(bunch);
@@ -174,7 +165,7 @@ protected:
 // =======================================================================
 
 struct handleListParams : public Command {
-	explicit handleListParams (queue<Event *> *event_queue, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, parameters, presetEngine, running) {};
+	explicit handleListParams (queue<Event *> *event_queue, GUI* gui, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, gui, parameters, presetEngine, running) {};
 	
 	bool handleIfMatch (string command) override {
 		if (ctre::match<pattern>(command)) {
@@ -191,9 +182,8 @@ struct handleListParams : public Command {
 	void handle (string command) override {
 		if (auto m = ctre::match<pattern>(command)) {
 			for (auto &p: *parameters->getDictionary()) {
-				printw("%s\n", p->key.c_str());
+				gui->output(p->key);
 			}
-			refresh();
 		}
 	}
 
@@ -205,7 +195,7 @@ protected:
 // =======================================================================
 
 struct handleLFOAssign : public Command {
-	explicit handleLFOAssign (queue<Event *> *event_queue, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, parameters, presetEngine, running) {};
+	explicit handleLFOAssign (queue<Event *> *event_queue, GUI* gui, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, gui, parameters, presetEngine, running) {};
 	
 	bool handleIfMatch (string command) override {
 		if (ctre::match<pattern>(command)) {
@@ -226,8 +216,7 @@ struct handleLFOAssign : public Command {
 			auto amount = m.get<3>().to_number();
 //			auto pid = parameters->translate(param);
 //			lfo 1 assign test amount 127
-			cout << "assign lfo " << CommandPool::color(lfo_num, 36) << " to param " <<
-				 CommandPool::color(param, 36) << " (" << amount << ")" << endl;
+			gui->output("assign lfo " + lfo_num + " to " + param + " (" + to_string(amount) + ")");
 		}
 	}
 
@@ -241,7 +230,7 @@ protected:
 // =======================================================================
 
 struct handleLFORemove : public Command {
-	explicit handleLFORemove (queue<Event *> *event_queue, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, parameters, presetEngine, running) {};
+	explicit handleLFORemove (queue<Event *> *event_queue, GUI* gui, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, gui, parameters, presetEngine, running) {};
 	
 	bool handleIfMatch (string command) override {
 		if (ctre::match<pattern>(command)) {
@@ -258,18 +247,11 @@ struct handleLFORemove : public Command {
 	void handle (string command) override {
 		if (auto m = ctre::match<pattern>(command)) {
 			string bunch = m.get<1>().to_string();
-			if (bunch == "help") {
-				for (auto& p : *parameters->getDictionary()) {
-					cout << p->key << ", ";
-				}
-				cout << "...\n";
-			} else {
-				cout << "Remapping CC: " << bunch << endl;
-				// Enable global remap mode
-				// Next incoming MIDI CC is saved as new controller
-				auto pid = parameters->translate(bunch);
-				event_queue->push(new Event{e_Control, 255, static_cast<unsigned short>(pid)});
-			}
+			cout << "Remapping CC: " << bunch << endl;
+			// Enable global remap mode
+			// Next incoming MIDI CC is saved as new controller
+			auto pid = parameters->translate(bunch);
+			event_queue->push(new Event{e_Control, 255, static_cast<unsigned short>(pid)});
 		}
 	}
 
@@ -281,7 +263,7 @@ protected:
 // =======================================================================
 
 struct handleStorePreset : public Command {
-	explicit handleStorePreset (queue<Event *> *event_queue, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, parameters, presetEngine, running) {};
+	explicit handleStorePreset (queue<Event *> *event_queue, GUI* gui, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, gui, parameters, presetEngine, running) {};
 	
 	bool handleIfMatch (string command) override {
 		if (ctre::match<pattern>(command)) {
@@ -310,7 +292,7 @@ protected:
 // =======================================================================
 
 struct handleLogPresets : public Command {
-	explicit handleLogPresets (queue<Event *> *event_queue, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, parameters, presetEngine, running) {};
+	explicit handleLogPresets (queue<Event *> *event_queue, GUI* gui, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, gui, parameters, presetEngine, running) {};
 	
 	bool handleIfMatch (string command) override {
 		if (ctre::match<pattern>(command)) {
@@ -336,7 +318,7 @@ protected:
 // =======================================================================
 
 struct handleLoadPreset : public Command {
-	explicit handleLoadPreset (queue<Event *> *event_queue, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, parameters, presetEngine, running) {};
+	explicit handleLoadPreset (queue<Event *> *event_queue, GUI* gui, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, gui, parameters, presetEngine, running) {};
 	
 	bool handleIfMatch (string command) override {
 		if (ctre::match<pattern>(command)) {
@@ -365,7 +347,7 @@ protected:
 // =======================================================================
 
 struct handleSplit : public Command {
-	explicit handleSplit (queue<Event *> *event_queue, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, parameters, presetEngine, running) {};
+	explicit handleSplit (queue<Event *> *event_queue, GUI* gui, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, gui, parameters, presetEngine, running) {};
 	
 	bool handleIfMatch (string command) override {
 		if (ctre::match<pattern>(command)) {
@@ -394,7 +376,7 @@ protected:
 // =======================================================================
 
 struct handleListMIDI : public Command {
-	explicit handleListMIDI (queue<Event *> *event_queue, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, parameters, presetEngine, running) {};
+	explicit handleListMIDI (queue<Event *> *event_queue, GUI* gui, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, gui, parameters, presetEngine, running) {};
 	
 	bool handleIfMatch (string command) override {
 		if (ctre::match<pattern>(command)) {
@@ -423,7 +405,7 @@ protected:
 // =======================================================================
 
 struct handleSelectMIDIIn : public Command {
-	explicit handleSelectMIDIIn (queue<Event *> *event_queue, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, parameters, presetEngine, running) {};
+	explicit handleSelectMIDIIn (queue<Event *> *event_queue, GUI* gui, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, gui, parameters, presetEngine, running) {};
 	
 	bool handleIfMatch (string command) override {
 		if (ctre::match<pattern>(command)) {
@@ -452,7 +434,7 @@ protected:
 // =======================================================================
 
 struct handleSelectMIDIOut : public Command {
-	explicit handleSelectMIDIOut (queue<Event *> *event_queue, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, parameters, presetEngine, running) {};
+	explicit handleSelectMIDIOut (queue<Event *> *event_queue, GUI* gui, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, gui, parameters, presetEngine, running) {};
 	
 	bool handleIfMatch (string command) override {
 		if (ctre::match<pattern>(command)) {
@@ -481,7 +463,7 @@ protected:
 // =======================================================================
 
 struct handleProgramExit : public Command {
-	explicit handleProgramExit (queue<Event *> *event_queue, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, parameters, presetEngine, running) {};
+	explicit handleProgramExit (queue<Event *> *event_queue, GUI* gui, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, gui, parameters, presetEngine, running) {};
 	
 	HelpItem getHelpText () override {
 		return helpText;
@@ -489,7 +471,6 @@ struct handleProgramExit : public Command {
 	
 	bool handleIfMatch (string command) override {
 		if (ctre::match<pattern>(command)) {
-			cout << "Exiting. Goodbye!" << endl;
 			handle(command);
 			return true;
 		}
@@ -497,6 +478,7 @@ struct handleProgramExit : public Command {
 	}
 	
 	void handle (string command) override {
+		gui->output("Exiting. Goodbye!");
 		*running = false;
 	}
 
@@ -505,21 +487,24 @@ protected:
 	HelpItem helpText = {"exit", "Quit Donut."};
 };
 
-CommandPool::CommandPool (queue<Event *> *event_queue, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) {
-	registerCommand(new handleSet(event_queue, parameters, presetEngine, running));
-	registerCommand(new handleListParams(event_queue, parameters, presetEngine, running));
-	registerCommand(new handleStorePreset(event_queue, parameters, presetEngine, running));
-	registerCommand(new handleSequence(event_queue, parameters, presetEngine, running));
-	registerCommand(new handleRemap(event_queue, parameters, presetEngine, running));
-	registerCommand(new handleLFOAssign(event_queue, parameters, presetEngine, running));
-	registerCommand(new handleLFORemove(event_queue, parameters, presetEngine, running));
-	registerCommand(new handleLogPresets(event_queue, parameters, presetEngine, running));
-	registerCommand(new handleLoadPreset(event_queue, parameters, presetEngine, running));
-	registerCommand(new handleSplit(event_queue, parameters, presetEngine, running));
-	registerCommand(new handleListMIDI(event_queue, parameters, presetEngine, running));
-	registerCommand(new handleSelectMIDIIn(event_queue, parameters, presetEngine, running));
-	registerCommand(new handleSelectMIDIOut(event_queue, parameters, presetEngine, running));
-	registerCommand(new handleProgramExit(event_queue, parameters, presetEngine, running));
+CommandPool::CommandPool (queue<Event *> *event_queue, GUI* gui, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) {
+	this->gui = gui;
+	
+	// Register commands
+	registerCommand(new handleSet(event_queue, gui, parameters, presetEngine, running));
+	registerCommand(new handleListParams(event_queue, gui, parameters, presetEngine, running));
+	registerCommand(new handleStorePreset(event_queue, gui, parameters, presetEngine, running));
+	registerCommand(new handleSequence(event_queue, gui, parameters, presetEngine, running));
+	registerCommand(new handleRemap(event_queue, gui, parameters, presetEngine, running));
+	registerCommand(new handleLFOAssign(event_queue, gui, parameters, presetEngine, running));
+	registerCommand(new handleLFORemove(event_queue, gui, parameters, presetEngine, running));
+	registerCommand(new handleLogPresets(event_queue, gui, parameters, presetEngine, running));
+	registerCommand(new handleLoadPreset(event_queue, gui, parameters, presetEngine, running));
+	registerCommand(new handleSplit(event_queue, gui, parameters, presetEngine, running));
+	registerCommand(new handleListMIDI(event_queue, gui, parameters, presetEngine, running));
+	registerCommand(new handleSelectMIDIIn(event_queue, gui, parameters, presetEngine, running));
+	registerCommand(new handleSelectMIDIOut(event_queue, gui, parameters, presetEngine, running));
+	registerCommand(new handleProgramExit(event_queue, gui, parameters, presetEngine, running));
 }
 
 #endif

@@ -35,6 +35,7 @@ class ControlMap {
 		void storeMap();
 		int getCC(ParameterID pid);
 		ParameterID getPID(uint16_t cc, uint16_t channel=0);
+		vector<ParameterID> getPIDs(uint16_t, uint16_t channel=0);
 
 		void setController(uint);
 		void listControllers();

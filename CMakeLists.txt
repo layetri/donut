@@ -8,6 +8,10 @@ file(GLOB sources_2 "${CMAKE_CURRENT_SOURCE_DIR}/src/ui/*.cpp")
 find_library (jack_lib jack)
 message("jack: ${jack_lib}")
 
+add_definitions( -DBUILD_PLATFORM=${PLATFORM_ID} )
+add_definitions( -DBUILD_ENVIRONMENT=debug )
+add_definitions( -DBUILD_GUI_NCURSES )
+
 add_executable(donut ${sources_1} ${sources_2})
 target_link_libraries(donut PRIVATE
         ${jack_lib}

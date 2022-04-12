@@ -18,6 +18,7 @@
 #include <System/Note.h>
 #include <System/ParameterStore.h>
 #include <System/Tables.h>
+#include <System/GUI.h>
 
 #include <curses.h>
 #include <unistd.h>
@@ -28,7 +29,7 @@ using namespace std;
 
 class Voice {
   public:
-    Voice(Buffer* output, ParameterPool* params, ModMatrix* mm, Tables* tables, uint8_t v_id=0);
+    Voice(Buffer* output, ParameterPool* params, ModMatrix* mm, Tables* tables, GUI* gui, uint8_t v_id=0);
     ~Voice();
 
     void assign(Note* note);
@@ -57,6 +58,7 @@ class Voice {
 	Buffer *output, *mixbus;
 	AddAndDivide *mixer;
 	Note *midi_note;
+	GUI *gui;
 	
 	bool available;
 	uint8_t voice_id;

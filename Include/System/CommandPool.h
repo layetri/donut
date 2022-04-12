@@ -15,8 +15,9 @@
 
 #include <Global.h>
 #include <ext/ctre.h>
-#include "ParameterStore.h"
-#include "PresetEngine.h"
+#include <System/ParameterStore.h>
+#include <System/PresetEngine.h>
+#include <System/GUI.h>
 
 using namespace std;
 
@@ -26,7 +27,7 @@ enum CommandNamespace {
 };
 
 struct Command {
-	Command(queue<Event*>*, ParameterPool*, PresetEngine*, bool* running);
+	Command(queue<Event*>*, GUI*, ParameterPool*, PresetEngine*, bool* running);
 
     virtual bool handleIfMatch(string command) = 0;
     virtual void handle(string command) = 0;
@@ -37,13 +38,14 @@ struct Command {
 		ParameterPool* parameters;
 		PresetEngine* presetEngine;
 		bool* running;
+		GUI* gui;
 		static constexpr auto pattern = "";
 		HelpItem helpText = {"command", "text"};
 };
 
 class CommandPool {
 	public:
-		CommandPool(queue<Event*>* event_queue, ParameterPool* parameters, PresetEngine* presetEngine, bool* running);
+		CommandPool(queue<Event*>* event_queue, GUI* gui, ParameterPool* parameters, PresetEngine* presetEngine, bool* running);
 		~CommandPool();
 
 		void registerCommand(Command *c);
@@ -52,6 +54,7 @@ class CommandPool {
 
 	private:
 		vector<Command *> commands;
+		GUI* gui;
 };
 
 

@@ -78,6 +78,18 @@ ParameterID ControlMap::getPID(uint16_t cc, uint16_t channel) {
 	return p_NotFound;
 }
 
+vector<ParameterID> ControlMap::getPIDs(uint16_t cc, uint16_t channel) {
+	vector<ParameterID> ret_arr;
+	
+	for(auto& v : current_map->values) {
+		if(v->cc == cc && v->channel == channel) {
+			ret_arr.push_back(v->parameter);
+		}
+	}
+	
+	return ret_arr;
+}
+
 void ControlMap::listControllers() {
 
 }
