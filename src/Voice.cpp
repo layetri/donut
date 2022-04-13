@@ -1,6 +1,6 @@
 #include <System/Voice.h>
 
-Voice::Voice(Buffer* output, ParameterPool* params, ModMatrix* mm, Tables* tables, GUI* gui, uint8_t v_id) {
+Voice::Voice(Buffer* output, ParameterPool* params, ModMatrix* mm, Tables* tables, Sampler* sampler, GUI* gui, uint8_t v_id) {
 	// Do various setup things
 	this->voice_id = v_id;
 	this->last_used = clock();
@@ -18,6 +18,7 @@ Voice::Voice(Buffer* output, ParameterPool* params, ModMatrix* mm, Tables* table
 	sources.push_back(new WaveTableOscillator(tables, params, params->get(p_WT1_Detune, v_id), params->get(p_WT1_Shape, v_id), params->get(p_WT1_Transpose, v_id), s_WT1, v_id)); // WT
 	sources.push_back(new WaveTableOscillator(tables, params, params->get(p_WT2_Detune, v_id), params->get(p_WT2_Shape, v_id), params->get(p_WT2_Transpose, v_id), s_WT2, v_id)); // WT
 	sources.push_back(new Tensions(tables, params, v_id));
+	sources.push_back(new SamplerVoice(sampler, params, v_id));
 	
 	// Grab source buffers
 	for(auto& s : sources) {
@@ -29,6 +30,7 @@ Voice::Voice(Buffer* output, ParameterPool* params, ModMatrix* mm, Tables* table
 	buffers[s_WT1]->attachMultiplier(params->get(p_WT1_Amount, v_id));
 	buffers[s_WT2]->attachMultiplier(params->get(p_WT2_Amount, v_id));
 	buffers[s_KS]->attachMultiplier(params->get(p_KS_Amount, v_id));
+	buffers[s_Sampler]->attachMultiplier(params->get(p_Sampler_Amount, v_id));
 	
 	modulators.push_back(new LFO(params->get(p_LFO1_Rate, v_id), params->get(p_LFO1_Sync, v_id), tables, m_LFO1, "lfo1", v_id));
 	modulators.push_back(new LFO(params->get(p_LFO2_Rate, v_id), params->get(p_LFO2_Sync, v_id), tables, m_LFO2, "lfo2", v_id));

@@ -2,13 +2,15 @@
 // Created by Daniël Kamp on 02/06/2021.
 //
 
-#ifndef KARPLUSSTRONG_PRESET_H
-#define KARPLUSSTRONG_PRESET_H
+#ifndef DONUT_PRESET_H
+#define DONUT_PRESET_H
 
-#include "../Global.h"
-#include "ParameterStore.h"
-#include "ModMatrix.h"
-#include "../ext/json.h"
+#include <Global.h>
+#include <System/ParameterStore.h>
+#include <System/ModMatrix.h>
+#include <System/SampleLibrary.h>
+#include <Source/Sampler.h>
+#include <ext/json.h>
 
 #include <filesystem>
 #include <fstream>
@@ -39,19 +41,23 @@ struct Preset {
 
 class PresetEngine {
 	public:
-		PresetEngine(ParameterPool*, ModMatrix*);
+		PresetEngine(ParameterPool*, ModMatrix*, Sampler*, SampleLibrary*);
 		~PresetEngine();
 
 		void load(string name);
 		void store(string name);
+		void autosave();
 		void log();
 
 	private:
 		ParameterPool* pool;
 		ModMatrix* modmatrix;
+		Sampler* sampler;
+		SampleLibrary* library;
+		
 		vector<Preset*>* presets;
 		vector<string>* available_presets;
 		uint16_t selected;
 };
 
-#endif //KARPLUSSTRONG_PRESET_H
+#endif //DONUT_PRESET_H

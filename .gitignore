@@ -4,9 +4,12 @@
 # Folders to ignore
 /.vscode
 /obj
-
-# Files to ignore
-*.o
 /.idea*/
 /donut
 /cmake-*/
+
+# Files to ignore
+*.o
+
+# Ignore test samples to not get in trouble
+/.donut_runtime/samples/lbn_swell.wav

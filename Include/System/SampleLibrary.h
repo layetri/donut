@@ -26,11 +26,12 @@ class SampleLibrary {
 		SampleLibrary (GUI* gui);
 		~SampleLibrary ();
 		
-		void load(const string&);
+		bool load(const string&);
 		void listLoaded();
 		void list();
 		
 		Sample* get(const string&);
+		vector<Sample*>* getSamples();
 	private:
 		vector<Sample*> samples;
 		GUI* gui;

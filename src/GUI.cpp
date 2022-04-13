@@ -73,7 +73,7 @@ string GUI::input() {
 		getstr(cmd_stream);
 		cmd = cmd_stream;
 	#elif defined(BUILD_GUI_COUT)
-//		cin >> getline(cmd_stream);
+		getline(cin, cmd);
 	#endif
 	
 	return cmd;
@@ -108,7 +108,13 @@ void GUI::output(const string line, bool lb, int x, int y, int c) {
 		curs_set(1);
 		refresh();
 	#elif defined(BUILD_GUI_COUT)
+		if(x > 0) {
+			for(int i = 0; i < x; i++) {
+				cout << " ";
+			}
+		}
 		if(lb) {
+			
 			cout << line << endl;
 		} else {
 			cout << line;

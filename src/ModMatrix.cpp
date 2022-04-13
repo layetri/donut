@@ -29,9 +29,14 @@ void ModMatrix::store (Modulator* modulator) {
 
 Modulator *ModMatrix::get (string name, uint8_t voice_id) {
 	for(auto& m : modulators) {
-		if(m->getName().compare(name) && m->getVoice() == voice_id) {
+		if(m->getName() == name && m->getVoice() == voice_id) {
 			return m;
 		}
 	}
 	return modulators[0];
+}
+
+bool ModMatrix::clearAll () {
+	connections.clear();
+	return connections.empty();
 }

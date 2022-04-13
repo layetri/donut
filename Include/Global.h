@@ -21,7 +21,8 @@
 #else
   #define ENGINE_JACK
   #include <cstdint>
-  #include <vector>
+  #include <utility>
+#include <vector>
   #include <string>
   #include <cmath>
 #endif
@@ -57,7 +58,7 @@ enum SourceID {
 	s_WT1,
 	s_WT2,
 	s_KS,
-	s_Sub,
+	s_Sampler,
 	s_Global
 };
 
@@ -129,10 +130,12 @@ enum ParameterID {
 	p_KS_FilterCutoff,
 	p_KS_Transpose,
 	
+	p_Sampler_Amount,
 	p_Sampler_Start,
 	p_Sampler_Length,
 	p_Sampler_Speed,
 	p_Sampler_Direction,
+	p_Sampler_Transpose,
 	
 	p_Sub_Toggle,
 	
@@ -157,6 +160,11 @@ enum ControlID {
 	c_NoteOff,
 	c_ccChange,
 	c_RemapOn,
+	c_SampleList,
+	c_SampleLoad,
+	c_SampleLoaded,
+	c_SamplerAddRegion,
+	c_SamplerSetRoot,
 	c_Sustain,
 	c_Transpose,
 	c_Split
@@ -182,6 +190,7 @@ struct Event {
 
 	ControlID cid = c_Generic;
 	SourceID source = s_Global;
+	std::string str_content;
 	std::vector<uint16_t> content;
 
 	void write(uint16_t c) {
@@ -198,6 +207,14 @@ struct MidiEvent : public Event {
 
 struct ControlEvent : public Event {
 	ControlEvent(ControlID cid, uint16_t value=0) : Event {e_Control} {
+		this->cid = cid;
+		this->value = value;
+	};
+};
+
+struct StringEvent : public Event {
+	StringEvent(ControlID cid, std::string str, uint16_t value=0) : Event {e_Control} {
+		this->str_content = std::move(str);
 		this->cid = cid;
 		this->value = value;
 	};

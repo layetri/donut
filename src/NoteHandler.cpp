@@ -121,7 +121,6 @@ void NoteHandler::tick() {
 */
 void NoteHandler::setSplit (uint8_t key) {
 	this->split_key = key;
-	
 	intelliSplit();
 	
 	voices_lower->voices->clear();
@@ -153,6 +152,7 @@ void NoteHandler::setSplitRatio(float split_ratio) {
 *   @brief Abstraction to provide bounds for split functionality.
 */
 void NoteHandler::intelliSplit() {
+	split_index = (split_key / 127.0) * (NUMBER_OF_VOICES - 1);
 	split_index =
 		  (split_index > 0 && split_index < NUMBER_OF_VOICES) * split_index +
 		  (split_index == 0) * (split_key > 0) +

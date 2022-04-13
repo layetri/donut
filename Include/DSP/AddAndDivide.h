@@ -23,7 +23,7 @@ class AddAndDivide {
     Buffer* output;
     vector<Buffer*>* inputs;
 	ParameterPool* parameters;
-	Parameter *ws1, *ws2, *wt1, *wt2, *ks, *master;
+	Parameter *ws1, *ws2, *wt1, *wt2, *ks, *smp, *master;
 };
 
 

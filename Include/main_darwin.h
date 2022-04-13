@@ -21,6 +21,7 @@
 #include <DSP/Buffer.h>
 
 #include <Effect/AutoMaster.h>
+#include <Source/Sampler.h>
 
 #include <System/PresetEngine.h>
 #include <System/ParameterStore.h>
@@ -31,6 +32,7 @@
 #include <System/Tables.h>
 #include <System/ModMatrix.h>
 #include <System/GUI.h>
+#include <System/SampleLibrary.h>
 
 using namespace std;
 

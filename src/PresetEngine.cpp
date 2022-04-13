@@ -4,9 +4,11 @@
 
 #include <System/PresetEngine.h>
 
-PresetEngine::PresetEngine(ParameterPool* parameters, ModMatrix* mm) {
+PresetEngine::PresetEngine(ParameterPool* parameters, ModMatrix* mm, Sampler* sampler, SampleLibrary* library) {
 	pool = parameters;
 	modmatrix = mm;
+	this->sampler = sampler;
+	this->library = library;
 
 	available_presets = new vector<string>;
 	presets = new vector<Preset*>;
@@ -38,7 +40,7 @@ void PresetEngine::load(string name) {
 	for (const auto & entry : filesystem::directory_iterator(path)) {
 		string filename = entry.path().filename().string();
 		
-		if(filename.compare(name)) {
+		if(filename == name + ".donutpreset") {
 			ifstream file(entry.path().c_str());
 			nlohmann::json filecontents;
 			file >> filecontents;
@@ -53,12 +55,24 @@ void PresetEngine::load(string name) {
 				});
 			}
 			
-			for(auto& m : filecontents["mod_links"]) {
-				modmatrix->link(
+			if(modmatrix->clearAll()) {
+				for (auto &m: filecontents["mod_links"]) {
+					modmatrix->link(
 					  pool->get(pool->translate((string) m["destination"]), m["voice"]),
 					  modmatrix->get(m["source"], m["voice"]),
 					  m["voice"]);
+				}
 			}
+			
+			for(auto& s : filecontents["sample_lib"]) {
+				library->load(s["name"]);
+			}
+			
+			for(auto& r : filecontents["sampler_regions"]) {
+				sampler->addRegion(r["sample"]);
+				sampler->setRoot(r["sample"], r["key_root"]);
+			}
+			
 			verbose("push finished");
 			
 			presets->push_back(&preset);
@@ -80,6 +94,8 @@ void PresetEngine::store(string name) {
 	nlohmann::json filecontents;
 	filecontents["parameters"] = {};
 	filecontents["mod_links"] = {};
+	filecontents["sample_lib"] = {};
+	filecontents["sampler_regions"] = {};
 	
 	for(auto& param : *pool->getAll()) {
 		string key = pool->translate(param->pid);
@@ -100,7 +116,29 @@ void PresetEngine::store(string name) {
 		});
 	}
 	
+	// TODO: Store sample library (aka which sample paths are loaded) and Sampler regions
+	for(auto& smp : *library->getSamples()) {
+		filecontents["sample_lib"].push_back({
+			"name", smp->name
+		});
+	}
+	
+	for(auto& r : *sampler->getRegions()) {
+		filecontents["sampler_regions"].push_back({
+			{"sample", r->sample->name},
+			{"smp_start", r->smp_start},
+			{"smp_end", r->smp_end},
+			{"key_start", r->key_start},
+			{"key_end", r->key_end},
+			{"key_root", r->key_root},
+			{"mode", r->mode}
+		});
+	}
+	
 	out << setw(4) << filecontents << endl;
 	out.close();
 }
 
+void PresetEngine::autosave() {
+	store("_autosave");
+}

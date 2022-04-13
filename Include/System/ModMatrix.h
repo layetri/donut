@@ -25,6 +25,7 @@ public:
 	void link(Parameter*, Modulator*, uint8_t);
 	void process();
 	void store(Modulator*);
+	bool clearAll();
 	
 	Modulator* get(string, uint8_t);
 	vector<ModDestination*>* get();

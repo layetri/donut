@@ -62,6 +62,9 @@ ParameterPool::ParameterPool() {
 		store(p_LFO2_Sync, i, "lfo2_sync", 0.0);
 		store(p_NotFound, i, "not_found", 0.0);
 		store(p_VoiceMaster, i, "voice_master", 1.0, 0.0);
+		
+		store(p_Sampler_Amount, i, "sampler_amount", 1.0);
+		store(p_Sampler_Transpose, i, "sampler_transpose", 0.0);
 	}
 	
 	store(p_FX_Delay_Amount, 0, "fx_delay_amount", 0.5, 0.5);

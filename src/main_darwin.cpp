@@ -20,7 +20,7 @@ void ui(bool& running, GUI& gui, queue<Event *>& events, ParameterPool& paramete
 	}
 }
 
-void event(vector<Voice*>& voices, GUI& gui, NoteHandler& nh, ParameterPool& parameters, queue<Event *>& events, RtMidiIn* midiIn, RtMidiOut* midiOut, bool& running) {
+void event(vector<Voice*>& voices, Sampler& sampler, GUI& gui, NoteHandler& nh, ParameterPool& parameters, queue<Event *>& events, SampleLibrary& lib, RtMidiIn* midiIn, RtMidiOut* midiOut, bool& running) {
 	bool remap_mode = false;
 	uint8_t remap_cc = 0;
 	ControlMap cm;
@@ -78,6 +78,16 @@ void event(vector<Voice*>& voices, GUI& gui, NoteHandler& nh, ParameterPool& par
 					} else if((e->cc - 21) == p_Exit) {
 						running = false;
 						
+					} else if(e->cid == c_SampleList) {
+						lib.list();
+					} else if(e->cid == c_SampleLoad) {
+						lib.load(e->str_content);
+					} else if(e->cid == c_SampleLoaded) {
+						lib.listLoaded();
+					} else if(e->cid == c_SamplerAddRegion) {
+						sampler.addRegion(e->str_content);
+					} else if(e->cid == c_SamplerSetRoot) {
+						sampler.setRoot(e->str_content, e->value);
 					} else if(e->cc >= p_ADSR1_Attack && e->cc <= p_Exit) {
 						nh.set(ParameterID(e->cc - 21), e->value);
 					}
@@ -267,7 +277,14 @@ void program() {
 	ApplicationState app = app_Idle;
 	ParameterPool parameters;
 	ModMatrix mm;
-	PresetEngine pe(&parameters, &mm);
+	
+	SampleLibrary lib(&gui);
+	lib.load("piano");
+	Sampler sampler(&parameters, &lib);
+	sampler.addRegion("piano");
+//	sampler.setRoot("default", 50);
+	
+	PresetEngine pe(&parameters, &mm, &sampler, &lib);
 	Tables tables;
 	tables.generateWaveforms();
 	
@@ -279,7 +296,7 @@ void program() {
 	voice_buffers.reserve(NUMBER_OF_VOICES);
 	for (int i = 0; i < NUMBER_OF_VOICES; i++) {
 		voice_buffers.push_back(new Buffer(441, "voice_"+to_string(i)));
-		voices.push_back(new Voice(voice_buffers[i], &parameters, &mm, &tables, &gui, (uint8_t) i));
+		voices.push_back(new Voice(voice_buffers[i], &parameters, &mm, &tables, &sampler, &gui, (uint8_t) i));
 	}
 	
 	NoteHandler handle(&voices);
@@ -315,7 +332,7 @@ void program() {
 	init_midi(midi_in);
 
 	thread midi_handler(midi, ref(handle), ref(gui), ref(event_queue), ref(midi_in), ref(midi_out), ref(running));
-	thread event_handler(event, ref(voices), ref(gui), ref(handle), ref(parameters), ref(event_queue), ref(midi_in), ref(midi_out), ref(running));
+	thread event_handler(event, ref(voices), ref(sampler), ref(gui), ref(handle), ref(parameters), ref(event_queue), ref(lib), ref(midi_in), ref(midi_out), ref(running));
 	
 	ui(running, ref(gui), event_queue, ref(parameters), ref(pe), &app, voices);
 

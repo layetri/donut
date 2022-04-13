@@ -28,18 +28,24 @@ void CommandPool::registerCommand (Command *c) {
 
 void CommandPool::handleCommand (string command) {
 	if (command == "help") {
-		printw("Here's what I can do:\n");
-		refresh();
+		gui->output("Here's what I can do:\n", false);
 		
 		int winy, winx;
-		getyx(stdscr, winy, winx);
+		
+		#ifdef BUILD_GUI_NCURSES
+			getyx(stdscr, winy, winx);
+		#else
+			winy = -1;
+		#endif
 		
 		for (auto &cmd: commands) {
 			auto line = cmd->getHelpText();
 			
 			gui->output(line.command, false, 4, winy, 5);
 			gui->output(line.description + "\n", false, 40, winy);
-			winy++;
+			#ifdef BUILD_GUI_NCURSES
+				winy++;
+			#endif
 		}
 		return;
 	} else {
@@ -348,6 +354,150 @@ protected:
 
 // =======================================================================
 
+struct handleListSamples : public Command {
+	explicit handleListSamples (queue<Event *> *event_queue, GUI* gui, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, gui, parameters, presetEngine, running) {};
+	
+	bool handleIfMatch (string command) override {
+		if (ctre::match<pattern>(command)) {
+			handle(command);
+			return true;
+		}
+		return false;
+	}
+	
+	HelpItem getHelpText () override {
+		return helpText;
+	}
+	
+	void handle (string command) override {
+		if (auto m = ctre::match<pattern>(command)) {
+			event_queue->push(new ControlEvent(c_SampleList));
+		}
+	}
+
+protected:
+	static constexpr auto pattern = ctll::fixed_string{R"(^sample\slist$)"};
+	HelpItem helpText = {"sample list", "List all samples available on the system."};
+};
+
+// =======================================================================
+
+struct handleListLoadedSamples : public Command {
+	explicit handleListLoadedSamples (queue<Event *> *event_queue, GUI* gui, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, gui, parameters, presetEngine, running) {};
+	
+	bool handleIfMatch (string command) override {
+		if (ctre::match<pattern>(command)) {
+			handle(command);
+			return true;
+		}
+		return false;
+	}
+	
+	HelpItem getHelpText () override {
+		return helpText;
+	}
+	
+	void handle (string command) override {
+		if (auto m = ctre::match<pattern>(command)) {
+			event_queue->push(new ControlEvent(c_SampleLoaded));
+		}
+	}
+
+protected:
+	static constexpr auto pattern = ctll::fixed_string{R"(^sample\sloaded$)"};
+	HelpItem helpText = {"sample loaded", "Display the samples that are loaded in memory."};
+};
+
+// =======================================================================
+
+struct handleLoadSample : public Command {
+	explicit handleLoadSample (queue<Event *> *event_queue, GUI* gui, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, gui, parameters, presetEngine, running) {};
+	
+	bool handleIfMatch (string command) override {
+		if (ctre::match<pattern>(command)) {
+			handle(command);
+			return true;
+		}
+		return false;
+	}
+	
+	HelpItem getHelpText () override {
+		return helpText;
+	}
+	
+	void handle (string command) override {
+		if (auto m = ctre::match<pattern>(command)) {
+			string n = m.get<1>().to_string();
+			event_queue->push(new StringEvent(c_SampleLoad, n));
+		}
+	}
+
+protected:
+	static constexpr auto pattern = ctll::fixed_string{R"(^sample\sload\s([a-zA-Z0-9_]+)$)"};
+	HelpItem helpText = {"sample load <name>", "Load the specified sample."};
+};
+
+// =======================================================================
+
+struct handleAddSamplerRegion : public Command {
+	explicit handleAddSamplerRegion (queue<Event *> *event_queue, GUI* gui, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, gui, parameters, presetEngine, running) {};
+	
+	bool handleIfMatch (string command) override {
+		if (ctre::match<pattern>(command)) {
+			handle(command);
+			return true;
+		}
+		return false;
+	}
+	
+	HelpItem getHelpText () override {
+		return helpText;
+	}
+	
+	void handle (string command) override {
+		if (auto m = ctre::match<pattern>(command)) {
+			string n = m.get<1>().to_string();
+			event_queue->push(new StringEvent(c_SamplerAddRegion, n));
+		}
+	}
+
+protected:
+	static constexpr auto pattern = ctll::fixed_string{R"(^sampler\sregion\s([a-zA-Z0-9_]+)$)"};
+	HelpItem helpText = {"sampler region <name>", "Create a sampler region with the specified sample."};
+};
+
+// =======================================================================
+
+struct handleSetSamplerRoot : public Command {
+	explicit handleSetSamplerRoot (queue<Event *> *event_queue, GUI* gui, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, gui, parameters, presetEngine, running) {};
+	
+	bool handleIfMatch (string command) override {
+		if (ctre::match<pattern>(command)) {
+			handle(command);
+			return true;
+		}
+		return false;
+	}
+	
+	HelpItem getHelpText () override {
+		return helpText;
+	}
+	
+	void handle (string command) override {
+		if (auto m = ctre::match<pattern>(command)) {
+			string n = m.get<1>().to_string();
+			uint16_t r = m.get<2>().to_number();
+			event_queue->push(new StringEvent(c_SamplerSetRoot, n, r));
+		}
+	}
+
+protected:
+	static constexpr auto pattern = ctll::fixed_string{R"(^sampler\sroot\s([a-zA-Z0-9_]+)\s([0-9]+)$)"};
+	HelpItem helpText = {"sampler root <name> <key>", "Set the root note for the specified sample."};
+};
+
+// =======================================================================
+
 struct handleSplit : public Command {
 	explicit handleSplit (queue<Event *> *event_queue, GUI* gui, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, gui, parameters, presetEngine, running) {};
 	
@@ -506,6 +656,11 @@ CommandPool::CommandPool (queue<Event *> *event_queue, GUI* gui, ParameterPool *
 	registerCommand(new handleListMIDI(event_queue, gui, parameters, presetEngine, running));
 	registerCommand(new handleSelectMIDIIn(event_queue, gui, parameters, presetEngine, running));
 	registerCommand(new handleSelectMIDIOut(event_queue, gui, parameters, presetEngine, running));
+	registerCommand(new handleListSamples(event_queue, gui, parameters, presetEngine, running));
+	registerCommand(new handleListLoadedSamples(event_queue, gui, parameters, presetEngine, running));
+	registerCommand(new handleLoadSample(event_queue, gui, parameters, presetEngine, running));
+	registerCommand(new handleAddSamplerRegion(event_queue, gui, parameters, presetEngine, running));
+	registerCommand(new handleSetSamplerRoot(event_queue, gui, parameters, presetEngine, running));
 	registerCommand(new handleProgramExit(event_queue, gui, parameters, presetEngine, running));
 }
 

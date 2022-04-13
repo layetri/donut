@@ -4,6 +4,7 @@
 #include <Source/WaveTable.h>
 #include <Source/Tensions.h>
 #include <Source/Square.h>
+#include <Source/Sampler.h>
 
 #include <DSP/Buffer.h>
 #include <DSP/AddAndDivide.h>
@@ -29,7 +30,7 @@ using namespace std;
 
 class Voice {
   public:
-    Voice(Buffer* output, ParameterPool* params, ModMatrix* mm, Tables* tables, GUI* gui, uint8_t v_id=0);
+    Voice(Buffer* output, ParameterPool* params, ModMatrix* mm, Tables* tables, Sampler* sampler, GUI* gui, uint8_t v_id=0);
     ~Voice();
 
     void assign(Note* note);

@@ -43,10 +43,9 @@ void WaveTableOscillator::process() {
 void WaveTableOscillator::tick() {
 	position += frequency;
 	position = (position < square->getSize()) * position + (position >= square->getSize()) * (position - square->getSize());
-//	position = bind(position);
 	fl_position = floor(position);
 	
-//	output->tick();
+	output->tick();
 }
 
 void WaveTableOscillator::refresh() {
