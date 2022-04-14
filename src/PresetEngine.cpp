@@ -84,7 +84,7 @@ void PresetEngine::load(string name) {
 		}
 	}
 	
-	printw("A preset with that name couldn't be found");
+	verbose("A preset with that name couldn't be found");
 }
 
 void PresetEngine::store(string name) {

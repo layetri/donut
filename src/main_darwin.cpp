@@ -176,6 +176,18 @@ void midi(NoteHandler& handler, GUI& gui, queue<Event*>& event_queue, RtMidiIn* 
 	}
 }
 
+void backup(PresetEngine& pe, bool& running) {
+	while(running) {
+		mtx.lock();
+		// Backup the current settings
+		pe.autosave();
+		mtx.unlock();
+		
+		// Wait a minute... oh wait
+		usleep(60000000);
+	}
+}
+
 
 void init_midi(RtMidiIn *midi_in) {
 	// Check inputs.
@@ -279,12 +291,14 @@ void program() {
 	ModMatrix mm;
 	
 	SampleLibrary lib(&gui);
-	lib.load("piano");
 	Sampler sampler(&parameters, &lib);
-	sampler.addRegion("piano");
-//	sampler.setRoot("default", 50);
+	if(lib.load("default")) {
+		sampler.addRegion("default");
+		sampler.setRoot("default", 50);
+	}
 	
 	PresetEngine pe(&parameters, &mm, &sampler, &lib);
+	
 	Tables tables;
 	tables.generateWaveforms();
 	
@@ -301,6 +315,7 @@ void program() {
 	
 	NoteHandler handle(&voices);
 	AutoMaster sensei(&voices, &parameters, parameters.get(p_Master, 0));
+	pe.load("_autosave");
 	
 	#ifdef ENGINE_JACK
 		// Assign the Jack callback function
@@ -333,11 +348,13 @@ void program() {
 
 	thread midi_handler(midi, ref(handle), ref(gui), ref(event_queue), ref(midi_in), ref(midi_out), ref(running));
 	thread event_handler(event, ref(voices), ref(sampler), ref(gui), ref(handle), ref(parameters), ref(event_queue), ref(lib), ref(midi_in), ref(midi_out), ref(running));
+	thread autosave_handler(backup, ref(pe), ref(running));
 	
 	ui(running, ref(gui), event_queue, ref(parameters), ref(pe), &app, voices);
 
 	midi_handler.join();
 	event_handler.join();
+	autosave_handler.join();
 	
 	delete midi_in;
 	delete midi_out;
