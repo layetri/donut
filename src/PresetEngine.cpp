@@ -119,7 +119,7 @@ void PresetEngine::store(string name) {
 	// TODO: Store sample library (aka which sample paths are loaded) and Sampler regions
 	for(auto& smp : *library->getSamples()) {
 		filecontents["sample_lib"].push_back({
-			"name", smp->name
+		   {"name", smp->name}
 		});
 	}
 	
