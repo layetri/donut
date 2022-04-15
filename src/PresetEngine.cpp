@@ -73,10 +73,8 @@ void PresetEngine::load(string name) {
 				sampler->setRoot(r["sample"], r["key_root"]);
 			}
 			
-			verbose("push finished");
-			
+			// Store the preset in memory
 			presets->push_back(&preset);
-			
 			
 			// Write to ParameterPool
 			pool->load(&preset.parameters);
