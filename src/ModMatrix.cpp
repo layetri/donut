@@ -7,9 +7,9 @@
 ModMatrix::ModMatrix () {}
 ModMatrix::~ModMatrix () {}
 
-void ModMatrix::link (Parameter* parameter, Modulator* modulator, uint8_t voice) {
+void ModMatrix::link (Parameter* parameter, Modulator* modulator, uint8_t voice, float amount) {
 	connections.push_back(new ModDestination {
-		modulator, parameter, voice
+		modulator, parameter, voice, amount
 	});
 }
 

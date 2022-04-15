@@ -22,7 +22,7 @@ public:
 	ModMatrix();
 	~ModMatrix();
 	
-	void link(Parameter*, Modulator*, uint8_t);
+	void link(Parameter*, Modulator*, uint8_t, float amount=1.0);
 	void process();
 	void store(Modulator*);
 	bool clearAll();

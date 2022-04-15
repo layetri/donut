@@ -43,7 +43,7 @@ ParameterPool::ParameterPool() {
 		store(p_WS1_Detune_Range, i, "ws1_detune_range", 6.35f, 6.35f);
 		store(p_WS1_Transpose, i, "ws1_transpose", 0.0, 0.0);
 		
-		store(p_WS2_Amount, i, "ws2_amount", 1.0, 0.0);
+		store(p_WS2_Amount, i, "ws2_amount", 0.0, 0.0);
 		store(p_WS2_BaseFrequency, i, "ws2_base_frequency", 440.0, 440.0);
 		store(p_WS2_Harmonics, i, "ws2_harmonics", 2.0, 2.0);
 		store(p_WS2_Detune, i, "ws2_detune", 430.0, 430.0);

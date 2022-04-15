@@ -184,7 +184,7 @@ void backup(PresetEngine& pe, bool& running) {
 		mtx.unlock();
 		
 		// Wait a minute... oh wait
-		usleep(60000000);
+		usleep(10000000);
 	}
 }
 

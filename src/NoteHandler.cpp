@@ -9,6 +9,7 @@ NoteHandler::NoteHandler(vector<Voice*>* voices) {
   voices_upper = new KeyboardHalf;
   voices_lower = new KeyboardHalf;
   last_controlled = new vector<KeyboardHalf*>;
+  last_controlled->push_back(voices_upper);
   setSplit(0);
 }
 
