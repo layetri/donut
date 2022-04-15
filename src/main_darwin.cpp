@@ -162,7 +162,7 @@ void midi(NoteHandler& handler, GUI& gui, queue<Event*>& event_queue, RtMidiIn* 
 			
 			#ifdef BUILD_GUI_NCURSES
 				if(handler.inUse() < 10) {
-					gui.output(to_string(handler.inUse()) + " / " + to_string(NUMBER_OF_VOICES), false, col - 7, 1);
+					gui.output(" " + to_string(handler.inUse()) + " / " + to_string(NUMBER_OF_VOICES), false, col - 8, 1);
 				} else {
 					gui.output(to_string(handler.inUse()) + " / " + to_string(NUMBER_OF_VOICES), false, col - 8, 1, 2);
 				}
@@ -297,7 +297,7 @@ void program() {
 		sampler.setRoot("default", 50);
 	}
 	
-	PresetEngine pe(&parameters, &mm, &sampler, &lib);
+	PresetEngine pe(&parameters, &mm, &sampler, &lib, &gui);
 	
 	Tables tables;
 	tables.generateWaveforms();

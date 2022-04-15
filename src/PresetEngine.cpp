@@ -4,19 +4,15 @@
 
 #include <System/PresetEngine.h>
 
-PresetEngine::PresetEngine(ParameterPool* parameters, ModMatrix* mm, Sampler* sampler, SampleLibrary* library) {
+PresetEngine::PresetEngine(ParameterPool* parameters, ModMatrix* mm, Sampler* sampler, SampleLibrary* library, GUI* gui) {
 	pool = parameters;
 	modmatrix = mm;
 	this->sampler = sampler;
 	this->library = library;
+	this->gui = gui;
 
 	available_presets = new vector<string>;
 	presets = new vector<Preset*>;
-
-	filesystem::path path = filesystem::current_path() / ".donut_runtime/presets";
-	for (const auto & entry : filesystem::directory_iterator(path)) {
-		available_presets->push_back(entry.path().c_str());
-	}
 	selected = 0;
 }
 
@@ -28,9 +24,14 @@ PresetEngine::~PresetEngine() {
 }
 
 void PresetEngine::log() {
+	filesystem::path path = filesystem::current_path() / ".donut_runtime/presets";
+	for (const auto & entry : filesystem::directory_iterator(path)) {
+		available_presets->push_back(entry.path().c_str());
+	}
+	
 	for (uint i = 0; i < available_presets->size(); i++) {
-		printw("[%u] %s\n", i, available_presets->at(i).erase(0, 65).c_str());
-		refresh();
+		gui->output("[" + to_string(i) + "] ", false, -1, -1, 5);
+		gui->output(available_presets->at(i).erase(0, 65) + "\n", false);
 	}
 }
 

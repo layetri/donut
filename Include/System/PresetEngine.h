@@ -9,6 +9,8 @@
 #include <System/ParameterStore.h>
 #include <System/ModMatrix.h>
 #include <System/SampleLibrary.h>
+#include <System/GUI.h>
+
 #include <Source/Sampler.h>
 #include <ext/json.h>
 
@@ -41,7 +43,7 @@ struct Preset {
 
 class PresetEngine {
 	public:
-		PresetEngine(ParameterPool*, ModMatrix*, Sampler*, SampleLibrary*);
+		PresetEngine(ParameterPool*, ModMatrix*, Sampler*, SampleLibrary*, GUI*);
 		~PresetEngine();
 
 		void load(string name);
@@ -54,6 +56,7 @@ class PresetEngine {
 		ModMatrix* modmatrix;
 		Sampler* sampler;
 		SampleLibrary* library;
+		GUI* gui;
 		
 		vector<Preset*>* presets;
 		vector<string>* available_presets;
