@@ -55,7 +55,7 @@ Voice::Voice(Buffer* output, ParameterPool* params, ModMatrix* mm, Tables* table
 		mm->store(m);
 	}
 
-//	mm->link(params->get(p_FM_Amount, v_id), modulators[m_LFO1], v_id);
+	mm->link(params->get(p_WS1_Harmonics, v_id), modulators[m_LFO1], v_id, 10);
 	mm->link(params->get(p_VoiceMaster, v_id), modulators[m_ADSR1], v_id);
 
 	// Initialize voice mixer
@@ -81,7 +81,7 @@ void Voice::process() {
 	}
 	
 	// Do FM modulation
-	sources[s_WS1]->fm(buffers[s_WS2]->getCurrentSample() / (float) SAMPLE_MAX_VALUE, ws_fm_amount->value);
+	sources[s_WS1]->fm((float) buffers[s_WS2]->getCurrentSample() / (float) SAMPLE_MAX_VALUE, ws_fm_amount->value);
 	
 	// Process sources
 	for(auto& s : sources) {
@@ -170,7 +170,7 @@ void Voice::set(ParameterID parameter, int value) {
 			parameters->set(p_WS1_Harmonics, voice_id, ((value + 1) / 4) - 16);
 			break;
 		case p_WS2_Harmonics:
-			parameters->set(p_WS2_Harmonics, voice_id, value / 127.0f);
+			parameters->set(p_WS2_Harmonics, voice_id, ((value + 1) / 4) - 16);
 			break;
 		case p_WS1_Detune:
 			parameters->set(p_WS1_Detune, voice_id,
@@ -206,7 +206,7 @@ void Voice::set(ParameterID parameter, int value) {
 			parameters->set(p_ADSR1_Release, voice_id, ((value / 127.0f) * 220500));
 			break;
 		case p_LFO1_Rate:
-			parameters->set(p_LFO1_Rate, voice_id, (value / 127.0f) * 220.0);
+			parameters->set(p_LFO1_Rate, voice_id, ((value / 127.0f) * 20.0) + 0.1);
 			break;
 		case p_FM_Amount:
 			parameters->set(p_FM_Amount, voice_id, value / 127.0f);

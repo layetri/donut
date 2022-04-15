@@ -15,14 +15,14 @@ LFO::LFO (Parameter* frequency, Parameter* sync_amt, Tables *tables, ModID mod_i
 
 void LFO::sync() {
 	// If sync is enabled, reset the position
-	position = (sync_amt->value > 0.0) * position;
+	position = (sync_amt->value < 1.0) * position;
 }
 
 void LFO::beatSync() {}
 
 void LFO::process () {
 	sample = (sample_t) (0.3 * wave->getSample(fl_position) + 0.7 * sample);
-	buffer->write((float) (sample / SAMPLE_MAX_VALUE));
+	buffer->write((float) sample / (float) SAMPLE_MAX_VALUE);
 }
 
 void LFO::refresh() {}

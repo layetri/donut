@@ -10,6 +10,7 @@ message("jack: ${jack_lib}")
 
 add_definitions( -DBUILD_PLATFORM=${PLATFORM_ID} )
 add_definitions( -DBUILD_ENVIRONMENT=debug )
+#add_definitions( -DBUILD_GUI_COUT )
 add_definitions( -DBUILD_GUI_NCURSES )
 
 add_executable(donut ${sources_1} ${sources_2})
