@@ -66,12 +66,15 @@ void PresetEngine::load(string name) {
 			}
 			
 			for(auto& s : filecontents["sample_lib"]) {
-				library->load(s["name"]);
+				if(!library->load(s["name"])) {
+					verbose("Failed to load sample");
+					exit(1);
+				}
 			}
 			
+			sampler->reset();
 			for(auto& r : filecontents["sampler_regions"]) {
-				sampler->addRegion(r["sample"]);
-				sampler->setRoot(r["sample"], r["key_root"]);
+				sampler->addRegion(r["sample"], r["key_start"], r["key_end"], r["key_root"], r["smp_start"], r["smp_end"]);
 			}
 			
 			// Store the preset in memory

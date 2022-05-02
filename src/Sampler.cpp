@@ -27,7 +27,7 @@ void SamplerVoice::pitch(uint8_t midi_note) {
 		position = current_sample->smp_start;
 		abs_position = current_sample->smp_start;
 	}
-	increment = (samplerate / mtof(current_sample->key_root)) / mtof(127-(midi_note + 2 + (uint8_t) transpose->value), 440.0);// repitch sample
+	increment = (samplerate / mtof(current_sample->key_root)) / mtof(127-(midi_note + 2 + (uint8_t) transpose->value), 430.0);// repitch sample
 	playing = true;
 }
 
@@ -51,9 +51,11 @@ Sampler::Sampler(ParameterPool* params, SampleLibrary* lib) {
 	this->library = lib;
 }
 
-void Sampler::addRegion(string sample) {
+void Sampler::addRegion (string sample, uint8_t start, uint8_t end, uint8_t root, uint smp_start, uint smp_end) {
 	auto smp = library->get(sample);
-	regions.push_back(new SamplerRegion {smp, 0, smp->sample->getSize()});
+	auto sz = (smp_end > 0) * smp_end + (smp_end == 0) * smp->sample->getSize();
+	
+	regions.push_back(new SamplerRegion{smp, smp_start, sz, start, end, root});
 	loaded = true;
 }
 
@@ -75,4 +77,12 @@ void Sampler::setRoot(string name, uint8_t key) {
 			r->key_root = key;
 		}
 	}
+}
+
+void Sampler::reset() {
+	// Protect from crashing
+	loaded = false;
+	
+	// Clear all regions
+	regions.clear();
 }

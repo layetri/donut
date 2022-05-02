@@ -47,3 +47,29 @@ EL-ONE is based around the Raspberry Pi 4B. Hardware design is currently in prog
 
 ### Getting the whole thing
 The software implementation can be found in this repository. Once I finish the hardware design, I will provide it for free through my website, however I will ask anyone who wants to build it to leave me a little message (in case anyone ever sees this or wants one for themselves, I'd love to know). 
+#### Build instructions
+To build the firmware available through this repository, you should first make sure you have all the necessary dependencies installed. These are the requirements for building Donut:
+- `ncurses`, `libncurses` or your platform's equivalent
+- `libjack2-dev` headers available globally
+- `gcc` version x and up
+- `cmake` for completeness' sake
+
+First, generate build files from the project root:
+```shell
+  cmake .
+```
+Then, use CMake to build the project:
+```shell
+  cmake . --build
+```
+
+Finally, to run Donut, first start `jackd`. Once JACK is running, run the program from the project root folder:
+```shell
+  ./CMakeFiles/donut
+```
+NOTE 1: make sure to run Donut from the project root folder! This is where it looks for its runtime resource files (like wavetables and presets).
+
+NOTE 2 (Linux only): before running Donut, make sure there's a MIDI connection available through something like `a2jmidid`.
+
+### Thanks and stuff
+- The default piano sample was generously provided by Björn Colin

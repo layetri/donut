@@ -58,6 +58,11 @@ void GUI::initgui () {
 		attroff(COLOR_PAIR(3));
 		printw("] ");
 		refresh();
+		
+		move(8, 4);
+		clrtoeol();
+		curs_set(1);
+		refresh();
 	#endif
 }
 
@@ -68,6 +73,7 @@ string GUI::input() {
 		move(8, 4);
 		clrtoeol();
 		curs_set(1);
+		refresh();
 		mtx2.unlock();
 		
 		getstr(cmd_stream);
