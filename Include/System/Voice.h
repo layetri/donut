@@ -5,6 +5,7 @@
 #include <Source/Tensions.h>
 #include <Source/Square.h>
 #include <Source/Sampler.h>
+#include <Source/Particles.h>
 
 #include <DSP/Buffer.h>
 #include <DSP/AddAndDivide.h>
@@ -13,6 +14,7 @@
 
 #include <Modulator/ADSR.h>
 #include <Modulator/LFO.h>
+#include <Modulator/RandomGenerator.h>
 #include <Modulator/Modulator.h>
 
 #include <System/ModMatrix.h>
@@ -30,7 +32,7 @@ using namespace std;
 
 class Voice {
   public:
-    Voice(Buffer* output, ParameterPool* params, ModMatrix* mm, Tables* tables, Sampler* sampler, GUI* gui, uint8_t v_id=0);
+    Voice(Buffer* output, ParameterPool* params, ModMatrix* mm, Tables* tables, Sampler* sampler, Particles* particles, GUI* gui, uint8_t v_id=0);
     ~Voice();
 
     void assign(Note* note);
@@ -41,6 +43,7 @@ class Voice {
 	void release();
 	void tick();
 	void set(ParameterID, int);
+	void block(size_t block_size);
 	
 	Buffer* getBuffer();
 	sample_t getSample();
@@ -51,6 +54,7 @@ class Voice {
 	vector<Source*> sources;
 	vector<Buffer*> buffers;
 	ParameterPool* parameters;
+	Particles* particles;
 	
 	Parameter *filter_cutoff, *ws_fm_amount;
 	

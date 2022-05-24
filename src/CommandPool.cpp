@@ -354,6 +354,64 @@ protected:
 
 // =======================================================================
 
+struct handleStoreControlMap : public Command {
+	explicit handleStoreControlMap (queue<Event *> *event_queue, GUI* gui, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, gui, parameters, presetEngine, running) {};
+	
+	bool handleIfMatch (string command) override {
+		if (ctre::match<pattern>(command)) {
+			handle(command);
+			return true;
+		}
+		return false;
+	}
+	
+	HelpItem getHelpText () override {
+		return helpText;
+	}
+	
+	void handle (string command) override {
+		if (auto m = ctre::match<pattern>(command)) {
+			string n = m.get<1>().to_string();
+			event_queue->push(new StringEvent(c_ControlsStore, n));
+		}
+	}
+
+protected:
+	static constexpr auto pattern = ctll::fixed_string{R"(^controls\sstore\s([a-zA-Z0-9_]+)$)"};
+	HelpItem helpText = {"controls store <name>", "Store the current controller settings."};
+};
+
+// =======================================================================
+
+struct handleLoadControlMap : public Command {
+	explicit handleLoadControlMap (queue<Event *> *event_queue, GUI* gui, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, gui, parameters, presetEngine, running) {};
+	
+	bool handleIfMatch (string command) override {
+		if (ctre::match<pattern>(command)) {
+			handle(command);
+			return true;
+		}
+		return false;
+	}
+	
+	HelpItem getHelpText () override {
+		return helpText;
+	}
+	
+	void handle (string command) override {
+		if (auto m = ctre::match<pattern>(command)) {
+			string n = m.get<1>().to_string();
+			event_queue->push(new StringEvent(c_ControlsLoad, n));
+		}
+	}
+
+protected:
+	static constexpr auto pattern = ctll::fixed_string{R"(^controls\sload\s([a-zA-Z0-9_]+)$)"};
+	HelpItem helpText = {"controls load <name>", "Load the specified controller settings."};
+};
+
+// =======================================================================
+
 struct handleListSamples : public Command {
 	explicit handleListSamples (queue<Event *> *event_queue, GUI* gui, ParameterPool *parameters, PresetEngine *presetEngine, bool *running) : Command(event_queue, gui, parameters, presetEngine, running) {};
 	
@@ -661,6 +719,8 @@ CommandPool::CommandPool (queue<Event *> *event_queue, GUI* gui, ParameterPool *
 	registerCommand(new handleLoadSample(event_queue, gui, parameters, presetEngine, running));
 	registerCommand(new handleAddSamplerRegion(event_queue, gui, parameters, presetEngine, running));
 	registerCommand(new handleSetSamplerRoot(event_queue, gui, parameters, presetEngine, running));
+	registerCommand(new handleLoadControlMap(event_queue, gui, parameters, presetEngine, running));
+	registerCommand(new handleStoreControlMap(event_queue, gui, parameters, presetEngine, running));
 	registerCommand(new handleProgramExit(event_queue, gui, parameters, presetEngine, running));
 }
 

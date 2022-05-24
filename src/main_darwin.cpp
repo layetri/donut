@@ -6,7 +6,8 @@
 
 mutex mtx;
 
-void ui(bool& running, GUI& gui, queue<Event *>& events, ParameterPool& parameters, PresetEngine& presetEngine, ApplicationState* app, vector<Voice*>& voices) {
+// This function runs the TUI
+void ui(bool& running, GUI& gui, queue<Event *>& events, ParameterPool& parameters, PresetEngine& presetEngine, vector<Voice*>& voices) {
 	// Setup UI
 	CommandPool cmd_pool(&events, &gui, &parameters, &presetEngine, &running);
 
@@ -20,10 +21,11 @@ void ui(bool& running, GUI& gui, queue<Event *>& events, ParameterPool& paramete
 	}
 }
 
+// This thread handles internal application events
 void event(vector<Voice*>& voices, Sampler& sampler, GUI& gui, NoteHandler& nh, ParameterPool& parameters, queue<Event *>& events, SampleLibrary& lib, RtMidiIn* midiIn, RtMidiOut* midiOut, bool& running) {
 	bool remap_mode = false;
 	uint8_t remap_cc = 0;
-	ControlMap cm;
+	ControlMap cm(&parameters);
 
 	while(running) {
 		mtx.lock();
@@ -36,7 +38,7 @@ void event(vector<Voice*>& voices, Sampler& sampler, GUI& gui, NoteHandler& nh, 
 				case e_Midi:
 					if(remap_mode) {
 						cm.changeCC(ParameterID(remap_cc), (uint16_t) e->cc);
-						gui.output("Remapped " + to_string(remap_cc) + " to " + to_string(e->cc));
+						gui.output("Remapped " + parameters.translate(ParameterID(remap_cc)) + " to " + to_string(e->cc));
 						remap_mode = false;
 						
 					} else if(cm.getPID(e->cc) == p_Master) {
@@ -88,6 +90,12 @@ void event(vector<Voice*>& voices, Sampler& sampler, GUI& gui, NoteHandler& nh, 
 						sampler.addRegion(e->str_content);
 					} else if(e->cid == c_SamplerSetRoot) {
 						sampler.setRoot(e->str_content, e->value);
+					} else if(e->cid == c_ControlsLoad) {
+						cm.loadMap(e->str_content);
+						gui.output("Controls loaded.");
+					} else if(e->cid == c_ControlsStore) {
+						cm.storeMap(e->str_content);
+						gui.output("Controls saved.");
 					} else if(e->cc >= p_ADSR1_Attack && e->cc <= p_Exit) {
 						nh.set(ParameterID(e->cc - 21), e->value);
 					}
@@ -112,7 +120,7 @@ void event(vector<Voice*>& voices, Sampler& sampler, GUI& gui, NoteHandler& nh, 
 	}
 }
 
-
+// This thread handles incoming and outgoing MIDI events
 void midi(NoteHandler& handler, GUI& gui, queue<Event*>& event_queue, RtMidiIn* midi_in, RtMidiOut* midi_out, bool& running) {
 	midi_message_t message;
 	vector<Note> sustained;
@@ -176,15 +184,35 @@ void midi(NoteHandler& handler, GUI& gui, queue<Event*>& event_queue, RtMidiIn* 
 	}
 }
 
+// This thread runs an automatic backup of parameters every 10 seconds
 void backup(PresetEngine& pe, bool& running) {
+	long counter = 0;
 	while(running) {
-		mtx.lock();
-		// Backup the current settings
-		pe.autosave();
-		mtx.unlock();
+		counter++;
+		
+		if(counter == 10000000) {
+			mtx.lock();
+			// Backup the current settings
+			pe.autosave();
+			mtx.unlock();
+			counter = 0;
+		}
 		
 		// Wait a minute... oh wait
-		usleep(10000000);
+		usleep(1);
+	}
+}
+
+// This thread runs the scheduling engine (BPM sync etc)
+void schedule(Scheduler& scheduler, bool& running) {
+	auto tp1 = chrono::steady_clock::now();
+	while(running) {
+		auto tp2 = chrono::steady_clock::now();
+		if(duration_cast<chrono::microseconds>(tp2 - tp1).count() > scheduler.getSchedulingInterval()) {
+			scheduler.fire();
+			tp1 = tp2;
+		}
+		usleep(1);
 	}
 }
 
@@ -286,9 +314,13 @@ void program() {
 		}
 	#endif
 	
-	ApplicationState app = app_Idle;
+	srand(time(NULL));
+	
 	ParameterPool parameters;
 	ModMatrix mm;
+	Scheduler scheduler(parameters.get(p_BPM, 0));
+	
+//	scheduler.store([]() {verbose("one measure!");}, Timestamp {1, 0, 0}, "liveness");
 	
 	SampleLibrary lib(&gui);
 	Sampler sampler(&parameters, &lib);
@@ -296,8 +328,9 @@ void program() {
 		sampler.addRegion("default");
 		sampler.setRoot("default", 50);
 	}
+	Particles particles(&lib);
 	
-	PresetEngine pe(&parameters, &mm, &sampler, &lib, &gui);
+	PresetEngine pe(&parameters, &mm, &sampler, &particles, &lib, &gui);
 	
 	Tables tables;
 	tables.generateWaveforms();
@@ -310,7 +343,7 @@ void program() {
 	voice_buffers.reserve(NUMBER_OF_VOICES);
 	for (int i = 0; i < NUMBER_OF_VOICES; i++) {
 		voice_buffers.push_back(new Buffer(441, "voice_"+to_string(i)));
-		voices.push_back(new Voice(voice_buffers[i], &parameters, &mm, &tables, &sampler, &gui, (uint8_t) i));
+		voices.push_back(new Voice(voice_buffers[i], &parameters, &mm, &tables, &sampler, &particles, &gui, (uint8_t) i));
 	}
 	
 	NoteHandler handle(&voices);
@@ -319,7 +352,12 @@ void program() {
 	
 	#ifdef ENGINE_JACK
 		// Assign the Jack callback function
-		jack.onProcess = [&sensei, &mm](jack_default_audio_sample_t *outBuf_L, jack_default_audio_sample_t *outBuf_R, jack_nframes_t nframes) {
+		jack.onProcess = [&sensei, &mm, &voices](jack_default_audio_sample_t *outBuf_L, jack_default_audio_sample_t *outBuf_R, jack_nframes_t nframes) {
+			auto time1 = chrono::steady_clock::now();
+			for(auto& v : voices) {
+				v->block((size_t) nframes);
+			}
+			
 			for (unsigned int i = 0; i < nframes; i++) {
 				mm.process();
 				sensei.process();
@@ -329,6 +367,7 @@ void program() {
 
 				sensei.tick();
 			}
+			verbose(chrono::duration_cast<chrono::microseconds>(chrono::steady_clock::now() - time1).count());
 
 			return 0;
 		};
@@ -348,13 +387,20 @@ void program() {
 
 	thread midi_handler(midi, ref(handle), ref(gui), ref(event_queue), ref(midi_in), ref(midi_out), ref(running));
 	thread event_handler(event, ref(voices), ref(sampler), ref(gui), ref(handle), ref(parameters), ref(event_queue), ref(lib), ref(midi_in), ref(midi_out), ref(running));
-	thread autosave_handler(backup, ref(pe), ref(running));
+//	thread scheduling_handler(schedule, ref(scheduler), ref(running));
 	
-	ui(running, ref(gui), event_queue, ref(parameters), ref(pe), &app, voices);
+	#ifndef BUILD_GUI_COUT
+		thread autosave_handler(backup, ref(pe), ref(running));
+	#endif
+	
+	ui(running, ref(gui), event_queue, ref(parameters), ref(pe), voices);
 
 	midi_handler.join();
 	event_handler.join();
-	autosave_handler.join();
+//	scheduling_handler.join();
+	#ifndef BUILD_GUI_COUT
+		autosave_handler.join();
+	#endif
 	
 	delete midi_in;
 	delete midi_out;

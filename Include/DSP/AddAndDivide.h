@@ -8,6 +8,8 @@
 
 #include "Buffer.h"
 #include <vector>
+
+#include <DSP/HighPassFilter.h>
 #include <System/ParameterStore.h>
 
 using namespace std;
@@ -18,12 +20,14 @@ class AddAndDivide {
     ~AddAndDivide();
 
     void process();
+	void tick();
 
   private:
-    Buffer* output;
+    Buffer *filter_queue, *output;
+	HighPassFilter* output_filter;
     vector<Buffer*>* inputs;
 	ParameterPool* parameters;
-	Parameter *ws1, *ws2, *wt1, *wt2, *ks, *smp, *master;
+	Parameter *ws1, *ws2, *wt1, *wt2, *ks, *smp, *part, *master;
 };
 
 

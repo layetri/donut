@@ -28,9 +28,10 @@ class Source {
 		virtual void pitch(uint8_t midi_note);
 		virtual void setFrequency(float frequency);
 		virtual void fm(float val, float amount);
+		virtual void block(size_t block_size);
 
 		Buffer* getBuffer();
-		float mtof(uint8_t midi_note, float base_frequency=440.0);
+		static float mtof(uint8_t midi_note, float base_frequency=440.0);
 	protected:
 		float clip(float, float, float);
 		

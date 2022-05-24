@@ -60,11 +60,25 @@ ParameterPool::ParameterPool() {
 		store(p_LFO1_Sync, i, "lfo1_sync", 0.0, 0.0);
 		store(p_LFO2_Rate, i, "lfo2_rate", 1.0, 1.0);
 		store(p_LFO2_Sync, i, "lfo2_sync", 0.0, 0.0);
+		
+		store(p_RND1_Rate, i, "rnd1_rate", 10.0, 10.0);
+		store(p_RND1_Range, i, "rnd1_range", 1.0, 1.0);
+		store(p_RND1_Sync, i, "rnd1_sync", 0.0, 0.0);
+		store(p_RND1_Slew, i, "rnd1_slew", 0.5, 0.5);
+		
+		store(p_OutputHPF_Frequency, i, "output_hpf_frequency", 10.0f, 10.0f);
 		store(p_NotFound, i, "not_found", 0.0, 0.0);
 		store(p_VoiceMaster, i, "voice_master", 1.0, 0.0);
 		
 		store(p_Sampler_Amount, i, "sampler_amount", 1.0, 1.0);
 		store(p_Sampler_Transpose, i, "sampler_transpose", 0.0, 0.0);
+		
+		store(p_Particles_Amount, i, "particles_amount", 1.0, 1.0);
+		store(p_Particles_Density, i, "particles_density", 1.0, 1.0);
+		store(p_Particles_Shape, i, "particles_shape", 0.5, 0.5);
+		store(p_Particles_Algorithm, i, "particles_algorithm", 0.5, 0.5);
+		store(p_Particles_GrainSize, i, "particles_grainsize", 100.0, 100.0);
+		store(p_Particles_Position, i, "particles_position", 3000.0, 3000.0);
 	}
 	
 	store(p_FX_Delay_Amount, 0, "fx_delay_amount", 0.5, 0.5);
@@ -74,6 +88,7 @@ ParameterPool::ParameterPool() {
 	store(p_FX_Delay_FBRight, 0, "fx_delay_feedback_right", 0.5, 0.5);
 	
 	store(p_Master, 0, "master", 1.0, 1.0);
+	store(p_BPM, 0, "bpm", 120.0, 120.0);
 }
 
 ParameterPool::~ParameterPool() {}

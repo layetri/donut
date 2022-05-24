@@ -69,6 +69,10 @@ Sample* SampleLibrary::get(const string& name) {
 	return samples[0];
 }
 
+Sample* SampleLibrary::getDefaultSample() {
+	return get("default");
+}
+
 vector<Sample*>* SampleLibrary::getSamples() {
 	return &samples;
 }

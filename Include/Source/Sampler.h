@@ -31,8 +31,9 @@ class Sampler {
 		Sampler(ParameterPool*, SampleLibrary* lib);
 		~Sampler() = default;
 		
-		void addRegion(string);
+		void addRegion(string, uint8_t start=0, uint8_t end=127, uint8_t root=0, uint smp_start=0, uint smp_end=0);
 		void setRoot(string, uint8_t);
+		void reset();
 		
 		SamplerRegion* lookup(uint8_t);
 		vector<SamplerRegion*>* getRegions();

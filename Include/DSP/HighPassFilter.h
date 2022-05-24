@@ -14,9 +14,11 @@ class HighPassFilter : public Filter {
 		~HighPassFilter();
 		
 		void process();
-
+		void handleFrequency();
 	private:
-		Parameter *frequency;
+		double b0, b1, b2, a0, a1, a2, q;
+		Parameter* frequency;
+		float old_f;
 };
 
 

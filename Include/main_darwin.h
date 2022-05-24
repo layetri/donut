@@ -14,6 +14,7 @@
 #include <queue>
 #include <thread>
 #include <mutex>
+#include <chrono>
 
 #include <ext/jack_module.h>
 #include <ext/RtMidi.h>
@@ -22,6 +23,7 @@
 
 #include <Effect/AutoMaster.h>
 #include <Source/Sampler.h>
+#include <Source/Particles.h>
 
 #include <System/PresetEngine.h>
 #include <System/ParameterStore.h>
@@ -33,6 +35,7 @@
 #include <System/ModMatrix.h>
 #include <System/GUI.h>
 #include <System/SampleLibrary.h>
+#include <System/Scheduler.h>
 
 using namespace std;
 

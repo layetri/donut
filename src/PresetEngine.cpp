@@ -4,10 +4,11 @@
 
 #include <System/PresetEngine.h>
 
-PresetEngine::PresetEngine(ParameterPool* parameters, ModMatrix* mm, Sampler* sampler, SampleLibrary* library, GUI* gui) {
+PresetEngine::PresetEngine(ParameterPool* parameters, ModMatrix* mm, Sampler* sampler, Particles* particles, SampleLibrary* library, GUI* gui) {
 	pool = parameters;
 	modmatrix = mm;
 	this->sampler = sampler;
+	this->particles = particles;
 	this->library = library;
 	this->gui = gui;
 
@@ -77,6 +78,10 @@ void PresetEngine::load(string name) {
 				sampler->addRegion(r["sample"], r["key_start"], r["key_end"], r["key_root"], r["smp_start"], r["smp_end"]);
 			}
 			
+			if(filecontents["particles_setup"].size() > 0) {
+				particles->swap(filecontents["particles_setup"]["sample"], filecontents["particles_setup"]["key_root"]);
+			}
+			
 			// Store the preset in memory
 			presets->push_back(&preset);
 			
@@ -90,8 +95,8 @@ void PresetEngine::load(string name) {
 }
 
 void PresetEngine::store(string name) {
-	string path = "/Users/layetri/Development/_modules/donut/.donut_runtime/presets/";
-	ofstream out(path.append(name).append(".donutpreset"));
+	filesystem::path path = filesystem::current_path() / ".donut_runtime/presets";
+	ofstream out(path.append(name + ".donutpreset"));
 
 	nlohmann::json filecontents;
 	filecontents["parameters"] = {};

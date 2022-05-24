@@ -12,6 +12,7 @@
 #include <System/GUI.h>
 
 #include <Source/Sampler.h>
+#include <Source/Particles.h>
 #include <ext/json.h>
 
 #include <filesystem>
@@ -43,7 +44,7 @@ struct Preset {
 
 class PresetEngine {
 	public:
-		PresetEngine(ParameterPool*, ModMatrix*, Sampler*, SampleLibrary*, GUI*);
+		PresetEngine(ParameterPool*, ModMatrix*, Sampler*, Particles*, SampleLibrary*, GUI*);
 		~PresetEngine();
 
 		void load(string name);
@@ -55,6 +56,7 @@ class PresetEngine {
 		ParameterPool* pool;
 		ModMatrix* modmatrix;
 		Sampler* sampler;
+		Particles* particles;
 		SampleLibrary* library;
 		GUI* gui;
 		
