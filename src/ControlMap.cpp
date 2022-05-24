@@ -4,7 +4,8 @@
 
 #include <System/ControlMap.h>
 
-ControlMap::ControlMap() {
+ControlMap::ControlMap(ParameterPool* pool) {
+	this->pool = pool;
 	current_map = new Map {"default_controls"};
 	selected_controller = 1;
 
@@ -18,8 +19,8 @@ ControlMap::ControlMap() {
 	addCC(p_WT1_Shape, 23);
 	addCC(p_WT2_Shape, 23);
 	addCC(p_Filter_Cutoff, 24);
-	addCC(p_Filter_Resonance, 25);
-	addCC(p_LFO1_Rate, 26);
+	addCC(p_Particles_GrainSize, 25);
+	addCC(p_Particles_Density, 26);
 	addCC(p_ADSR1_Attack, 27);
 	addCC(p_ADSR1_Release, 28);
 	
@@ -30,8 +31,8 @@ ControlMap::ControlMap() {
 	addCC(p_WT1_Amount, 43);
 	addCC(p_WT2_Amount, 44);
 	addCC(p_KS_Amount, 45);
-	addCC(p_FX_Delay_DTLeft, 46);
-	addCC(p_FX_Delay_FBLeft, 47);
+	addCC(p_Sampler_Amount, 46);
+	addCC(p_Particles_Amount, 47);
 	addCC(p_FX_Delay_Amount, 48);
 	
 	addCC(p_Master, 7);
@@ -45,20 +46,52 @@ void ControlMap::addCC(ParameterID pid, uint16_t cc, uint16_t channel) {
 
 void ControlMap::changeCC(ParameterID pid, uint16_t cc) {
 	for(auto& v : current_map->values) {
-		if(v->parameter == pid) {
-			v->cc = cc;
+		if(v->cc == cc) {
+			v->parameter = pid;
 		}
-//		if(v->cc == cc && v->parameter != pid) {
-//			v.second = 255;
-//		}
 	}
 }
 
-void ControlMap::loadMap() {
-
+void ControlMap::loadMap(const string& name) {
+	filesystem::path path = filesystem::current_path() / ".donut_runtime/controls";
+	
+	for (const auto & entry : filesystem::directory_iterator(path)) {
+		string filename = entry.path().filename().string();
+		
+		if (filename == name + ".donutcontrols") {
+			ifstream file(entry.path().c_str());
+			nlohmann::json filecontents;
+			file >> filecontents;
+			
+			reset();
+			
+			for(auto& c : filecontents["controls"]) {
+				addCC(pool->translate((string) c["parameter"]), c["cc"], c["channel"]);
+			}
+		}
+	}
 }
 
-void ControlMap::storeMap() {}
+void ControlMap::storeMap(const string& name) {
+	// Store a controls map to /.donut_runtime/controls as .donutcontrols
+	filesystem::path path = filesystem::current_path() / ".donut_runtime/controls";
+	ofstream out(path.append(name + ".donutcontrols"));
+	
+	nlohmann::json filecontents;
+	filecontents["controls"] = {};
+	
+	for(auto& v : current_map->values) {
+		string key = pool->translate(v->parameter);
+		filecontents["controls"].push_back({
+			{"cc", v->cc},
+			{"channel", v->channel},
+			{"parameter", key}
+		});
+	}
+	
+	out << setw(4) << filecontents << endl;
+	out.close();
+}
 
 int ControlMap::getCC(ParameterID pid) {
 	for(auto& v : current_map->values) {
@@ -88,6 +121,10 @@ vector<ParameterID> ControlMap::getPIDs(uint16_t cc, uint16_t channel) {
 	}
 	
 	return ret_arr;
+}
+
+void ControlMap::reset() {
+	current_map->values.clear();
 }
 
 void ControlMap::listControllers() {

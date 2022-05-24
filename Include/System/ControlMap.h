@@ -6,7 +6,11 @@
 #define DONUT_CONTROLMAP_H
 
 #include <Global.h>
-#include "ParameterStore.h"
+#include <System/ParameterStore.h>
+#include <ext/json.h>
+
+#include <filesystem>
+#include <fstream>
 #include <string>
 #include <vector>
 #include <cstdlib>
@@ -26,13 +30,14 @@ struct Map {
 
 class ControlMap {
 	public:
-		ControlMap();
+		ControlMap(ParameterPool*);
 		~ControlMap();
 
 		void addCC(ParameterID, uint16_t, uint16_t channel=0);
 		void changeCC(ParameterID, uint16_t);
-		void loadMap();
-		void storeMap();
+		void loadMap(const string& name);
+		void storeMap(const string& name);
+		void reset();
 		int getCC(ParameterID pid);
 		ParameterID getPID(uint16_t cc, uint16_t channel=0);
 		vector<ParameterID> getPIDs(uint16_t, uint16_t channel=0);
@@ -41,6 +46,7 @@ class ControlMap {
 		void listControllers();
 
 	private:
+		ParameterPool* pool;
 		Map* current_map;
 		uint selected_controller;
 

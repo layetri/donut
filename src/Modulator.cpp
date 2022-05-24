@@ -21,6 +21,7 @@ void Modulator::tick () {
 	buffer->tick();
 }
 void Modulator::sync () {}
+void Modulator::syncToScheduler () {}
 void Modulator::noteOff () {}
 
 float Modulator::getCurrentValue() {

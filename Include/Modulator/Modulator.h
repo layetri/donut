@@ -23,6 +23,7 @@ class Modulator {
 	virtual void set(float); // Set a stable value
 	
 	virtual void sync();
+	virtual void syncToScheduler();
 	virtual void start(float);
 	virtual void noteOff();
 	

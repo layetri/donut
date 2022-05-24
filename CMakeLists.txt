@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.20)
 
 project(Donut VERSION 0.2 DESCRIPTION "Donut firmware for EL-ONE hardware synthesizer")
 
@@ -10,8 +10,8 @@ message("jack: ${jack_lib}")
 
 add_definitions( -DBUILD_PLATFORM=${PLATFORM_ID} )
 add_definitions( -DBUILD_ENVIRONMENT=debug )
-#add_definitions( -DBUILD_GUI_COUT )
-add_definitions( -DBUILD_GUI_NCURSES )
+add_definitions( -DBUILD_GUI_COUT )
+#add_definitions( -DBUILD_GUI_NCURSES )
 
 add_executable(donut ${sources_1} ${sources_2})
 target_link_libraries(donut PRIVATE

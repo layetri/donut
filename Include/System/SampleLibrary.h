@@ -31,6 +31,7 @@ class SampleLibrary {
 		void list();
 		
 		Sample* get(const string&);
+		Sample* getDefaultSample();
 		vector<Sample*>* getSamples();
 	private:
 		vector<Sample*> samples;

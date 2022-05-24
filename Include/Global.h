@@ -47,11 +47,6 @@ extern unsigned int samplerate;
 
 typedef std::vector<unsigned char> midi_message_t;
 
-enum ApplicationState {
-	app_Idle,
-	app_Sequencer
-};
-
 enum SourceID {
 	s_WS1,
 	s_WS2,
@@ -59,6 +54,7 @@ enum SourceID {
 	s_WT2,
 	s_KS,
 	s_Sampler,
+	s_Particles,
 	s_Global
 };
 
@@ -66,7 +62,9 @@ enum ModID {
 	m_LFO1,
 	m_LFO2,
 	m_ADSR1,
-	m_ADSR2
+	m_ADSR2,
+	m_RND1,
+	m_RND2
 };
 
 enum ParameterID {
@@ -83,6 +81,11 @@ enum ParameterID {
 	
 	p_LFO2_Rate,
 	p_LFO2_Sync,
+	
+	p_RND1_Rate,
+	p_RND1_Range,
+	p_RND1_Sync,
+	p_RND1_Slew,
 	
 	p_Filter_Cutoff,
 	p_Filter_Resonance,
@@ -137,6 +140,13 @@ enum ParameterID {
 	p_Sampler_Direction,
 	p_Sampler_Transpose,
 	
+	p_Particles_Amount,
+	p_Particles_Shape,
+	p_Particles_Density,
+	p_Particles_Algorithm,
+	p_Particles_GrainSize,
+	p_Particles_Position,
+	
 	p_Sub_Toggle,
 	
 	p_KeyboardSplit,
@@ -147,8 +157,11 @@ enum ParameterID {
 	p_FX_Delay_FBLeft,
 	p_FX_Delay_FBRight,
 	
+	p_OutputHPF_Frequency,
+	
 	p_VoiceMaster,
 	p_Master,
+	p_BPM,
 	p_Generic,
 	p_NotFound,
 	p_Exit
@@ -165,6 +178,8 @@ enum ControlID {
 	c_SampleLoaded,
 	c_SamplerAddRegion,
 	c_SamplerSetRoot,
+	c_ControlsStore,
+	c_ControlsLoad,
 	c_Sustain,
 	c_Transpose,
 	c_Split
