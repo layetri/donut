@@ -10,15 +10,20 @@ mutex mtx;
 void ui(bool& running, GUI& gui, queue<Event *>& events, ParameterPool& parameters, PresetEngine& presetEngine, vector<Voice*>& voices) {
 	// Setup UI
 	CommandPool cmd_pool(&events, &gui, &parameters, &presetEngine, &running);
-
-	while (running) {
-		auto m = gui.input();
-		
-		mtx.lock();
-		cmd_pool.handleCommand(m);
-		mtx.unlock();
-		usleep(1000);
-	}
+	
+	#ifndef BUILD_GUI_IMGUI
+		while (running) {
+			auto m = gui.input();
+	
+			mtx.lock();
+			cmd_pool.handleCommand(m);
+			mtx.unlock();
+			usleep(1000);
+		}
+	#else
+		gui.loop();
+		running = false;
+	#endif
 }
 
 // This thread handles internal application events
@@ -298,7 +303,10 @@ void displayMidiStatus(RtMidiIn* midi_in, RtMidiOut* midi_out) {
 }
 
 void program() {
-	GUI gui;
+	ParameterPool parameters;
+	queue<Event *> event_queue;
+	
+	GUI gui(&parameters, &event_queue);
 	gui.initgui();
 	
 	bool running = true;
@@ -316,7 +324,7 @@ void program() {
 	
 	srand(time(NULL));
 	
-	ParameterPool parameters;
+	// TODO: add ImGui
 	ModMatrix mm;
 	Scheduler scheduler(parameters.get(p_BPM, 0));
 	
@@ -335,7 +343,6 @@ void program() {
 	Tables tables;
 	tables.generateWaveforms();
 	
-	queue<Event *> event_queue;
 	vector<Voice *> voices;
 	vector<Buffer *> voice_buffers;
 
@@ -352,8 +359,7 @@ void program() {
 	
 	#ifdef ENGINE_JACK
 		// Assign the Jack callback function
-		jack.onProcess = [&sensei, &mm, &voices](jack_default_audio_sample_t *outBuf_L, jack_default_audio_sample_t *outBuf_R, jack_nframes_t nframes) {
-			auto time1 = chrono::steady_clock::now();
+		jack.onProcess = [&sensei, &mm, &voices, &gui](jack_default_audio_sample_t *outBuf_L, jack_default_audio_sample_t *outBuf_R, jack_nframes_t nframes) {
 			for(auto& v : voices) {
 				v->block((size_t) nframes);
 			}
@@ -367,7 +373,8 @@ void program() {
 
 				sensei.tick();
 			}
-			verbose(chrono::duration_cast<chrono::microseconds>(chrono::steady_clock::now() - time1).count());
+			
+			gui.stereoPlot(outBuf_L, outBuf_R, nframes);
 
 			return 0;
 		};
@@ -402,6 +409,7 @@ void program() {
 		autosave_handler.join();
 	#endif
 	
+	gui.cleanup();
 	delete midi_in;
 	delete midi_out;
 	exit(0);

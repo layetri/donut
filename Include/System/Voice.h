@@ -49,6 +49,8 @@ class Voice {
 	sample_t getSample();
 	clock_t getTime() const;
 	Note* getNote();
+	
+	Parameter* multiplier;
   private:
 	vector<Modulator*> modulators;
 	vector<Source*> sources;

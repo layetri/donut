@@ -77,6 +77,7 @@ Voice::Voice(Buffer* output, ParameterPool* params, ModMatrix* mm, Tables* table
 	this->lpf = new LowPassFilter(parameters->get(p_Filter_Cutoff, voice_id), mixbus, output);
 	
 	ws_fm_amount = parameters->get(p_FM_Amount, voice_id);
+	multiplier = parameters->get(p_VoiceMaster, voice_id);
 }
 
 Voice::~Voice() {

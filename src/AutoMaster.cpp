@@ -31,18 +31,15 @@ void AutoMaster::process () {
 		left += voice->getSample();
 		right += voice->getBuffer()->readBack(stereoize);
 
-		on_voices += !(voice->isAvailable());
+		on_voices += voice->multiplier->value > 0.0f;
 	}
 	
 	on_voices = on_voices + (on_voices == 0);
+	mult = (float) (0.5 + 0.4 * sqrt(1.0 / on_voices));
+	mult = (mult >= 1.0f) + (mult < 1.0f) * mult;
 	
-	output_left->write((sample_t) (left * (sqrt(1.0 / on_voices))));
-	auto tmp = (sample_t) (left * (sqrt(1.0 / on_voices)));
-	output_right->write((sample_t) (right * (sqrt(1.0 / on_voices))));
-//	if(tmp != 0) {
-//		verbose(tmp);
-//	}
-//	verbose(output_left->getCurrentSample());
+	output_left->write((sample_t) (left * mult));
+	output_right->write((sample_t) (right * mult));
 	
 	delay->process();
 }

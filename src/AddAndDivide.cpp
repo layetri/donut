@@ -34,7 +34,8 @@ void AddAndDivide::process() {
     val += b->getCurrentSampleMultiplied();
   }
   div = div < 1.0f ? 1.0f : div;
-  val = (sample_t) ((float) val / ((div == 0) + div));
+//  val = (sample_t) ((float) val / ((float) (div == 0.0f) + div));
+  val = (sample_t) ((float) val / 7.0f);
 
   filter_queue->write(val * master->value);
   output_filter->process();

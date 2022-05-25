@@ -16,15 +16,15 @@ ParameterPool::ParameterPool() {
 		store(p_ADSR2_Sustain, i, "adsr2_sustain", 1.0, 1.0);
 		store(p_ADSR2_Release, i, "adsr2_release", 2200.0, 2200.0);
 
-		store(p_Filter_Cutoff, i, "filter_cutoff", 16000.0, 16000.0);
+		store(p_Filter_Cutoff, i, "filter_cutoff", 16000.0, 16000.0, 1.0f, 16000.0f);
 		store(p_Filter_Resonance, i, "filter_resonance", 0.5, 0.5);
 		store(p_Filter_Type, i, "filter_type", 0.0, 0.0);
 		store(p_Filter_KeyTrack, i, "filter_keytrack", 0.0, 0.0);
 
-		store(p_FM_Amount, i, "fm_amount", 0.77, 0.77);
 		store(p_FM_KeyTrack, i, "fm_keytrack", 0.5, 0.5);
-
+		
 		store(p_WT1_Amount, i, "wt1_amount", 0.0, 0.0);
+		store(p_FM_Amount, i, "wt1_fm", 0.77, 0.77);
 		store(p_WT1_Shape, i, "wt1_shape", 1.0, 1.0);
 		store(p_WT1_Detune, i, "wt1_detune", 430.0, 430.0);
 		store(p_WT1_BaseFrequency, i, "wt1_base_frequency", 440.0, 440.0);
@@ -66,7 +66,7 @@ ParameterPool::ParameterPool() {
 		store(p_RND1_Sync, i, "rnd1_sync", 0.0, 0.0);
 		store(p_RND1_Slew, i, "rnd1_slew", 0.5, 0.5);
 		
-		store(p_OutputHPF_Frequency, i, "output_hpf_frequency", 10.0f, 10.0f);
+		store(p_OutputHPF_Frequency, i, "output_hpf_frequency", 10.0f, 10.0f, 1.0f, 1000.0f);
 		store(p_NotFound, i, "not_found", 0.0, 0.0);
 		store(p_VoiceMaster, i, "voice_master", 1.0, 0.0);
 		
@@ -146,9 +146,9 @@ float ParameterPool::value(ParameterID pid, uint8_t voice_id) {
 	return get(pid, voice_id)->value;
 }
 
-void ParameterPool::store(ParameterID pid, uint8_t voice_id, string key, float value, float base_value) {
+void ParameterPool::store(ParameterID pid, uint8_t voice_id, string key, float value, float base_value, float min, float max) {
 	if(!voice_id) {
 		dictionary.push_back(new ParameterDict {pid, key});
 	}
-	parameters.push_back(new Parameter {pid, voice_id, value, base_value});
+	parameters.push_back(new Parameter {pid, voice_id, value, base_value, min, max});
 }

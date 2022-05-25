@@ -36,7 +36,7 @@ class AutoMaster {
 		uint16_t stereoize;
 		uint8_t on_voices;
 		long left, right;
-		float scaling_sample;
+		float scaling_sample, mult = 0.0f;
 };
 
 
