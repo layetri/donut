@@ -304,9 +304,10 @@ void displayMidiStatus(RtMidiIn* midi_in, RtMidiOut* midi_out) {
 
 void program() {
 	ParameterPool parameters;
+	ModMatrix mm(&parameters);
 	queue<Event *> event_queue;
 	
-	GUI gui(&parameters, &event_queue);
+	GUI gui(&parameters, &mm, &event_queue);
 	gui.initgui();
 	
 	bool running = true;
@@ -325,7 +326,7 @@ void program() {
 	srand(time(NULL));
 	
 	// TODO: add ImGui
-	ModMatrix mm;
+	
 	Scheduler scheduler(parameters.get(p_BPM, 0));
 	
 //	scheduler.store([]() {verbose("one measure!");}, Timestamp {1, 0, 0}, "liveness");

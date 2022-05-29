@@ -7,6 +7,7 @@
 
 #include <Global.h>
 #include <System/ParameterStore.h>
+#include <System/ModMatrix.h>
 
 #include <string>
 #include <mutex>
@@ -30,7 +31,7 @@ using namespace std;
 
 class GUI {
 	public:
-		GUI (ParameterPool* parameters, queue<Event*>* event_queue);
+		GUI (ParameterPool* parameters, ModMatrix* mod, queue<Event*>* event_queue);
 		~GUI ();
 		
 		void initgui();
@@ -43,6 +44,7 @@ class GUI {
 	
 	private:
 		ParameterPool* parameters;
+		ModMatrix* mod;
 //		CommandPool* commands;
 		
 		int row, col, winy, winx;
@@ -52,7 +54,7 @@ class GUI {
 	#ifdef BUILD_GUI_IMGUI
 		ImGuiIO* io;
 		GLFWwindow* window;
-		ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+		ImVec4 clear_color = ImVec4(0.496f, 0.882f, 0.968f, 1.00f);
 		
 		bool demo_var = false;
 		deque<string> log;

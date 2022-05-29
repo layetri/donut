@@ -61,7 +61,7 @@ void PresetEngine::load(string name) {
 				for (auto &m: filecontents["mod_links"]) {
 					modmatrix->link(
 					  pool->get(pool->translate((string) m["destination"]), m["voice"]),
-					  modmatrix->get(m["source"], m["voice"]),
+					  modmatrix->get((string) m["source"], m["voice"]),
 					  m["voice"]);
 				}
 			}

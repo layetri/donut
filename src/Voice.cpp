@@ -54,12 +54,12 @@ Voice::Voice(Buffer* output, ParameterPool* params, ModMatrix* mm, Tables* table
 		  params->get(p_ADSR2_Release, v_id),
 		  m_ADSR2, "adsr2", v_id));
 	
-//	modulators.push_back(new RandomGenerator(
-//		  params->get(p_RND1_Rate, v_id),
-//		  params->get(p_RND1_Range, v_id),
-//		  params->get(p_RND1_Slew, v_id),
-//		  params->get(p_RND1_Sync, v_id),
-//		  m_RND1, "rnd1", v_id));
+	modulators.push_back(new RandomGenerator(
+		  params->get(p_RND1_Rate, v_id),
+		  params->get(p_RND1_Range, v_id),
+		  params->get(p_RND1_Slew, v_id),
+		  params->get(p_RND1_Sync, v_id),
+		  m_RND1, "rnd1", v_id));
 
 	for(auto& m : modulators) {
 		mm->store(m);
@@ -187,6 +187,7 @@ Note* Voice::getNote() {
 }
 
 void Voice::set(ParameterID parameter, int value) {
+	auto p = parameters->get(parameter, voice_id);
 	switch(parameter) {
 		case p_WS1_Harmonics:
 			parameters->set(p_WS1_Harmonics, voice_id, ((value + 1) / 4) - 16);
@@ -208,48 +209,11 @@ void Voice::set(ParameterID parameter, int value) {
 		case p_WS2_Detune_Range:
 			parameters->set(p_WS2_Detune_Range, voice_id, 1.0f - (127.0f / value));
 			break;
-		case p_Filter_Cutoff:
-			parameters->set(p_Filter_Cutoff, voice_id, (value / 127.0f) * 16000.0);
-			break;
 		case p_Filter_Resonance:
-			lpf->setResonance(0.5f + (value / 12.7f));
 			parameters->set(p_Filter_Resonance, voice_id, 0.5f + (value / 12.7f));
-			break;
-		case p_ADSR1_Attack:
-			parameters->set(p_ADSR1_Attack, voice_id, ((value / 127.0f) * 220500));
-			break;
-		case p_ADSR1_Decay:
-			parameters->set(p_ADSR1_Decay, voice_id, ((value / 127.0f) * 220500));
-			break;
-		case p_ADSR1_Sustain:
-			parameters->set(p_ADSR1_Sustain, voice_id, (value / 127.0f));
-			break;
-		case p_ADSR1_Release:
-			parameters->set(p_ADSR1_Release, voice_id, ((value / 127.0f) * 220500));
 			break;
 		case p_LFO1_Rate:
 			parameters->set(p_LFO1_Rate, voice_id, ((value / 127.0f) * 20.0) + 0.1);
-			break;
-		case p_FM_Amount:
-			parameters->set(p_FM_Amount, voice_id, value / 127.0f);
-			break;
-		case p_FM_KeyTrack:
-			parameters->set(p_FM_KeyTrack, voice_id, value / 127.0f);
-			break;
-		case p_WS1_Amount:
-			parameters->set(p_WS1_Amount, voice_id, value / 127.0f);
-			break;
-		case p_WS2_Amount:
-			parameters->set(p_WS2_Amount, voice_id, value / 127.0f);
-			break;
-		case p_WT1_Amount:
-			parameters->set(p_WT1_Amount, voice_id, value / 127.0f);
-			break;
-		case p_WT2_Amount:
-			parameters->set(p_WT2_Amount, voice_id, value / 127.0f);
-			break;
-		case p_KS_Amount:
-			parameters->set(p_KS_Amount, voice_id, value / 127.0f);
 			break;
 		case p_Sampler_Amount:
 			parameters->set(p_Sampler_Amount, voice_id, value / 127.0f);
@@ -280,26 +244,8 @@ void Voice::set(ParameterID parameter, int value) {
 			parameters->set(p_WT2_Shape, voice_id, value / 63.5f);
 			sources[s_WT2]->refresh();
 			break;
-		case p_WT1_Transpose:
-			parameters->set(p_WT1_Transpose, voice_id, value - 64);
-			break;
-		case p_WT2_Transpose:
-			parameters->set(p_WT2_Transpose, voice_id, value - 64);
-			break;
-		case p_WS1_Transpose:
-			parameters->set(p_WS1_Transpose, voice_id, value - 64);
-			break;
-		case p_WS2_Transpose:
-			parameters->set(p_WS2_Transpose, voice_id, value - 64);
-			break;
-		case p_KS_Transpose:
-			parameters->set(p_KS_Transpose, voice_id, value - 64);
-			break;
-		case p_OutputHPF_Frequency:
-			parameters->set(p_OutputHPF_Frequency, voice_id, (value / 127.0f) * 1000.0f);
-			break;
 		default:
-			gui->output("Parameter doesn't exist");
+			parameters->set(parameter, voice_id, ((value / 127.0f) * (p->max - p->min)) + p->min);
 			break;
 	}
 }

@@ -10,9 +10,10 @@ static void glfw_error_callback(int error, const char* description) {
 	fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
 
-GUI::GUI (ParameterPool* parameters, queue<Event*>* event_queue) {
+GUI::GUI (ParameterPool* parameters, ModMatrix* mod, queue<Event*>* event_queue) {
 	this->parameters = parameters;
 	this->event_queue = event_queue;
+	this->mod = mod;
 	
 	for(auto& p : *parameters->getDictionary()) {
 		if(p->key.find("amount") != string::npos) {
@@ -225,6 +226,39 @@ void GUI::loop() {
 				if(ImGui::IsItemEdited()) {
 					event_queue->push(new Event{e_Control, (uint16_t)(21 + v->pid), (uint16_t) (127.0f * (v->value / (v->max - v->min)))});
 				}
+			}
+			ImGui::End();
+		}
+		
+		// Modulation Matrix
+		{
+			ImGui::Begin("Mod Matrix");
+			if (ImGui::BeginTable("modmtx", mod->getDict()->size() + 1)) {
+				ImGui::TableNextRow();
+				int col = 1;
+				for (auto& m : *mod->getDict()) {
+					ImGui::TableSetColumnIndex(col);
+					ImGui::Text("%s", m.key.c_str());
+					col++;
+				}
+				
+				for (auto& p : *parameters->getDictionary()) {
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("%s", p->key.c_str());
+					
+					col = 1;
+					for (auto& m : *mod->getDict()) {
+						float v = 0.0f;
+						ImGui::TableSetColumnIndex(col);
+						ImGui::SliderFloat("", &v, 0.0f, 1.0f);
+						if(ImGui::IsItemEdited()) {
+							mod->setOrCreate(m.mid, p->pid, v);
+						}
+						col++;
+					}
+				}
+				ImGui::EndTable();
 			}
 			ImGui::End();
 		}

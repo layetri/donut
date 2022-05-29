@@ -7,7 +7,7 @@
 
 #include <vector>
 #include <Global.h>
-#include "ParameterStore.h"
+#include <System/ParameterStore.h>
 #include <Modulator/Modulator.h>
 
 struct ModDestination {
@@ -17,21 +17,33 @@ struct ModDestination {
 	float amount = 1.0;
 };
 
+struct ModDict {
+	ModID mid;
+	string key;
+};
+
 class ModMatrix {
 public:
-	ModMatrix();
+	ModMatrix(ParameterPool* parameters);
 	~ModMatrix();
 	
 	void link(Parameter*, Modulator*, uint8_t, float amount=1.0);
 	void process();
 	void store(Modulator*);
+	void setOrCreate(ModID, ParameterID, float);
 	bool clearAll();
 	
 	Modulator* get(string, uint8_t);
+	Modulator* get(ModID, uint8_t);
 	vector<ModDestination*>* get();
+	ModDestination* get(Modulator*, Parameter*, uint8_t);
+	vector<Modulator*>* getMods();
+	vector<ModDict>* getDict();
 private:
 	vector<ModDestination*> connections;
 	vector<Modulator*> modulators;
+	vector<ModDict> dictionary;
+	ParameterPool* parameters;
 };
 
 
