@@ -16,6 +16,8 @@ add_library(
         backends/imgui_impl_opengl3.h
         backends/imgui_impl_opengl3_loader.h
         backends/imgui_impl_opengl3.cpp
+        backends/imgui_impl_opengl2.h
+        backends/imgui_impl_opengl2.cpp
         imgui_internal.h
         imstb_rectpack.h
         imstb_textedit.h
