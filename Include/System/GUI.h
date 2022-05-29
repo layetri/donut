@@ -17,7 +17,7 @@
 #elif defined(BUILD_GUI_IMGUI)
 #include "../../imgui/imgui.h"
 #include "../../imgui/backends/imgui_impl_glfw.h"
-#include "../../imgui/backends/imgui_impl_opengl3.h"
+#include "../../imgui/backends/imgui_impl_opengl2.h"
 #include <stdio.h>
 #include <GLFW/glfw3.h>
 #endif
