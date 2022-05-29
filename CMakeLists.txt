@@ -17,7 +17,21 @@ add_definitions( -DBUILD_ENVIRONMENT=debug )
 #add_definitions( -DBUILD_GUI_NCURSES )
 add_definitions( -DBUILD_GUI_IMGUI )
 
+if(UNIX AND NOT APPLE)
+    # finds OpenGL, GLU and X11
+    find_package(OpenGL REQUIRED)
+    if(NOT OPENGL_FOUND)
+        message("ERROR: OpenGL not found")
+    endif(NOT OPENGL_FOUND)
+    set(GL_LIBRARY GL GLU X11)
+endif()
+
 add_executable(donut ${sources_1} ${sources_2})
+
+if(UNIX AND NOT APPLE)
+    target_link_libraries(donut PRIVATE glfw3 ${GL_LIBRARY} dl m)
+endif()
+
 target_link_libraries(donut PRIVATE
         ${jack_lib}
         -lncurses
@@ -55,5 +69,3 @@ target_compile_definitions(donut PRIVATE
 target_include_directories(donut PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/Include")
 target_include_directories(donut PRIVATE "/usr/local/include")
 target_include_directories(donut PRIVATE "/opt/homebrew/include")
-
-
