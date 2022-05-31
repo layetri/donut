@@ -22,8 +22,11 @@
 #include <string>
 #include <tuple>
 #include <vector>
+#include <chrono>
 
-#include <curses.h>
+#ifdef BUILD_GUI_NCURSES
+	#include <curses.h>
+#endif
 
 #define NUM_PRESETS 8
 #if !defined(PLATFORM_DARWIN_X86)

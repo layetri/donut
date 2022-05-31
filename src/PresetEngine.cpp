@@ -26,14 +26,38 @@ PresetEngine::~PresetEngine() {
 
 void PresetEngine::log() {
 	filesystem::path path = filesystem::current_path() / ".donut_runtime/presets";
+	#ifdef BUILD_GUI_IMGUI
+		vector<PresetGUIItem> gui_presets;
+	#endif
 	for (const auto & entry : filesystem::directory_iterator(path)) {
-		available_presets->push_back(entry.path().c_str());
+		auto filename = entry.path().string();
+		filename = filename.substr(filename.find_last_of("/\\") + 1);
+		filename = filename.substr(0, filename.find_last_of("."));
+		
+		available_presets->push_back(filename.c_str());
+		#ifdef BUILD_GUI_IMGUI
+			// Geez C++...
+			// TODO: clean this up, someday
+			auto ts = filesystem::last_write_time(entry);
+			auto cstime = chrono::file_clock::to_sys(ts);
+			auto ftime = chrono::system_clock::to_time_t(cstime);
+			
+			char buffer [80];
+			strftime(buffer, 80, "%x, %R", localtime(&ftime));
+			
+			string ln = buffer;
+			gui_presets.push_back(PresetGUIItem {filename, ln});
+		#endif
 	}
 	
-	for (uint i = 0; i < available_presets->size(); i++) {
-		gui->output("[" + to_string(i) + "] ", false, -1, -1, 5);
-		gui->output(available_presets->at(i).erase(0, 65) + "\n", false);
-	}
+	#ifndef BUILD_GUI_IMGUI
+		for (uint i = 0; i < available_presets->size(); i++) {
+			gui->output("[" + to_string(i) + "] ", false, -1, -1, 5);
+			gui->output(available_presets->at(i) + "\n", false);
+		}
+	#else
+		gui->updatePresets(gui_presets);
+	#endif
 }
 
 void PresetEngine::load(string name) {

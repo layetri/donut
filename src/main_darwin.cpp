@@ -27,7 +27,7 @@ void ui(bool& running, GUI& gui, queue<Event *>& events, ParameterPool& paramete
 }
 
 // This thread handles internal application events
-void event(vector<Voice*>& voices, Sampler& sampler, GUI& gui, NoteHandler& nh, ParameterPool& parameters, queue<Event *>& events, SampleLibrary& lib, RtMidiIn* midiIn, RtMidiOut* midiOut, bool& running) {
+void event(vector<Voice*>& voices, Sampler& sampler, GUI& gui, NoteHandler& nh, ParameterPool& parameters, PresetEngine& pe, queue<Event *>& events, SampleLibrary& lib, RtMidiIn* midiIn, RtMidiOut* midiOut, bool& running) {
 	bool remap_mode = false;
 	uint8_t remap_cc = 0;
 	ControlMap cm(&parameters);
@@ -101,6 +101,12 @@ void event(vector<Voice*>& voices, Sampler& sampler, GUI& gui, NoteHandler& nh, 
 					} else if(e->cid == c_ControlsStore) {
 						cm.storeMap(e->str_content);
 						gui.output("Controls saved.");
+					} else if(e->cid == c_PresetsList) {
+						pe.log();
+					} else if(e->cid == c_PresetLoad) {
+						pe.load(e->str_content);
+					} else if(e->cid == c_PresetStore) {
+						pe.store(e->str_content);
 					} else if(e->cc >= p_ADSR1_Attack && e->cc <= p_Exit) {
 						nh.set(ParameterID(e->cc - 21), e->value);
 					}
@@ -235,7 +241,12 @@ void listMidiDevices(RtMidiIn* midi_in, RtMidiOut* midi_out, GUI* gui) {
 	// Check inputs.
 	unsigned int nPorts = midi_in->getPortCount();
 	unsigned int nOutPorts = midi_out->getPortCount();
-	gui->output("\nThere are " + to_string(nPorts) + " MIDI input sources available.\n", false);
+	#ifndef BUILD_GUI_IMGUI
+		gui->output("\nThere are " + to_string(nPorts) + " MIDI input sources available.\n", false);
+	#else
+		vector<string> in_ports;
+		vector<string> out_ports;
+	#endif
 
 	// List inputs
 	string portName;
@@ -247,14 +258,22 @@ void listMidiDevices(RtMidiIn* midi_in, RtMidiOut* midi_out, GUI* gui) {
 			delete midi_in;
 			return;
 		}
-		gui->output("  Input Port #" + to_string(i) + ": " + portName + "\n", false);
+		#ifndef BUILD_GUI_IMGUI
+			gui->output("  Input Port #" + to_string(i) + ": " + portName + "\n", false);
+		#else
+			in_ports.push_back(portName);
+		#endif
 	}
-	gui->output("\nUse ", false);
-	gui->output("midi in [device_number]", false, -1, -1, 5);
-	gui->output(" to select a MIDI input device.", false);
 	
-	// List outputs
-	gui->output("\nThere are " + to_string(nOutPorts) + " MIDI output destinations available.\n", false);
+	#ifndef BUILD_GUI_IMGUI
+		gui->output("\nUse ", false);
+		gui->output("midi in [device_number]", false, -1, -1, 5);
+		gui->output(" to select a MIDI input device.", false);
+	
+	
+		// List outputs
+		gui->output("\nThere are " + to_string(nOutPorts) + " MIDI output destinations available.\n", false);
+	#endif
 	for (unsigned int i = 0; i < nOutPorts; i++) {
 		try {
 			portName = midi_out->getPortName(i);
@@ -263,11 +282,19 @@ void listMidiDevices(RtMidiIn* midi_in, RtMidiOut* midi_out, GUI* gui) {
 			delete midi_out;
 			return;
 		}
-		gui->output("  Output Port #" + to_string(i) + ": " + portName + "\n", false);
+		#ifndef BUILD_GUI_IMGUI
+			gui->output("  Output Port #" + to_string(i) + ": " + portName + "\n", false);
+		#else
+			out_ports.push_back(portName);
+		#endif
 	}
-	gui->output("\nUse ", false);
-	gui->output("midi out [device_number]", false, -1, -1, 5);
-	gui->output(" to select a MIDI output device.", true);
+	#ifndef BUILD_GUI_IMGUI
+		gui->output("\nUse ", false);
+		gui->output("midi out [device_number]", false, -1, -1, 5);
+		gui->output(" to select a MIDI output device.", true);
+	#else
+		gui->updateMidiDevices(in_ports, out_ports);
+	#endif
 }
 
 void switchMidiInputs(RtMidiIn* midi_in, uint port, GUI* gui) {
@@ -394,7 +421,7 @@ void program() {
 	init_midi(midi_in);
 
 	thread midi_handler(midi, ref(handle), ref(gui), ref(event_queue), ref(midi_in), ref(midi_out), ref(running));
-	thread event_handler(event, ref(voices), ref(sampler), ref(gui), ref(handle), ref(parameters), ref(event_queue), ref(lib), ref(midi_in), ref(midi_out), ref(running));
+	thread event_handler(event, ref(voices), ref(sampler), ref(gui), ref(handle), ref(parameters), ref(pe), ref(event_queue), ref(lib), ref(midi_in), ref(midi_out), ref(running));
 //	thread scheduling_handler(schedule, ref(scheduler), ref(running));
 	
 	#ifndef BUILD_GUI_COUT

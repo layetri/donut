@@ -15,6 +15,12 @@ GUI::GUI (ParameterPool* parameters, ModMatrix* mod, queue<Event*>* event_queue)
 	this->event_queue = event_queue;
 	this->mod = mod;
 	
+	mainButtons.push_back(ToggleWindowButton{"MIDI Console", win_MIDI_Console});
+	mainButtons.push_back(ToggleWindowButton{"MIDI Devices", win_MIDI_Devices});
+	mainButtons.push_back(ToggleWindowButton{"Oscilloscope", win_Oscilloscope});
+	mainButtons.push_back(ToggleWindowButton{"Presets", win_Presets});
+	mainButtons.push_back(ToggleWindowButton{"Pads", win_Pads});
+	
 	for(auto& p : *parameters->getDictionary()) {
 		if(p->key.find("amount") != string::npos) {
 			mix_controls.push_back(parameters->get(p->pid, 0));
@@ -205,20 +211,162 @@ void GUI::loop() {
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 		
-		// Logging console
+		// Main window
 		{
-			ImGui::Begin("Application Console");
+			ImGui::Begin("Application Controls");
+			
+			for(auto& b : mainButtons) {
+				ImGui::SameLine();
+				ImGui::Button(b.label.c_str());
+				if (ImGui::IsItemClicked()) {
+					b.status = !b.status;
+				}
+			}
+			
+			ImGui::End();
+		}
+		
+		// MIDI console
+		if(mainButtons[win_MIDI_Console].status) {
+			ImGui::Begin("MIDI Console");
 			for(basic_string<char> line : log) {
 				ImGui::Text("%s", line.c_str());
 			}
 			ImGui::End();
 		}
 		
+		// MIDI Devices
+		if(mainButtons[win_MIDI_Devices].status) {
+			ImGui::Begin("MIDI Devices");
+			event_queue->push(new Event{e_System, 21 + p_MIDI_List, 0});
+			
+			if (ImGui::BeginListBox("MIDI Inputs")) {
+				for (int n = 0; n < midi_inputs.size(); n++) {
+					const bool is_selected = (midi_in_selector == n);
+					if (ImGui::Selectable(midi_inputs[n].c_str(), is_selected)) {
+						midi_in_selector = n;
+						event_queue->push(new Event{e_System, 21 + p_MIDI_In, midi_in_selector});
+					}
+					
+					// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndListBox();
+			}
+			
+			if (ImGui::BeginListBox("MIDI Outputs")) {
+				for (int n = 0; n < midi_outputs.size(); n++) {
+					const bool is_selected = (midi_out_selector == n);
+					if (ImGui::Selectable(midi_outputs[n].c_str(), is_selected)) {
+						midi_out_selector = n;
+						event_queue->push(new Event{e_System, 21 + p_MIDI_In, midi_out_selector});
+					}
+					
+					// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndListBox();
+			}
+			
+			ImGui::End();
+		}
+		
 		// Output graph
-		{
+		if(mainButtons[win_Oscilloscope].status) {
 			ImGui::Begin("Oscilloscope");
 			ImGui::PlotLines("Left", plotL, plot_size, 0, NULL, -1.0f, 1.0f, ImVec2(0, 80));
 			ImGui::PlotLines("Right", plotR, plot_size, 0, NULL, -1.0f, 1.0f, ImVec2(0, 80));
+			ImGui::End();
+		}
+		
+		// Presets
+		if(mainButtons[win_Presets].status) {
+			ImGui::Begin("Presets");
+			
+			ImVec2 list_dims(120, 250);
+			event_queue->push(new ControlEvent{c_PresetsList});
+			
+			if(ImGui::Button("New..."))
+				ImGui::OpenPopup("Store preset");
+			
+			if(!presets.empty()) {
+				ImGui::BeginGroup();
+				if (ImGui::BeginListBox("##presets_list", list_dims)) {
+					for (int n = 0; n < presets.size(); n++) {
+						const bool is_selected = (selected_preset == n);
+						if (ImGui::Selectable(presets[n].name.c_str(), is_selected)) {
+							selected_preset = n;
+						}
+						
+						// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+						if (is_selected)
+							ImGui::SetItemDefaultFocus();
+					}
+				}
+				ImGui::EndListBox();
+				ImGui::EndGroup();
+				ImGui::SameLine();
+				
+				ImGui::BeginGroup();
+				ImGui::Text("%s", presets[selected_preset].name.c_str());
+				ImGui::Text("Modified: %s", presets[selected_preset].created_at.c_str());
+				if(ImGui::Button("Load preset")) {
+					event_queue->push(new StringEvent{c_PresetLoad, presets[selected_preset].name});
+				}
+				ImGui::EndGroup();
+			}
+			
+			if(ImGui::BeginPopupModal("Store preset")) {
+				ImGui::SetItemDefaultFocus();
+				ImGui::InputText("Preset name", pr_name, 80);
+				
+				if(ImGui::Button("Store", ImVec2(120, 0))) {
+					string pr_name_cast(pr_name);
+					output(pr_name_cast);
+					event_queue->push(new StringEvent{c_PresetStore, pr_name_cast});
+					ImGui::CloseCurrentPopup();
+				}
+				ImGui::SameLine();
+				if(ImGui::Button("Cancel", ImVec2(120,0)))
+					ImGui::CloseCurrentPopup();
+				
+				ImGui::EndPopup();
+			}
+			
+			ImGui::End();
+		}
+		
+		if(mainButtons[win_Pads].status) {
+			ImGui::Begin("Pads##pad_window");
+			
+			// TODO: add button mode controls
+			
+			ImGuiStyle& style = ImGui::GetStyle();
+			ImVec2 button_sz(200, 200);
+			int buttons_count = 8;
+			float window_visible_x2 = ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x;
+			for (int n = 0; n < buttons_count; n++) {
+				ImGui::PushID(n);
+				if(ImGui::Button(to_string(n).c_str(), button_sz)) {
+					switch(padMode) {
+						case pm_MIDI:
+							output(to_string(n));
+							break;
+						case pm_Trigger:
+							
+							break;
+					}
+				}
+				
+				float last_button_x2 = ImGui::GetItemRectMax().x;
+				float next_button_x2 = last_button_x2 + style.ItemSpacing.x + button_sz.x; // Expected position if next button was on same line
+				if (n + 1 < buttons_count && next_button_x2 < window_visible_x2)
+					ImGui::SameLine();
+				ImGui::PopID();
+			}
+			
 			ImGui::End();
 		}
 		
@@ -318,4 +466,23 @@ void GUI::stereoPlot(float* left, float* right, uint size) {
 	this->plotL = left;
 	this->plotR = right;
 	this->plot_size = size;
+}
+
+void GUI::updateMidiDevices (vector<string> inputs, vector<string> outputs) {
+	midi_inputs.clear();
+	for(auto& i : inputs) {
+		midi_inputs.push_back(i);
+	}
+	
+	midi_outputs.clear();
+	for(auto& o : outputs) {
+		midi_outputs.push_back(o);
+	}
+}
+
+void GUI::updatePresets(vector<PresetGUIItem> presets) {
+	this->presets.clear();
+	for(auto& p : presets) {
+		this->presets.push_back(p);
+	}
 }
