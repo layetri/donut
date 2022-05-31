@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.18)
 
 project(Donut VERSION 0.2 DESCRIPTION "Donut firmware for EL-ONE hardware synthesizer")
 

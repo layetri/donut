@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 3.18)
 
 set(CMAKE_CXX_STANDARD 20)
 
@@ -16,6 +16,8 @@ add_library(
         backends/imgui_impl_opengl3.h
         backends/imgui_impl_opengl3_loader.h
         backends/imgui_impl_opengl3.cpp
+        backends/imgui_impl_opengl2.h
+        backends/imgui_impl_opengl2.cpp
         imgui_internal.h
         imstb_rectpack.h
         imstb_textedit.h
