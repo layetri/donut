@@ -23,8 +23,6 @@ GUI::GUI (ParameterPool* parameters, ModMatrix* mod, queue<Event*>* event_queue)
 	mainButtons.push_back(ToggleWindowButton{ICON_FAD_MIDIPLUG "MIDI Devices", win_MIDI_Devices});
 	mainButtons.push_back(ToggleWindowButton{ICON_FAD_MODSINE "Oscilloscope", win_Oscilloscope});
 	
-	
-	
 	for(auto& p : *parameters->getDictionary()) {
 		if(p->key.find("amount") != string::npos) {
 			mix_controls.push_back(parameters->get(p->pid, 0));
@@ -217,11 +215,32 @@ void GUI::loop() {
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 		
+		int fwx, fwy;
+		glfwGetWindowSize(window, &fwx, &fwy);
+		
+		ImGuiStyle& window_style = ImGui::GetStyle();
+		window_style.ChildRounding = 7.0f;
+		window_style.FrameRounding = 7.0f;
+//		window_style.WindowRounding = 7.0f;
+		window_style.GrabRounding = 7.0f;
+		window_style.TabRounding = 7.0f;
+		window_style.PopupRounding = 7.0f;
+		window_style.ScrollbarRounding = 7.0f;
+		
 		// Main window
 		{
-			ImGui::Begin("Application Controls");
+			ImGuiWindowFlags topbar_flags = 0;
+			topbar_flags |= ImGuiWindowFlags_NoResize;
+			topbar_flags |= ImGuiWindowFlags_NoMove;
+			topbar_flags |= ImGuiWindowFlags_NoCollapse;
+			topbar_flags |= ImGuiWindowFlags_NoTitleBar;
+			
+			ImGui::SetNextWindowSize(ImVec2(fwx, 45));
+			ImGui::SetNextWindowPos(ImVec2(0, 0));
+			ImGui::Begin("Application Controls", NULL, topbar_flags);
 			for(auto& b : mainButtons) {
 				ImGui::SameLine();
+				
 				ImGui::Button(b.label.c_str());
 				if (ImGui::IsItemClicked()) {
 					b.status = !b.status;
@@ -286,8 +305,7 @@ void GUI::loop() {
 		
 		// Presets
 		if(mainButtons[win_Presets].status) {
-			ImVec2 window_dims(400, 327);
-			ImGui::SetNextWindowSize(window_dims);
+			ImGui::SetNextWindowSize(ImVec2(400, 327));
 			ImGuiWindowFlags preset_window_flags = 0;
 			preset_window_flags |= global_window_flags;
 			preset_window_flags |= ImGuiWindowFlags_NoResize;
@@ -296,8 +314,8 @@ void GUI::loop() {
 			ImVec2 list_dims(120, 250);
 			event_queue->push(new ControlEvent{c_PresetsList});
 			
-			if(ImGui::Button("New..."))
-				ImGui::OpenPopup("Store preset");
+			if(ImGui::Button(ICON_FAD_SAVEAS "New..."))
+				ImGui::OpenPopup(ICON_FAD_SAVEAS "Store preset");
 			
 			if(!presets.empty()) {
 				ImGui::BeginGroup();
@@ -331,7 +349,7 @@ void GUI::loop() {
 				ImGui::EndGroup();
 			}
 			
-			if(ImGui::BeginPopupModal("Store preset")) {
+			if(ImGui::BeginPopupModal(ICON_FAD_SAVEAS "Store preset")) {
 				ImGui::SetItemDefaultFocus();
 				ImGui::InputText("Preset name", pr_name, 80);
 				
@@ -352,12 +370,26 @@ void GUI::loop() {
 		}
 		
 		if(mainButtons[win_Pads].status) {
-			ImGui::Begin("Pads##pad_window");
+			ImGui::SetNextWindowSize(ImVec2(641, 380));
+			ImGuiWindowFlags pads_flags = 0;
+			pads_flags |= ImGuiWindowFlags_NoResize;
+			pads_flags |= ImGuiWindowFlags_NoScrollbar;
+			pads_flags |= ImGuiWindowFlags_NoCollapse;
+			
+			ImGui::Begin(ICON_FAD_DRUMPAD "Pads##pad_window", NULL, pads_flags);
 			
 			// TODO: add button mode controls
+			if(ImGui::Button("MIDI")) {
+				padMode = pm_MIDI;
+			}
+			ImGui::SameLine();
+			if(ImGui::Button("Trigger")) {
+				padMode = pm_Trigger;
+			}
 			
+			ImGui::Text("X: %f, Y: %f", ImGui::GetWindowSize().x, ImGui::GetWindowSize().y);
 			ImGuiStyle& style = ImGui::GetStyle();
-			ImVec2 button_sz(200, 200);
+			ImVec2 button_sz(150, 150);
 			int buttons_count = 8;
 			float window_visible_x2 = ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x;
 			for (int n = 0; n < buttons_count; n++) {
@@ -385,13 +417,17 @@ void GUI::loop() {
 		
 		// Voice controls
 		{
-			ImGui::Begin("Voice controls");
+			ImGui::SetNextWindowSize(ImVec2(400, fwy - 45));
+			ImGui::SetNextWindowPos(ImVec2(fwx-400, 45));
+			ImGui::Begin(ICON_FAD_SLIDERHANDLE_1 "Voice controls", NULL, global_window_flags);
 			for(auto& v : voice_controls) {
 				auto name = parameters->translate(v->pid);
-				ImGui::SliderFloat(name.substr(0, name.find("_amount")).c_str(), &v->value, v->min, v->max);
+				ImGui::PushItemWidth(250);
+				ImGui::SliderFloat(name.substr(0, name.find("_amount")).c_str(), &v->value, v->min, v->max, "%.5f");
 				if(ImGui::IsItemEdited()) {
 					event_queue->push(new Event{e_Control, (uint16_t)(21 + v->pid), (uint16_t) (127.0f * (v->value / (v->max - v->min)))});
 				}
+				ImGui::PopItemWidth();
 			}
 			ImGui::End();
 		}
@@ -431,14 +467,32 @@ void GUI::loop() {
 		
 		// Mixer
 		if(mainButtons[win_Mixer].status){
+			ImGui::SetNextWindowSize(ImVec2(0,0));
 			ImGui::Begin("Mixer");
 			for(int i = 0; i < mix_controls.size(); i++) {
-				if(i > 0) ImGui::SameLine();
+				auto label = parameters->translate(mix_controls[i]->pid);
+//				if(i > 0) ImGui::SameLine();
+				ImGui::SameLine();
 				
-				ImGui::VSliderFloat(parameters->translate(mix_controls[i]->pid).c_str(), ImVec2(18, 160), &mix_controls[i]->value, 0.0f, 1.0f);
+				ImGui::BeginGroup();
+				ImGui::BeginChild(label.c_str(), ImVec2(80, 200), true);
+				
+				label = label.substr(0, label.find_last_of("_"));
+				auto windowWidth = ImGui::GetWindowSize().x;
+				auto textWidth   = ImGui::CalcTextSize(label.c_str()).x;
+				
+				ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
+				ImGui::PushFont(font_bold);
+				ImGui::Text("%s", label.c_str());
+				ImGui::PopFont();
+				
+				ImGui::SetCursorPosX((windowWidth - 18) * 0.5f);
+				ImGui::VSliderFloat("##mixer_slider", ImVec2(18, 160), &mix_controls[i]->value, 0.0f, 1.0f);
 				if(ImGui::IsItemEdited()) {
 					event_queue->push(new Event{e_Control, (uint16_t)(21 + mix_controls[i]->pid), (uint16_t) (127.0f * mix_controls[i]->value)});
 				}
+				ImGui::EndChild();
+				ImGui::EndGroup();
 			}
 			ImGui::End();
 		}
