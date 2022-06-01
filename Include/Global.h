@@ -34,6 +34,7 @@
 // Provide a global sample template type
 typedef int16_t sample_t;
 #define SAMPLE_MAX_VALUE 32768
+#define SAMPLE_MIN_VALUE -32767
 #define PARAMETER_MAX_VALUE 65535
 
 // Provide a global samplerate value;
@@ -147,8 +148,6 @@ enum ParameterID {
 	p_Particles_GrainSize,
 	p_Particles_Position,
 	
-	p_Sub_Toggle,
-	
 	p_KeyboardSplit,
 	
 	p_FX_Delay_Amount,
@@ -156,6 +155,15 @@ enum ParameterID {
 	p_FX_Delay_DTRight,
 	p_FX_Delay_FBLeft,
 	p_FX_Delay_FBRight,
+	
+	p_FX_Fold_Amount,
+	p_FX_Fold_Gain,
+	
+	p_FX_Glitch_Amount,
+	p_FX_Glitch_Stutter,
+	p_FX_Glitch_Reverse,
+	p_FX_Glitch_Repeat,
+	p_FX_Glitch_Sync,
 	
 	p_OutputHPF_Frequency,
 	

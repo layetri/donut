@@ -30,6 +30,7 @@ add_executable(donut ${sources_1} ${sources_2})
 
 if(UNIX AND NOT APPLE)
     target_link_libraries(donut PRIVATE glfw3 ${GL_LIBRARY} dl m)
+    add_definitions( -DSYS_LINUX )
 endif()
 
 target_link_libraries(donut PRIVATE

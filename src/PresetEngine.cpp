@@ -39,8 +39,12 @@ void PresetEngine::log() {
 			// Geez C++...
 			// TODO: clean this up, someday
 			auto ts = filesystem::last_write_time(entry);
+		#ifdef SYS_LINUX
 			auto cstime = chrono::file_clock::to_sys(ts);
 			auto ftime = chrono::system_clock::to_time_t(cstime);
+		#else
+			auto ftime = chrono::file_clock::to_time_t(ts);
+		#endif
 			
 			char buffer [80];
 			strftime(buffer, 80, "%x, %R", localtime(&ftime));

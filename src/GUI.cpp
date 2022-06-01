@@ -15,11 +15,15 @@ GUI::GUI (ParameterPool* parameters, ModMatrix* mod, queue<Event*>* event_queue)
 	this->event_queue = event_queue;
 	this->mod = mod;
 	
+	mainButtons.push_back(ToggleWindowButton{ICON_FAD_HEADPHONES "Mixer", win_Mixer});
+	mainButtons.push_back(ToggleWindowButton{ICON_FAD_MODULARPLUG "Mod Matrix", win_ModMatrix});
+	mainButtons.push_back(ToggleWindowButton{ICON_FAD_SAVE "Presets", win_Presets});
+	mainButtons.push_back(ToggleWindowButton{ICON_FAD_DRUMPAD "Pads", win_Pads});
 	mainButtons.push_back(ToggleWindowButton{"MIDI Console", win_MIDI_Console});
-	mainButtons.push_back(ToggleWindowButton{"MIDI Devices", win_MIDI_Devices});
-	mainButtons.push_back(ToggleWindowButton{"Oscilloscope", win_Oscilloscope});
-	mainButtons.push_back(ToggleWindowButton{"Presets", win_Presets});
-	mainButtons.push_back(ToggleWindowButton{"Pads", win_Pads});
+	mainButtons.push_back(ToggleWindowButton{ICON_FAD_MIDIPLUG "MIDI Devices", win_MIDI_Devices});
+	mainButtons.push_back(ToggleWindowButton{ICON_FAD_MODSINE "Oscilloscope", win_Oscilloscope});
+	
+	
 	
 	for(auto& p : *parameters->getDictionary()) {
 		if(p->key.find("amount") != string::npos) {
@@ -47,27 +51,6 @@ GUI::GUI (ParameterPool* parameters, ModMatrix* mod, queue<Event*>* event_queue)
 		glfwSetErrorCallback(glfw_error_callback);
 		if (!glfwInit())
 			exit(1);
-		
-		// Decide GL+GLSL versions
-//		#if defined(IMGUI_IMPL_OPENGL_ES2)
-//			// GL ES 2.0 + GLSL 100
-//			const char* glsl_version = "#version 100";
-//			glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
-//			glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-//			glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
-//		#elif defined(__APPLE__)
-//			// GL 3.2 + GLSL 150
-//			const char* glsl_version = "#version 150";
-//			glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-//			glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
-//			glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
-//			glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, true);            // Required on Mac
-//		#else
-//			const char* glsl_version = "#version 130";
-//			glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-//			glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-//			glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-//		#endif
 	
 		// Create window with graphics context
 		window = glfwCreateWindow(1280, 720, "DonutUI", NULL, NULL);
@@ -80,8 +63,31 @@ GUI::GUI (ParameterPool* parameters, ModMatrix* mod, queue<Event*>* event_queue)
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
 		
+		// Setup styles
 		io = &ImGui::GetIO(); (void)io;
 		ImGui::StyleColorsDark();
+		
+		// Import fonts
+		font_regular = io->Fonts->AddFontFromFileTTF(".donut_runtime/fonts/NotoSans-Regular.ttf", 20.0f);
+		
+		static const ImWchar icons_ranges[] = { ICON_MIN_FAD, ICON_MAX_16_FAD, 0 };
+		ImFontConfig icons_config;
+		icons_config.MergeMode = true;
+		icons_config.PixelSnapH = true;
+		icons_config.GlyphMinAdvanceX = 20.0f;
+		icons_config.GlyphOffset = ImVec2(-2.0f, 5.0f);
+		io->Fonts->AddFontFromFileTTF(".donut_runtime/fonts/fontaudio.ttf", 20.0f, &icons_config, icons_ranges );
+		
+		font_bold = io->Fonts->AddFontFromFileTTF(".donut_runtime/fonts/NotoSans-Bold.ttf", 20.0f);
+		font_light = io->Fonts->AddFontFromFileTTF(".donut_runtime/fonts/NotoSans-Light.ttf", 20.0f);
+		text_small = io->Fonts->AddFontFromFileTTF(".donut_runtime/fonts/NotoSans-Regular.ttf", 14.0f);
+		
+		io->Fonts->Build();
+		
+		// Set global window flags
+		global_window_flags |= ImGuiWindowFlags_NoCollapse;
+		global_window_flags |= ImGuiWindowFlags_AlwaysAutoResize;
+		io->ConfigWindowsMoveFromTitleBarOnly = true;
 	
 		ImGui_ImplGlfw_InitForOpenGL(window, true);
 		ImGui_ImplOpenGL2_Init();
@@ -214,7 +220,6 @@ void GUI::loop() {
 		// Main window
 		{
 			ImGui::Begin("Application Controls");
-			
 			for(auto& b : mainButtons) {
 				ImGui::SameLine();
 				ImGui::Button(b.label.c_str());
@@ -237,7 +242,7 @@ void GUI::loop() {
 		
 		// MIDI Devices
 		if(mainButtons[win_MIDI_Devices].status) {
-			ImGui::Begin("MIDI Devices");
+			ImGui::Begin(ICON_FAD_MIDIPLUG "MIDI Devices");
 			event_queue->push(new Event{e_System, 21 + p_MIDI_List, 0});
 			
 			if (ImGui::BeginListBox("MIDI Inputs")) {
@@ -248,7 +253,6 @@ void GUI::loop() {
 						event_queue->push(new Event{e_System, 21 + p_MIDI_In, midi_in_selector});
 					}
 					
-					// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
 					if (is_selected)
 						ImGui::SetItemDefaultFocus();
 				}
@@ -263,7 +267,6 @@ void GUI::loop() {
 						event_queue->push(new Event{e_System, 21 + p_MIDI_In, midi_out_selector});
 					}
 					
-					// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
 					if (is_selected)
 						ImGui::SetItemDefaultFocus();
 				}
@@ -283,7 +286,12 @@ void GUI::loop() {
 		
 		// Presets
 		if(mainButtons[win_Presets].status) {
-			ImGui::Begin("Presets");
+			ImVec2 window_dims(400, 327);
+			ImGui::SetNextWindowSize(window_dims);
+			ImGuiWindowFlags preset_window_flags = 0;
+			preset_window_flags |= global_window_flags;
+			preset_window_flags |= ImGuiWindowFlags_NoResize;
+			ImGui::Begin("Presets", NULL, preset_window_flags);
 			
 			ImVec2 list_dims(120, 250);
 			event_queue->push(new ControlEvent{c_PresetsList});
@@ -300,7 +308,6 @@ void GUI::loop() {
 							selected_preset = n;
 						}
 						
-						// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
 						if (is_selected)
 							ImGui::SetItemDefaultFocus();
 					}
@@ -310,8 +317,14 @@ void GUI::loop() {
 				ImGui::SameLine();
 				
 				ImGui::BeginGroup();
+				ImGui::PushFont(font_bold);
 				ImGui::Text("%s", presets[selected_preset].name.c_str());
+				ImGui::PopFont();
+				ImGui::PushFont(text_small);
 				ImGui::Text("Modified: %s", presets[selected_preset].created_at.c_str());
+				ImGui::PopFont();
+				
+				ImGui::SetCursorPos(ImVec2(140, ImGui::GetWindowHeight() - 40));
 				if(ImGui::Button("Load preset")) {
 					event_queue->push(new StringEvent{c_PresetLoad, presets[selected_preset].name});
 				}
@@ -384,7 +397,7 @@ void GUI::loop() {
 		}
 		
 		// Modulation Matrix
-		{
+		if(mainButtons[win_ModMatrix].status){
 			ImGui::Begin("Mod Matrix");
 			if (ImGui::BeginTable("modmtx", mod->getDict()->size() + 1)) {
 				ImGui::TableNextRow();
@@ -417,7 +430,7 @@ void GUI::loop() {
 		}
 		
 		// Mixer
-		{
+		if(mainButtons[win_Mixer].status){
 			ImGui::Begin("Mixer");
 			for(int i = 0; i < mix_controls.size(); i++) {
 				if(i > 0) ImGui::SameLine();

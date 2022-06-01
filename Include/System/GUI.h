@@ -8,6 +8,7 @@
 #include <Global.h>
 #include <System/ParameterStore.h>
 #include <System/ModMatrix.h>
+#include <ext/Fontaudio.h>
 
 #include <string>
 #include <mutex>
@@ -30,11 +31,13 @@
 using namespace std;
 
 enum WindowNames {
+	win_Mixer,
+	win_ModMatrix,
+	win_Presets,
+	win_Pads,
 	win_MIDI_Console,
 	win_MIDI_Devices,
 	win_Oscilloscope,
-	win_Presets,
-	win_Pads
 };
 
 enum PadMode {
@@ -83,6 +86,8 @@ class GUI {
 		ImGuiIO* io;
 		GLFWwindow* window;
 		ImVec4 clear_color = ImVec4(0.496f, 0.882f, 0.968f, 1.00f);
+		ImFont *font_regular, *font_bold, *font_light, *text_small;
+		ImGuiWindowFlags global_window_flags = 0;
 		
 		bool demo_var = false;
 		deque<string> log;
