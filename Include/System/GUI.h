@@ -66,7 +66,6 @@ class GUI {
 		void initgui();
 		string input();
 		void output(string, bool lb=true, int x=-1, int y=-1, int c=0);
-		void process();
 		void loop();
 		int cleanup();
 		
@@ -78,7 +77,7 @@ class GUI {
 		ParameterPool* parameters;
 		ModMatrix* mod;
 		bool* running;
-//		CommandPool* commands;
+		queue<Event*>* event_queue;
 		
 		int row, col, winy, winx;
 		string cmd;
@@ -97,8 +96,6 @@ class GUI {
 		
 		uint plot_size = 0;
 		float *plotL = 0, *plotR = 0;
-		
-		queue<Event*>* event_queue;
 		
 		vector<string> midi_inputs;
 		vector<string> midi_outputs;

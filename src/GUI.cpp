@@ -16,38 +16,6 @@ GUI::GUI (ParameterPool* parameters, ModMatrix* mod, queue<Event*>* event_queue,
 	this->mod = mod;
 	this->running = running;
 	
-	mainButtons.push_back(ToggleWindowButton{ICON_FAD_HEADPHONES "Mixer", win_Mixer});
-	mainButtons.push_back(ToggleWindowButton{ICON_FAD_MODULARPLUG "Mod Matrix", win_ModMatrix});
-	mainButtons.push_back(ToggleWindowButton{ICON_FAD_SAVE "Presets", win_Presets});
-	mainButtons.push_back(ToggleWindowButton{ICON_FAD_DRUMPAD "Pads", win_Pads});
-	mainButtons.push_back(ToggleWindowButton{"MIDI Console", win_MIDI_Console});
-	mainButtons.push_back(ToggleWindowButton{ICON_FAD_MIDIPLUG "MIDI Devices", win_MIDI_Devices});
-	mainButtons.push_back(ToggleWindowButton{ICON_FAD_MODSINE "Oscilloscope", win_Oscilloscope});
-	
-	parameterCategories.insert({"adsr1", "ADSR1"});
-	parameterCategories.insert({"adsr2", "ADSR2"});
-	parameterCategories.insert({"lfo1", "LFO1"});
-	parameterCategories.insert({"lfo2", "LFO2"});
-	parameterCategories.insert({"rnd1", "Random 1"});
-	parameterCategories.insert({"rnd2", "Random 2"});
-	parameterCategories.insert({"filter", "Filter"});
-	parameterCategories.insert({"wt1", "Basic OSC 1"});
-	parameterCategories.insert({"wt2", "Basic OSC 2"});
-	parameterCategories.insert({"ws1", "WaveShaper 1"});
-	parameterCategories.insert({"ws2", "WaveShaper 2"});
-	parameterCategories.insert({"ks", "Tensions"});
-	parameterCategories.insert({"sampler", "Sampler"});
-	parameterCategories.insert({"particles", "Particles"});
-	parameterCategories.insert({"fxdelay", "StereoDelay"});
-	
-	for(auto& p : *parameters->getDictionary()) {
-		if(p->key.find("amount") != string::npos) {
-			mix_controls.push_back(parameters->get(p->pid, 0));
-		} else {
-			voice_controls.push_back(parameters->get(p->pid, 0));
-		}
-	}
-//	this->commands = commands;
 	// Construct a GUI with ncurses, ImGui, or std::cout
 	#if defined(BUILD_GUI_NCURSES)
 		initscr();
@@ -62,6 +30,38 @@ GUI::GUI (ParameterPool* parameters, ModMatrix* mod, queue<Event*>* event_queue,
 		init_pair(4, COLOR_WHITE, -1);
 		init_pair(5, COLOR_CYAN, -1);
 	#elif defined(BUILD_GUI_IMGUI)
+		mainButtons.push_back(ToggleWindowButton{ICON_FAD_HEADPHONES "Mixer", win_Mixer});
+		mainButtons.push_back(ToggleWindowButton{ICON_FAD_MODULARPLUG "Mod Matrix", win_ModMatrix});
+		mainButtons.push_back(ToggleWindowButton{ICON_FAD_SAVE "Presets", win_Presets});
+		mainButtons.push_back(ToggleWindowButton{ICON_FAD_DRUMPAD "Pads", win_Pads});
+		mainButtons.push_back(ToggleWindowButton{"MIDI Console", win_MIDI_Console});
+		mainButtons.push_back(ToggleWindowButton{ICON_FAD_MIDIPLUG "MIDI Devices", win_MIDI_Devices});
+		mainButtons.push_back(ToggleWindowButton{ICON_FAD_MODSINE "Oscilloscope", win_Oscilloscope});
+		
+		parameterCategories.insert({"adsr1", "ADSR1"});
+		parameterCategories.insert({"adsr2", "ADSR2"});
+		parameterCategories.insert({"lfo1", "LFO1"});
+		parameterCategories.insert({"lfo2", "LFO2"});
+		parameterCategories.insert({"rnd1", "Random 1"});
+		parameterCategories.insert({"rnd2", "Random 2"});
+		parameterCategories.insert({"filter", "Filter"});
+		parameterCategories.insert({"wt1", "Basic OSC 1"});
+		parameterCategories.insert({"wt2", "Basic OSC 2"});
+		parameterCategories.insert({"ws1", "WaveShaper 1"});
+		parameterCategories.insert({"ws2", "WaveShaper 2"});
+		parameterCategories.insert({"ks", "Tensions"});
+		parameterCategories.insert({"sampler", "Sampler"});
+		parameterCategories.insert({"particles", "Particles"});
+		parameterCategories.insert({"fxdelay", "StereoDelay"});
+		
+		for(auto& p : *parameters->getDictionary()) {
+			if(p->key.find("amount") != string::npos) {
+				mix_controls.push_back(parameters->get(p->pid, 0));
+			} else {
+				voice_controls.push_back(parameters->get(p->pid, 0));
+			}
+		}
+		
 		// Setup window
 		glfwSetErrorCallback(glfw_error_callback);
 		if (!glfwInit())
@@ -217,10 +217,6 @@ void GUI::output(const string line, bool lb, int x, int y, int c) {
 			log.pop_front();
 		}
 	#endif
-}
-
-void GUI::process() {
-	// This is where general GUI elements go (like voice count, midi io, etc)
 }
 
 void GUI::loop() {
@@ -563,17 +559,18 @@ int GUI::cleanup() {
 	return 1;
 }
 
-//void GUI::refreshDisplayValues() {
-//
-//}
 
 void GUI::stereoPlot(float* left, float* right, uint size) {
+#ifdef BUILD_GUI_IMGUI
+
 	this->plotL = left;
 	this->plotR = right;
 	this->plot_size = size;
+#endif
 }
 
 void GUI::updateMidiDevices (vector<string> inputs, vector<string> outputs) {
+#ifdef BUILD_GUI_IMGUI
 	midi_inputs.clear();
 	for(auto& i : inputs) {
 		midi_inputs.push_back(i);
@@ -583,11 +580,14 @@ void GUI::updateMidiDevices (vector<string> inputs, vector<string> outputs) {
 	for(auto& o : outputs) {
 		midi_outputs.push_back(o);
 	}
+#endif
 }
 
 void GUI::updatePresets(vector<PresetGUIItem> presets) {
+#ifdef BUILD_GUI_IMGUI
 	this->presets.clear();
 	for(auto& p : presets) {
 		this->presets.push_back(p);
 	}
+#endif
 }

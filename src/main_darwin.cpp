@@ -231,7 +231,7 @@ void init_midi(RtMidiIn *midi_in) {
 	// Check inputs.
 	unsigned int nPorts = midi_in->getPortCount();
 	if(nPorts > 0) {
-		midi_in->openPort(1);
+		midi_in->openPort(0);
 		midi_in->ignoreTypes(false, false, false);
 	}
 }
@@ -429,12 +429,12 @@ void program() {
 	#endif
 	
 	ui(running, ref(gui), event_queue, ref(parameters), ref(pe), voices);
-
+	
 	midi_handler.join();
 	event_handler.join();
 //	scheduling_handler.join();
 	#ifndef BUILD_GUI_COUT
-		autosave_handler.join();
+	autosave_handler.join();
 	#endif
 	
 	gui.cleanup();
