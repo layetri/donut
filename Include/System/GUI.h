@@ -10,6 +10,7 @@
 #include <System/ModMatrix.h>
 #include <ext/Fontaudio.h>
 
+#include <unordered_map>
 #include <string>
 #include <mutex>
 
@@ -59,7 +60,7 @@ struct ToggleWindowButton {
 
 class GUI {
 	public:
-		GUI (ParameterPool* parameters, ModMatrix* mod, queue<Event*>* event_queue);
+		GUI (ParameterPool* parameters, ModMatrix* mod, queue<Event*>* event_queue, bool* running);
 		~GUI ();
 		
 		void initgui();
@@ -76,6 +77,7 @@ class GUI {
 	private:
 		ParameterPool* parameters;
 		ModMatrix* mod;
+		bool* running;
 //		CommandPool* commands;
 		
 		int row, col, winy, winx;
@@ -113,6 +115,7 @@ class GUI {
 		vector<ToggleWindowButton> mainButtons;
 		vector<Parameter*> mix_controls; // Store parameters that belong to Mixer
 		vector<Parameter*> voice_controls;
+		unordered_map<string, string> parameterCategories;
 	#endif
 };
 

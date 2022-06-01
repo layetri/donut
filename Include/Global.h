@@ -193,7 +193,8 @@ enum ControlID {
 	c_ControlsLoad,
 	c_Sustain,
 	c_Transpose,
-	c_Split
+	c_Split,
+	c_SafeShutdown
 };
 
 enum EventType {

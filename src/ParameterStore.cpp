@@ -21,7 +21,7 @@ ParameterPool::ParameterPool() {
 		store(p_Filter_Type, i, "filter_type", 0.0, 0.0);
 		store(p_Filter_KeyTrack, i, "filter_keytrack", 0.0, 0.0);
 
-		store(p_FM_KeyTrack, i, "fm_keytrack", 0.5, 0.5);
+		store(p_FM_KeyTrack, i, "fm-keytrack", 0.5, 0.5);
 		
 		store(p_WT1_Amount, i, "wt1_amount", 0.0, 0.0);
 		store(p_FM_Amount, i, "wt1_fm", 0.77, 0.77);
@@ -66,9 +66,9 @@ ParameterPool::ParameterPool() {
 		store(p_RND1_Sync, i, "rnd1_sync", 0.0, 0.0);
 		store(p_RND1_Slew, i, "rnd1_slew", 0.5, 0.5);
 		
-		store(p_OutputHPF_Frequency, i, "output_hpf_frequency", 10.0f, 10.0f, 1.0f, 1000.0f);
-		store(p_NotFound, i, "not_found", 0.0, 0.0);
-		store(p_VoiceMaster, i, "voice_master", 1.0, 0.0);
+		store(p_OutputHPF_Frequency, i, "output-hpf-frequency", 10.0f, 10.0f, 1.0f, 1000.0f);
+		store(p_NotFound, i, "not-found", 0.0, 0.0);
+		store(p_VoiceMaster, i, "voice-master", 1.0, 0.0);
 		
 		store(p_Sampler_Amount, i, "sampler_amount", 1.0, 1.0);
 		store(p_Sampler_Transpose, i, "sampler_transpose", 0.0, 0.0);
@@ -81,11 +81,11 @@ ParameterPool::ParameterPool() {
 		store(p_Particles_Position, i, "particles_position", 3000.0, 3000.0, 0, 100);
 	}
 	
-	store(p_FX_Delay_Amount, 0, "fx_delay_amount", 0.5, 0.5);
-	store(p_FX_Delay_DTLeft, 0, "fx_delay_time_left", 8000, 8000, 100, 44100);
-	store(p_FX_Delay_DTRight, 0, "fx_delay_time_right", 8000, 8000, 100, 44100);
-	store(p_FX_Delay_FBLeft, 0, "fx_delay_feedback_left", 0.5, 0.5, 0.01, 0.99);
-	store(p_FX_Delay_FBRight, 0, "fx_delay_feedback_right", 0.5, 0.5, 0.01, 0.99);
+	store(p_FX_Delay_Amount, 0, "fxdelay_amount", 0.5, 0.5);
+	store(p_FX_Delay_DTLeft, 0, "fxdelay_time_left", 8000, 8000, 100, 44100);
+	store(p_FX_Delay_DTRight, 0, "fxdelay_time_right", 8000, 8000, 100, 44100);
+	store(p_FX_Delay_FBLeft, 0, "fxdelay_feedback_left", 0.5, 0.5, 0.01, 0.99);
+	store(p_FX_Delay_FBRight, 0, "fxdelay_feedback_right", 0.5, 0.5, 0.01, 0.99);
 	
 	store(p_Master, 0, "master", 1.0, 1.0);
 	store(p_BPM, 0, "bpm", 120.0, 120.0, 60.0f, 240.0f);

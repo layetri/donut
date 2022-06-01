@@ -82,9 +82,8 @@ void event(vector<unique_ptr<Voice>>& voices, Sampler& sampler, GUI& gui, NoteHa
 						remap_mode = true;
 						remap_cc = e->value;
 						
-					} else if((e->cc - 21) == p_Exit) {
+					} else if((e->cc - 21) == p_Exit || e->cid == c_SafeShutdown) {
 						running = false;
-						
 					} else if(e->cid == c_SampleList) {
 						lib.list();
 					} else if(e->cid == c_SampleLoad) {
@@ -330,14 +329,14 @@ void displayMidiStatus(RtMidiIn* midi_in, RtMidiOut* midi_out) {
 }
 
 void program() {
+	bool running = true;
 	ParameterPool parameters;
 	ModMatrix mm(&parameters);
 	queue<Event *> event_queue;
 	
-	GUI gui(&parameters, &mm, &event_queue);
+	GUI gui(&parameters, &mm, &event_queue, &running);
 	gui.initgui();
 	
-	bool running = true;
 	extern unsigned int samplerate;
 	
 	#ifdef ENGINE_JACK

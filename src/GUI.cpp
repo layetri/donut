@@ -10,10 +10,11 @@ static void glfw_error_callback(int error, const char* description) {
 	fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
 
-GUI::GUI (ParameterPool* parameters, ModMatrix* mod, queue<Event*>* event_queue) {
+GUI::GUI (ParameterPool* parameters, ModMatrix* mod, queue<Event*>* event_queue, bool* running) {
 	this->parameters = parameters;
 	this->event_queue = event_queue;
 	this->mod = mod;
+	this->running = running;
 	
 	mainButtons.push_back(ToggleWindowButton{ICON_FAD_HEADPHONES "Mixer", win_Mixer});
 	mainButtons.push_back(ToggleWindowButton{ICON_FAD_MODULARPLUG "Mod Matrix", win_ModMatrix});
@@ -22,6 +23,22 @@ GUI::GUI (ParameterPool* parameters, ModMatrix* mod, queue<Event*>* event_queue)
 	mainButtons.push_back(ToggleWindowButton{"MIDI Console", win_MIDI_Console});
 	mainButtons.push_back(ToggleWindowButton{ICON_FAD_MIDIPLUG "MIDI Devices", win_MIDI_Devices});
 	mainButtons.push_back(ToggleWindowButton{ICON_FAD_MODSINE "Oscilloscope", win_Oscilloscope});
+	
+	parameterCategories.insert({"adsr1", "ADSR1"});
+	parameterCategories.insert({"adsr2", "ADSR2"});
+	parameterCategories.insert({"lfo1", "LFO1"});
+	parameterCategories.insert({"lfo2", "LFO2"});
+	parameterCategories.insert({"rnd1", "Random 1"});
+	parameterCategories.insert({"rnd2", "Random 2"});
+	parameterCategories.insert({"filter", "Filter"});
+	parameterCategories.insert({"wt1", "Basic OSC 1"});
+	parameterCategories.insert({"wt2", "Basic OSC 2"});
+	parameterCategories.insert({"ws1", "WaveShaper 1"});
+	parameterCategories.insert({"ws2", "WaveShaper 2"});
+	parameterCategories.insert({"ks", "Tensions"});
+	parameterCategories.insert({"sampler", "Sampler"});
+	parameterCategories.insert({"particles", "Particles"});
+	parameterCategories.insert({"fxdelay", "StereoDelay"});
 	
 	for(auto& p : *parameters->getDictionary()) {
 		if(p->key.find("amount") != string::npos) {
@@ -51,7 +68,7 @@ GUI::GUI (ParameterPool* parameters, ModMatrix* mod, queue<Event*>* event_queue)
 			exit(1);
 	
 		// Create window with graphics context
-		window = glfwCreateWindow(840, 480, "DonutUI", NULL, NULL);
+		window = glfwCreateWindow(800, 480, "DonutUI", NULL, NULL);
 		if (window == NULL)
 			exit(1);
 		glfwMakeContextCurrent(window);
@@ -208,7 +225,7 @@ void GUI::process() {
 
 void GUI::loop() {
 	#ifdef BUILD_GUI_IMGUI
-	while(!glfwWindowShouldClose(window)) {
+	while(!glfwWindowShouldClose(window) && *running) {
 		glfwPollEvents();
 		
 		ImGui_ImplOpenGL2_NewFrame();
@@ -245,6 +262,11 @@ void GUI::loop() {
 				if (ImGui::IsItemClicked()) {
 					b.status = !b.status;
 				}
+			}
+			
+			ImGui::SameLine();
+			if(ImGui::Button(ICON_FAD_POWERSWITCH)) {
+				event_queue->push(new ControlEvent{c_SafeShutdown});
 			}
 			
 			ImGui::End();
@@ -417,17 +439,33 @@ void GUI::loop() {
 		
 		// Voice controls
 		{
-			ImGui::SetNextWindowSize(ImVec2(375, fwy - 45));
-			ImGui::SetNextWindowPos(ImVec2(fwx-375, 45));
+			ImGui::SetNextWindowSize(ImVec2(270, fwy - 45));
+			ImGui::SetNextWindowPos(ImVec2(fwx-270, 45));
 			ImGui::Begin(ICON_FAD_SLIDERHANDLE_1 "Voice controls", NULL, global_window_flags);
+			string category = "";
 			for(auto& v : voice_controls) {
 				auto name = parameters->translate(v->pid);
-				ImGui::PushItemWidth(250);
-				ImGui::SliderFloat(name.substr(0, name.find("_amount")).c_str(), &v->value, v->min, v->max, "%.5f");
-				if(ImGui::IsItemEdited()) {
-					event_queue->push(new Event{e_Control, (uint16_t)(21 + v->pid), (uint16_t) (127.0f * (v->value / (v->max - v->min)))});
+				if(name.find("_") != string::npos) {
+					auto cat = name.substr(0, name.find_first_of("_"));
+					
+					if (category != cat) {
+						category = cat;
+						ImGui::Separator();
+						ImGui::PushFont(font_bold);
+						ImGui::Text("%s", parameterCategories.at(cat).c_str());
+						ImGui::PopFont();
+					}
+					
+					ImGui::PushFont(font_light);
+					ImGui::Text("%s", name.substr(name.find_first_of("_") + 1).c_str());
+					ImGui::PopFont();
+					
+					ImGui::PushItemWidth(240);
+					ImGui::SliderFloat("##slider", &v->value, v->min, v->max, "%.5f");
+					if (ImGui::IsItemEdited()) {
+						event_queue->push(new Event{e_Control, (uint16_t) (21 + v->pid),(uint16_t) (127.0f * (v->value / (v->max - v->min)))});
+					}
 				}
-				ImGui::PopItemWidth();
 			}
 			ImGui::End();
 		}
