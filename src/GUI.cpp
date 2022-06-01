@@ -51,7 +51,7 @@ GUI::GUI (ParameterPool* parameters, ModMatrix* mod, queue<Event*>* event_queue)
 			exit(1);
 	
 		// Create window with graphics context
-		window = glfwCreateWindow(1280, 720, "DonutUI", NULL, NULL);
+		window = glfwCreateWindow(840, 480, "DonutUI", NULL, NULL);
 		if (window == NULL)
 			exit(1);
 		glfwMakeContextCurrent(window);
@@ -387,7 +387,7 @@ void GUI::loop() {
 				padMode = pm_Trigger;
 			}
 			
-			ImGui::Text("X: %f, Y: %f", ImGui::GetWindowSize().x, ImGui::GetWindowSize().y);
+//			ImGui::Text("X: %f, Y: %f", ImGui::GetWindowSize().x, ImGui::GetWindowSize().y);
 			ImGuiStyle& style = ImGui::GetStyle();
 			ImVec2 button_sz(150, 150);
 			int buttons_count = 8;
@@ -417,8 +417,8 @@ void GUI::loop() {
 		
 		// Voice controls
 		{
-			ImGui::SetNextWindowSize(ImVec2(400, fwy - 45));
-			ImGui::SetNextWindowPos(ImVec2(fwx-400, 45));
+			ImGui::SetNextWindowSize(ImVec2(375, fwy - 45));
+			ImGui::SetNextWindowPos(ImVec2(fwx-375, 45));
 			ImGui::Begin(ICON_FAD_SLIDERHANDLE_1 "Voice controls", NULL, global_window_flags);
 			for(auto& v : voice_controls) {
 				auto name = parameters->translate(v->pid);
