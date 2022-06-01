@@ -14,9 +14,6 @@ NoteHandler::NoteHandler(vector<Voice*>* voices) {
 }
 
 NoteHandler::~NoteHandler() {
-	delete voices_upper;
-	delete voices_lower;
-	delete last_controlled;
 }
 
 void NoteHandler::noteOn(Note* note) {
@@ -28,9 +25,9 @@ void NoteHandler::noteOn(Note* note) {
 	}
 }
 
-void NoteHandler::noteOff(Note* note) {
-	for(auto& v : *voices) {
-		if(v->releaseIfMatches(note->pitch)) {
+void NoteHandler::noteOff(Note note) {
+	for(auto& v : voices) {
+		if(v->releaseIfMatches(note.pitch)) {
 			used_voices--;
 			return;
 		}
@@ -83,16 +80,16 @@ bool NoteHandler::findNextFree(Note *note) {
 	return false;
 }
 
-void NoteHandler::incrementVoiceIndex(KeyboardHalf* half) {
-	half->rr_index = (half->rr_index + 1 < half->voices->size()) * (half->rr_index + 1);
+void NoteHandler::incrementVoiceIndex(KeyboardHalf& half) {
+	half.rr_index = (half.rr_index + 1 < half.voices.size()) * (half.rr_index + 1);
 }
 
 void NoteHandler::stealLeastRecent(Note* note) {
 	clock_t s = clock();
-	Voice* voice_to_steal;
-	KeyboardHalf* half = getHalf(note);
+	Voice* voice_to_steal = nullptr;
+	KeyboardHalf& half = getHalf(note);
 
-	for(auto& v : *half->voices) {
+	for(auto& v : half.voices) {
 		if(v->getTime() < s) {
 			s = v->getTime();
 			voice_to_steal = v;
@@ -105,10 +102,10 @@ void NoteHandler::stealLeastRecent(Note* note) {
 void NoteHandler::tick() {
   // Assign all notes in queue - if any are left, delete them
   while(!note_queue.empty()) {
-    Note *tmp = note_queue.front();
+    Note tmp = note_queue.front();
     note_queue.pop();
 
-    for (auto &voice : *voices) {
+    for (auto &voice : voices) {
       if (voice->assignIfAvailable(tmp)) {
         break;
       }
@@ -124,15 +121,15 @@ void NoteHandler::setSplit (uint8_t key) {
 	this->split_key = key;
 	intelliSplit();
 	
-	voices_lower->voices->clear();
-	voices_upper->voices->clear();
+	voices_lower->voices.clear();
+	voices_upper->voices.clear();
 	
 	for(int i = 0; i < NUMBER_OF_VOICES; i++) {
 		if(i < split_index) {
 			voices_lower->voices->push_back(voices->at(i));
 //			cout << "l" << i << " ";
 		} else {
-			voices_upper->voices->push_back(voices->at(i));
+			voices_upper->voices.push_back(voices.at(i).get());
 //			cout << "u" << i << " ";
 		}
 	}
@@ -164,7 +161,7 @@ KeyboardHalf* NoteHandler::getHalf(Note* note) {
 	if(note->pitch >= split_key) {
 		return voices_upper;
 	} else {
-		return voices_lower;
+		return *voices_lower;
 	}
 }
 

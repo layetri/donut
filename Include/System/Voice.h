@@ -48,7 +48,7 @@ class Voice {
 	Buffer* getBuffer();
 	sample_t getSample();
 	clock_t getTime() const;
-	Note* getNote();
+	Note getNote();
 	
 	Parameter* multiplier;
   private:
@@ -64,7 +64,7 @@ class Voice {
 	
 	Buffer *output, *mixbus;
 	AddAndDivide *mixer;
-	Note *midi_note;
+	Note midi_note;
 	GUI *gui;
 	
 	bool available;

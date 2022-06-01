@@ -93,6 +93,20 @@ void Voice::process() {
 		m->process();
 	}
 	
+//	if (auto ws = dynamic_cast<WaveShaper*> (sources[s_WS1]))
+//	{
+//		ws->fm((float) buffers[s_WS2]->getCurrentSample() / (float) SAMPLE_MAX_VALUE, ws_fm_amount->value);
+//	}
+//	dynamic_cast<WaveShaper*> (sources[s_WS1])->fm((float) buffers[s_WS2]->getCurrentSample() / (float) SAMPLE_MAX_VALUE, ws_fm_amount->value);
+//
+//	std::tuple<WaveShaper, Square, Sine, Oscillator> sources;
+//
+//	forEachTupleItem(sources, [] (auto& source) {
+//		source.process();
+//	});
+//
+//  sources.get<3>().fm(...);
+	
 	// Do FM modulation
 	sources[s_WS1]->fm((float) buffers[s_WS2]->getCurrentSample() / (float) SAMPLE_MAX_VALUE, ws_fm_amount->value);
 	
@@ -122,13 +136,13 @@ void Voice::tick() {
 	output->flush();
 }
 
-void Voice::assign(Note* note) {
+void Voice::assign(Note note) {
 	this->midi_note = note;
-	this->pitch = note->pitch;
+	this->pitch = note.pitch;
 	
 	// Set source pitch
 	for(auto& s : sources) {
-		s->pitch(note->pitch);
+		s->pitch(note.pitch);
 	}
 	
 	// Sync modulators
@@ -137,8 +151,8 @@ void Voice::assign(Note* note) {
 	}
 
 	// Set modulator velocity
-	modulators[m_ADSR1]->start(sqrt(note->velocity / 127.0f));
-	modulators[m_ADSR2]->start(sqrt(note->velocity / 127.0f));
+	modulators[m_ADSR1]->start(sqrt(note.velocity / 127.0f));
+	modulators[m_ADSR2]->start(sqrt(note.velocity / 127.0f));
 	parameters->set(p_OutputHPF_Frequency, voice_id, Source::mtof(pitch, 440.0f) + 1.0f);
 
 	// Housekeeping
@@ -158,7 +172,7 @@ void Voice::block(size_t block_size) {
 	}
 }
 
-bool Voice::assignIfAvailable(Note *note) {
+bool Voice::assignIfAvailable(Note note) {
 	bool a = available;
 	if(available) {
 		assign(note);
@@ -182,7 +196,7 @@ sample_t Voice::getSample() {
 	return output->getCurrentSample();
 }
 
-Note* Voice::getNote() {
+Note Voice::getNote() {
 	return midi_note;
 }
 

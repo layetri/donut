@@ -370,15 +370,16 @@ void program() {
 	
 	Tables tables;
 	tables.generateWaveforms();
-	
-	vector<Voice *> voices;
+	vector<unique_ptr<Voice>> voices;
+//	vector<Voice *> voices;
 	vector<Buffer *> voice_buffers;
 
 	voices.reserve(NUMBER_OF_VOICES);
 	voice_buffers.reserve(NUMBER_OF_VOICES);
 	for (int i = 0; i < NUMBER_OF_VOICES; i++) {
 		voice_buffers.push_back(new Buffer(441, "voice_"+to_string(i)));
-		voices.push_back(new Voice(voice_buffers[i], &parameters, &mm, &tables, &sampler, &particles, &gui, (uint8_t) i));
+		voices.push_back(make_unique<Voice>(voice_buffers[i], &parameters, &mm, &tables, &sampler, &particles, &gui, (uint8_t) i));
+//		voices.push_back(new Voice(voice_buffers[i], &parameters, &mm, &tables, &sampler, &particles, &gui, (uint8_t) i));
 	}
 	
 	NoteHandler handle(&voices);

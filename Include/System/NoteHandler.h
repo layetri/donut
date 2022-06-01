@@ -53,7 +53,7 @@ class NoteHandler {
 	KeyboardHalf* voices_upper;
 	vector<KeyboardHalf*>* last_controlled;
 	
-    queue<Note*> note_queue;
+    queue<Note> note_queue;
 	uint8_t used_voices = 0;
 	uint8_t split_key = 0;
 	uint8_t split_index = 3;

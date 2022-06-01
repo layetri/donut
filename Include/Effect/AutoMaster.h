@@ -28,10 +28,11 @@ class AutoMaster {
 		float getRightChannel();
 		
 	private:
-		vector<Voice*>* voices;
+		vector<unique_ptr<Voice>>& voices;
 		Parameter *volume, *delay_amount;
-		Buffer *output_left, *output_right, *master_left, *master_right;
-		StereoDelay *delay;
+		Buffer output_left, output_right;
+		Buffer *master_left, *master_right;
+		StereoDelay delay;
 	
 		uint16_t stereoize;
 		uint8_t on_voices;
