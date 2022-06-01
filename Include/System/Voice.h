@@ -35,8 +35,8 @@ class Voice {
     Voice(Buffer* output, ParameterPool* params, ModMatrix* mm, Tables* tables, Sampler* sampler, Particles* particles, GUI* gui, uint8_t v_id=0);
     ~Voice();
 
-    void assign(Note* note);
-    bool assignIfAvailable(Note* note);
+    void assign(Note note);
+    bool assignIfAvailable(Note note);
 	bool releaseIfMatches(int note);
 	bool isAvailable();
     void process();

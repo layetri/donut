@@ -17,7 +17,7 @@ using namespace std;
 
 class AutoMaster {
 	public:
-		AutoMaster(vector<Voice*>* voices, ParameterPool* params, Parameter* volume);
+		AutoMaster(vector<unique_ptr<Voice>>& voices, ParameterPool* params, Parameter* volume);
 		~AutoMaster();
 		
 		void process();

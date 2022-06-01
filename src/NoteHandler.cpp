@@ -4,19 +4,17 @@
 
 #include <System/NoteHandler.h>
 
-NoteHandler::NoteHandler(vector<Voice*>* voices) {
-  this->voices = voices;
-  voices_upper = new KeyboardHalf;
-  voices_lower = new KeyboardHalf;
-  last_controlled = new vector<KeyboardHalf*>;
-  last_controlled->push_back(voices_upper);
+NoteHandler::NoteHandler(vector<unique_ptr<Voice>>& voices) : voices(voices) {
+  voices_upper = make_unique<KeyboardHalf>();
+  voices_lower = make_unique<KeyboardHalf>();
+  last_controlled.push_back(voices_upper.get());
   setSplit(0);
 }
 
 NoteHandler::~NoteHandler() {
 }
 
-void NoteHandler::noteOn(Note* note) {
+void NoteHandler::noteOn(Note note) {
 	// Find a free voice or steal the least recently used voice
 	if(!findNextFree(note)) {
 	  	stealLeastRecent(note);
@@ -35,43 +33,43 @@ void NoteHandler::noteOff(Note note) {
 }
 
 void NoteHandler::set(ParameterID parameter, uint16_t value) {
-	// Check if there are any held notes
+	const auto isVoiceInUse = [](auto& voice) { return !voice->isAvailable(); };
+	
+	const auto isThereAnActiveVoiceInHalf = [&] (auto& half) {
+    			return count_if(half->voices.begin(),
+    							half->voices.end(),
+    							[&] (auto& voice) { return isVoiceInUse(voice); }) > 0;
+	};
+	
 	if(inUse() > 0) {
-		bool set_lower = false;
-		bool set_upper = false;
-		last_controlled->clear();
-		// Find the associated half for these notes
-		for(auto& v : *voices) {
-			if(!v->isAvailable()) {
-				if(count(voices_lower->voices->begin(), voices_lower->voices->end(), v) && !set_lower) {
-					for(auto& r : *voices_lower->voices) {
-						r->set(parameter, value);
-					}
-					set_lower = true;
-					last_controlled->push_back(voices_lower);
-				} else if(count(voices_upper->voices->begin(), voices_upper->voices->end(), v) && !set_upper) {
-					for(auto& r : *voices_upper->voices) {
-						r->set(parameter, value);
-					}
-					set_upper = true;
-					last_controlled->push_back(voices_upper);
-				}
+		last_controlled.clear();
+		
+		if (isThereAnActiveVoiceInHalf(voices_lower)) {
+			for(auto& r : voices_lower->voices) {
+				r->set(parameter, value);
 			}
+			last_controlled.push_back(voices_lower.get());
+		}
+		
+		if (isThereAnActiveVoiceInHalf(voices_upper)) {
+			for(auto& r : voices_upper->voices) {
+				r->set(parameter, value);
+			}
+			last_controlled.push_back(voices_upper.get());
 		}
 	} else {
-		for(auto& half : *last_controlled) {
-			for(auto& voice : *half->voices) {
+		for(auto& half : last_controlled) {
+			for(auto& voice : half->voices) {
 				voice->set(parameter, value);
 			}
 		}
 	}
 }
 
-bool NoteHandler::findNextFree(Note *note) {
-	KeyboardHalf* half = getHalf(note);
-	verbose(half->name);
-	for(int i = 0; i < half->voices->size(); i++) {
-		if(half->voices->at(half->rr_index)->assignIfAvailable(note)) {
+bool NoteHandler::findNextFree(Note note) {
+	KeyboardHalf& half = getHalf(note);
+	for(int i = 0; i < half.voices.size(); i++) {
+		if(half.voices.at(half.rr_index)->assignIfAvailable(note)) {
 			incrementVoiceIndex(half);
 			return true;
 		}
@@ -84,7 +82,7 @@ void NoteHandler::incrementVoiceIndex(KeyboardHalf& half) {
 	half.rr_index = (half.rr_index + 1 < half.voices.size()) * (half.rr_index + 1);
 }
 
-void NoteHandler::stealLeastRecent(Note* note) {
+void NoteHandler::stealLeastRecent(Note note) {
 	clock_t s = clock();
 	Voice* voice_to_steal = nullptr;
 	KeyboardHalf& half = getHalf(note);
@@ -126,7 +124,7 @@ void NoteHandler::setSplit (uint8_t key) {
 	
 	for(int i = 0; i < NUMBER_OF_VOICES; i++) {
 		if(i < split_index) {
-			voices_lower->voices->push_back(voices->at(i));
+			voices_lower->voices.push_back(voices.at(i).get());
 //			cout << "l" << i << " ";
 		} else {
 			voices_upper->voices.push_back(voices.at(i).get());
@@ -157,9 +155,9 @@ void NoteHandler::intelliSplit() {
 		  (split_index == NUMBER_OF_VOICES) * (NUMBER_OF_VOICES - (split_key < 127));
 }
 
-KeyboardHalf* NoteHandler::getHalf(Note* note) {
-	if(note->pitch >= split_key) {
-		return voices_upper;
+KeyboardHalf& NoteHandler::getHalf(Note note) {
+	if(note.pitch >= split_key) {
+		return *voices_upper;
 	} else {
 		return *voices_lower;
 	}

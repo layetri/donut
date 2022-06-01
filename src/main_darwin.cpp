@@ -7,7 +7,7 @@
 mutex mtx;
 
 // This function runs the TUI
-void ui(bool& running, GUI& gui, queue<Event *>& events, ParameterPool& parameters, PresetEngine& presetEngine, vector<Voice*>& voices) {
+void ui(bool& running, GUI& gui, queue<Event *>& events, ParameterPool& parameters, PresetEngine& presetEngine, vector<unique_ptr<Voice>>& voices) {
 	// Setup UI
 	CommandPool cmd_pool(&events, &gui, &parameters, &presetEngine, &running);
 	
@@ -27,7 +27,7 @@ void ui(bool& running, GUI& gui, queue<Event *>& events, ParameterPool& paramete
 }
 
 // This thread handles internal application events
-void event(vector<Voice*>& voices, Sampler& sampler, GUI& gui, NoteHandler& nh, ParameterPool& parameters, PresetEngine& pe, queue<Event *>& events, SampleLibrary& lib, RtMidiIn* midiIn, RtMidiOut* midiOut, bool& running) {
+void event(vector<unique_ptr<Voice>>& voices, Sampler& sampler, GUI& gui, NoteHandler& nh, ParameterPool& parameters, PresetEngine& pe, queue<Event *>& events, SampleLibrary& lib, RtMidiIn* midiIn, RtMidiOut* midiOut, bool& running) {
 	bool remap_mode = false;
 	uint8_t remap_cc = 0;
 	ControlMap cm(&parameters);
@@ -161,7 +161,7 @@ void midi(NoteHandler& handler, GUI& gui, queue<Event*>& event_queue, RtMidiIn* 
 					sustain = message[2] > 0;
 					if(!sustain) {
 						for(auto& note : sustained) {
-							handler.noteOff(&note);
+							handler.noteOff(note);
 						}
 						sustained.clear();
 					}
@@ -171,12 +171,12 @@ void midi(NoteHandler& handler, GUI& gui, queue<Event*>& event_queue, RtMidiIn* 
 				}
 			} else if(type == 128 || message[2] == 0) {
 				if (!sustain) {
-					handler.noteOff(&n);
+					handler.noteOff(n);
 				} else {
 					sustained.push_back(n);
 				}
 			} else if(type == 144) {
-				handler.noteOn(&n);
+				handler.noteOn(n);
 			}
 			
 			#ifdef BUILD_GUI_NCURSES
@@ -382,8 +382,8 @@ void program() {
 //		voices.push_back(new Voice(voice_buffers[i], &parameters, &mm, &tables, &sampler, &particles, &gui, (uint8_t) i));
 	}
 	
-	NoteHandler handle(&voices);
-	AutoMaster sensei(&voices, &parameters, parameters.get(p_Master, 0));
+	NoteHandler handle(voices);
+	AutoMaster sensei(voices, &parameters, parameters.get(p_Master, 0));
 	pe.load("_autosave");
 	
 	#ifdef ENGINE_JACK

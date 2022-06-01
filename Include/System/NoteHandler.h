@@ -18,40 +18,36 @@
 using namespace std;
 
 struct KeyboardHalf {
-	vector<Voice*>* voices;
+	vector<Voice*> voices;
 	uint8_t rr_index = 0;
 	string name;
-	
-	KeyboardHalf() {
-		voices = new vector<Voice*>;
-	}
 };
 
 class NoteHandler {
   public:
-    NoteHandler(vector<Voice*>* voices);
+    NoteHandler(vector<unique_ptr<Voice>>& voices);
     ~NoteHandler();
 
-    void noteOn(Note* note);
-	void noteOff(Note* note);
+    void noteOn(Note note);
+	void noteOff(Note note);
 	void set(ParameterID, uint16_t);
 	
-	bool findNextFree(Note* note);
-	void stealLeastRecent(Note* note);
-	void incrementVoiceIndex(KeyboardHalf* half);
+	bool findNextFree(Note note);
+	void stealLeastRecent(Note note);
+	void incrementVoiceIndex(KeyboardHalf& half);
     void tick();
 	uint8_t inUse();
 	
 	void setSplit(uint8_t key);
 	void setSplitRatio(float split_ratio);
 	void intelliSplit();
-	KeyboardHalf* getHalf(Note* note);
+	KeyboardHalf& getHalf(Note note);
 	
   private:
-	vector<Voice*>* voices;
-	KeyboardHalf* voices_lower;
-	KeyboardHalf* voices_upper;
-	vector<KeyboardHalf*>* last_controlled;
+	vector<unique_ptr<Voice>>& voices;
+	unique_ptr<KeyboardHalf> voices_lower;
+	unique_ptr<KeyboardHalf> voices_upper;
+	vector<KeyboardHalf*> last_controlled;
 	
     queue<Note> note_queue;
 	uint8_t used_voices = 0;
