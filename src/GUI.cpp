@@ -96,6 +96,7 @@ GUI::GUI (ParameterPool* parameters, ModMatrix* mod, queue<Event*>* event_queue,
 		font_bold = io->Fonts->AddFontFromFileTTF(".donut_runtime/fonts/NotoSans-Bold.ttf", 20.0f);
 		font_light = io->Fonts->AddFontFromFileTTF(".donut_runtime/fonts/NotoSans-Light.ttf", 20.0f);
 		text_small = io->Fonts->AddFontFromFileTTF(".donut_runtime/fonts/NotoSans-Regular.ttf", 14.0f);
+		text_small_bold = io->Fonts->AddFontFromFileTTF(".donut_runtime/fonts/NotoSans-Bold.ttf", 14.0f);
 		
 		io->Fonts->Build();
 		
@@ -505,7 +506,6 @@ void GUI::loop() {
 			ImGui::Begin("Mixer");
 			for(int i = 0; i < mix_controls.size(); i++) {
 				auto label = parameters->translate(mix_controls[i]->pid);
-//				if(i > 0) ImGui::SameLine();
 				ImGui::SameLine();
 				
 				ImGui::BeginGroup();
@@ -516,7 +516,7 @@ void GUI::loop() {
 				auto textWidth   = ImGui::CalcTextSize(parameterCategories.at(label).c_str()).x;
 				
 				ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
-				ImGui::PushFont(font_bold);
+				ImGui::PushFont(text_small_bold);
 				ImGui::Text("%s", parameterCategories.at(label).c_str());
 				ImGui::PopFont();
 				

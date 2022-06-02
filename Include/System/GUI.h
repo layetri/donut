@@ -87,7 +87,7 @@ class GUI {
 		ImGuiIO* io;
 		GLFWwindow* window;
 		ImVec4 clear_color = ImVec4(0.496f, 0.882f, 0.968f, 1.00f);
-		ImFont *font_regular, *font_bold, *font_light, *text_small;
+		ImFont *font_regular, *font_bold, *font_light, *text_small, *text_small_bold;
 		ImGuiWindowFlags global_window_flags = 0;
 		
 		bool demo_var = false;
