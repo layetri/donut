@@ -17,6 +17,11 @@ add_definitions( -DBUILD_ENVIRONMENT=debug )
 #add_definitions( -DBUILD_GUI_NCURSES )
 add_definitions( -DBUILD_GUI_IMGUI )
 
+# Configure build options (features, sound engines, etc)
+add_definitions( -DFEATURES_PADS )
+add_definitions( -DFEATURES_MODMATRIX )
+#add_definitions( -DENGINES_PARTICLES )
+
 if(UNIX AND NOT APPLE)
     # finds OpenGL, GLU and X11
     find_package(OpenGL REQUIRED)

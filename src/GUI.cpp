@@ -31,9 +31,13 @@ GUI::GUI (ParameterPool* parameters, ModMatrix* mod, queue<Event*>* event_queue,
 		init_pair(5, COLOR_CYAN, -1);
 	#elif defined(BUILD_GUI_IMGUI)
 		mainButtons.push_back(ToggleWindowButton{ICON_FAD_HEADPHONES "Mixer", win_Mixer});
+	#ifdef FEATURES_MODMATRIX
 		mainButtons.push_back(ToggleWindowButton{ICON_FAD_MODULARPLUG "Mod Matrix", win_ModMatrix});
+	#endif
 		mainButtons.push_back(ToggleWindowButton{ICON_FAD_SAVE "Presets", win_Presets});
+	#ifdef FEATURES_PADS
 		mainButtons.push_back(ToggleWindowButton{ICON_FAD_DRUMPAD "Pads", win_Pads});
+	#endif
 		mainButtons.push_back(ToggleWindowButton{"MIDI Console", win_MIDI_Console});
 		mainButtons.push_back(ToggleWindowButton{ICON_FAD_MIDIPLUG "MIDI Devices", win_MIDI_Devices});
 		mainButtons.push_back(ToggleWindowButton{ICON_FAD_MODSINE "Oscilloscope", win_Oscilloscope});
@@ -388,6 +392,8 @@ void GUI::loop() {
 			ImGui::End();
 		}
 		
+	#ifdef FEATURES_PADS
+		// Drumpads
 		if(mainButtons[win_Pads].status) {
 			ImGui::SetNextWindowSize(ImVec2(641, 380));
 			ImGuiWindowFlags pads_flags = 0;
@@ -433,6 +439,7 @@ void GUI::loop() {
 			
 			ImGui::End();
 		}
+	#endif
 		
 		// Voice controls
 		{
