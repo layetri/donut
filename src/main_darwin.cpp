@@ -237,7 +237,6 @@ void processing_thread(AutoMaster& sensei, ModMatrix& mm, StereoOutputBuffer& bu
 	auto process_block = [&sensei, &mm, &running,
 						  &testsound, &testbuf
 						  ](StereoOutputBuffer& buffer) {
-		verbose("processing " + to_string(buffer.getBlockSize()) + " samples");
 		while(buffer.isReadyToWrite() && running) {
 			// Process Modulation Matrix
 			mm.process();
@@ -245,27 +244,30 @@ void processing_thread(AutoMaster& sensei, ModMatrix& mm, StereoOutputBuffer& bu
 			sensei.process();
 			
 			// Write samples to current processing buffer
-			testsound.tick();
-			auto smp = (float) testbuf->getCurrentSample() / (float) SAMPLE_MAX_VALUE;
-			buffer.writeSamplePair(smp, smp);
+//			testsound.tick();
+//			auto smp = (float) testbuf->getCurrentSample() / (float) SAMPLE_MAX_VALUE;
+//			buffer.writeSamplePair(smp, smp);
+			buffer.writeSamplePair(sensei.getLeftChannel(), sensei.getRightChannel());
 			buffer.tick();
+			sensei.tick();
 			
-			testbuf->tick();
+//			testbuf->tick();
 			
 		}
 	};
 	
 	while(running) {
 		if(buffer_0.isReadyToWrite()) {
-			verbose(to_string(chrono::steady_clock::now().time_since_epoch().count()) + "writing buffer_0");
+//			verbose(to_string(chrono::steady_clock::now().time_since_epoch().count()) + ": writing buffer_0");
 			process_block(buffer_0);
-			verbose("done writing buffer_0");
+//			verbose(to_string(chrono::steady_clock::now().time_since_epoch().count()) + ": done writing buffer_0");
 		}
 		if(buffer_1.isReadyToWrite()) {
-			verbose(to_string(chrono::steady_clock::now().time_since_epoch().count()) + "writing buffer_1");
+//			verbose(to_string(chrono::steady_clock::now().time_since_epoch().count()) + ": writing buffer_1");
 			process_block(buffer_1);
-			verbose("done writing buffer_1");
+//			verbose(to_string(chrono::steady_clock::now().time_since_epoch().count()) + ": done writing buffer_1");
 		}
+		usleep(1);
 	}
 }
 
@@ -421,9 +423,9 @@ void program() {
 	
 	StereoOutputBuffer buffer_0;
 	StereoOutputBuffer buffer_1;
-	StereoOutputBuffer* is_currently_reading = nullptr;
+	buffer_0.initAsReadyToRead();
 	
-	
+	StereoOutputBuffer* is_currently_reading = &buffer_0;
 	
 	// Initialize note allocation component
 	NoteHandler handle(voices);
@@ -436,32 +438,38 @@ void program() {
 	
 	#ifdef ENGINE_JACK
 		// Assign the Jack callback function
-		jack.onProcess = [&sensei, &mm, &gui, &buffer_0, &buffer_1, &is_currently_reading](jack_default_audio_sample_t *outBuf_L, jack_default_audio_sample_t *outBuf_R, jack_nframes_t nframes) {
-//			auto ts = chrono::steady_clock::now();
+		float last_sample_left = 0.0, last_sample_right = 0.0;
+		jack.onProcess = [&gui, &buffer_0, &buffer_1, &is_currently_reading, &last_sample_left, &last_sample_right](jack_default_audio_sample_t *outBuf_L, jack_default_audio_sample_t *outBuf_R, jack_nframes_t nframes) {
 //			for(auto& v : voices) {
 //				v->block((size_t) nframes);
 //			}
-			if(buffer_0.isReadyToRead() && ((is_currently_reading && !is_currently_reading->isReadyToRead()) || !is_currently_reading)) {
-				verbose(to_string(chrono::steady_clock::now().time_since_epoch().count()) + "reading buffer_0");
-				is_currently_reading = &buffer_0;
-			} else if(buffer_1.isReadyToRead() && !is_currently_reading->isReadyToRead()) {
-				verbose(to_string(chrono::steady_clock::now().time_since_epoch().count()) + "reading buffer_1");
-				is_currently_reading = &buffer_1;
-			}
-			if(is_currently_reading) {
+
+			if(is_currently_reading->isDoneReading()) {
+				if(is_currently_reading == &buffer_1 && buffer_0.isReadyToRead()) {
+					is_currently_reading = &buffer_0;
+					is_currently_reading->resetReadCount();
+					buffer_1.recycle();
+//					verbose(to_string(chrono::steady_clock::now().time_since_epoch().count()) + ": reading buffer_0");
+				} else if(is_currently_reading == &buffer_0 && buffer_1.isReadyToRead()) {
+					is_currently_reading = &buffer_1;
+					is_currently_reading->resetReadCount();
+					buffer_0.recycle();
+//					verbose(to_string(chrono::steady_clock::now().time_since_epoch().count()) + ": reading buffer_1");
+				}
 				is_currently_reading->setBlockSize(nframes);
 			}
 			
 			for (unsigned int i = 0; i < nframes; i++) {
-				// Find out which block to read from:
-				// - If buffer_0 is ready and
-				if(is_currently_reading) {
+				if(is_currently_reading->isReadyToRead()) {
 					outBuf_L[i] = is_currently_reading->getLeftSample();
 					outBuf_R[i] = is_currently_reading->getRightSample();
 					is_currently_reading->tickReadHead();
+					
+					last_sample_left = outBuf_L[i];
+					last_sample_right = outBuf_R[i];
 				} else {
-					outBuf_L[i] = 0.0;
-					outBuf_R[i] = 0.0;
+					outBuf_L[i] = last_sample_left;
+					outBuf_R[i] = last_sample_right;
 				}
 //				mm.process();
 //				sensei.process();
@@ -473,10 +481,8 @@ void program() {
 			}
 			
 //			gui.stereoPlot(outBuf_L, outBuf_R, nframes);
-			gui.stereoPlot(is_currently_reading->getl(), is_currently_reading->getr(), nframes);
+			gui.stereoPlot(is_currently_reading->getl(), outBuf_R, nframes);
 
-
-//			verbose(chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - ts).count());
 			return 0;
 		};
 		jack.autoConnect();

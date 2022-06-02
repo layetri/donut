@@ -18,6 +18,9 @@ class StereoOutputBuffer {
 		void tick();
 		void tickReadHead();
 		
+		void initAsReadyToRead();
+		void resetReadCount() {samples_read = 0;};
+		
 		float getLeftSample();
 		float getRightSample();
 		

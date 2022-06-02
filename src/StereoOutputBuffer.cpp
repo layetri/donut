@@ -28,12 +28,21 @@ bool StereoOutputBuffer::hasReachedBlockEnd(uint pos) const {
 	return pos >= block_size;
 }
 
+void StereoOutputBuffer::initAsReadyToRead() {
+	_ready_to_write = false;
+	_ready_to_read = true;
+}
+
 // Reset the buffer after it's been processed by JACK
 void StereoOutputBuffer::recycle() {
 	samples_written = 0;
+	samples_read = 0;
+	
 	left_channel.purge();
 	right_channel.purge();
+	
 	_ready_to_write = true;
+	_ready_to_read = false;
 }
 
 // Write a pair of floats to the current buffer position
@@ -47,6 +56,7 @@ void StereoOutputBuffer::tick() {
 	if(hasReachedBlockEnd(samples_written)) {
 		_ready_to_write = false;
 		_ready_to_read = true;
+		samples_read = 0;
 	} else {
 		left_channel.tick();
 		right_channel.tick();
@@ -70,7 +80,7 @@ float StereoOutputBuffer::getLeftSample() {
 	if(!_ready_to_write)
 		return left_channel.getSampleAt(samples_read);
 	
-//	verbose("WARNING: Reading from buffer while it is locked is not permitted.");
+	verbose("WARNING: Reading from buffer while it is locked is not permitted.");
 	return 0.0;
 }
 

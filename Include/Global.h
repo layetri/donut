@@ -11,21 +11,12 @@
 #define PLATFORM_DARWIN_X86
 
 // Make sure that there's only one platform at once
-#if !defined(PLATFORM_DARWIN_X86) or !defined(SYS_LINUX)
-  // Set platform to Arduino
-  //#define PLATFORM_ARDUINO_ARM
-
-  // Set platform to Teensy 4.0 (IMXRT1062)
-  #define PLATFORM_TEENSY40
-  #define PLATFORM_EMBEDDED
-#else
   #define ENGINE_JACK
   #include <cstdint>
   #include <utility>
-#include <vector>
+  #include <vector>
   #include <string>
   #include <cmath>
-#endif
 
 // Add global likely/unlikely directives
 #define likely(x)       __builtin_expect((x),1)
