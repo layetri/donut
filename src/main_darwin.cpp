@@ -330,14 +330,17 @@ void displayMidiStatus(RtMidiIn* midi_in, RtMidiOut* midi_out) {
 
 void program() {
 	bool running = true;
+	srand(time(NULL));
+	extern unsigned int samplerate;
+	
+	// Initialize meta components
 	ParameterPool parameters;
 	ModMatrix mm(&parameters);
 	queue<Event *> event_queue;
 	
+	// Initialize GUI
 	GUI gui(&parameters, &mm, &event_queue, &running);
 	gui.initgui();
-	
-	extern unsigned int samplerate;
 	
 	#ifdef ENGINE_JACK
 		// Do Jack setup
@@ -349,15 +352,14 @@ void program() {
 		}
 	#endif
 	
-	srand(time(NULL));
-	
-	// TODO: add ImGui
-	
 	Scheduler scheduler(parameters.get(p_BPM, 0));
-	
 //	scheduler.store([]() {verbose("one measure!");}, Timestamp {1, 0, 0}, "liveness");
 	
+	// Initialize sample-based components
 	SampleLibrary lib(&gui);
+	Tables tables;
+	tables.generateWaveforms();
+	
 	Sampler sampler(&parameters, &lib);
 	if(lib.load("default")) {
 		sampler.addRegion("default");
@@ -365,32 +367,35 @@ void program() {
 	}
 	Particles particles(&lib);
 	
+	// Initialize presets
 	PresetEngine pe(&parameters, &mm, &sampler, &particles, &lib, &gui);
 	
-	Tables tables;
-	tables.generateWaveforms();
+	// Reserve memory for Voice allocation
 	vector<unique_ptr<Voice>> voices;
-//	vector<Voice *> voices;
 	vector<Buffer *> voice_buffers;
-
 	voices.reserve(NUMBER_OF_VOICES);
 	voice_buffers.reserve(NUMBER_OF_VOICES);
+	
+	// Create the Voices and their output buffers
 	for (int i = 0; i < NUMBER_OF_VOICES; i++) {
 		voice_buffers.push_back(new Buffer(441, "voice_"+to_string(i)));
 		voices.push_back(make_unique<Voice>(voice_buffers[i], &parameters, &mm, &tables, &sampler, &particles, &gui, (uint8_t) i));
-//		voices.push_back(new Voice(voice_buffers[i], &parameters, &mm, &tables, &sampler, &particles, &gui, (uint8_t) i));
 	}
 	
+	// Initialize note allocation component
 	NoteHandler handle(voices);
+	
+	// Initialize mastering component
 	AutoMaster sensei(voices, &parameters, parameters.get(p_Master, 0));
 	pe.load("_autosave");
 	
 	#ifdef ENGINE_JACK
 		// Assign the Jack callback function
 		jack.onProcess = [&sensei, &mm, &voices, &gui](jack_default_audio_sample_t *outBuf_L, jack_default_audio_sample_t *outBuf_R, jack_nframes_t nframes) {
-			for(auto& v : voices) {
-				v->block((size_t) nframes);
-			}
+//			auto ts = chrono::steady_clock::now();
+//			for(auto& v : voices) {
+//				v->block((size_t) nframes);
+//			}
 			
 			for (unsigned int i = 0; i < nframes; i++) {
 				mm.process();
@@ -404,6 +409,7 @@ void program() {
 			
 			gui.stereoPlot(outBuf_L, outBuf_R, nframes);
 
+//			verbose(chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - ts).count());
 			return 0;
 		};
 		jack.autoConnect();

@@ -513,7 +513,7 @@ void GUI::loop() {
 				
 				label = label.substr(0, label.find_last_of("_"));
 				auto windowWidth = ImGui::GetWindowSize().x;
-				auto textWidth   = ImGui::CalcTextSize(label.c_str()).x;
+				auto textWidth   = ImGui::CalcTextSize(parameterCategories.at(label).c_str()).x;
 				
 				ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
 				ImGui::PushFont(font_bold);
