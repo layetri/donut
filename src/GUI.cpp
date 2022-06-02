@@ -511,12 +511,11 @@ void GUI::loop() {
 				ImGui::BeginGroup();
 				ImGui::BeginChild(label.c_str(), ImVec2(80, 200), true);
 				
+				ImGui::PushFont(text_small_bold);
 				label = label.substr(0, label.find_last_of("_"));
 				auto windowWidth = ImGui::GetWindowSize().x;
 				auto textWidth   = ImGui::CalcTextSize(parameterCategories.at(label).c_str()).x;
-				
 				ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
-				ImGui::PushFont(text_small_bold);
 				ImGui::Text("%s", parameterCategories.at(label).c_str());
 				ImGui::PopFont();
 				
