@@ -227,6 +227,49 @@ void schedule(Scheduler& scheduler, bool& running) {
 }
 
 
+void processing_thread(AutoMaster& sensei, ModMatrix& mm, StereoOutputBuffer& buffer_0, StereoOutputBuffer& buffer_1, bool& running) {
+	
+	// TODO: REMOVE
+	#include <Source/TestSynth.h>
+	Buffer* testbuf = new Buffer(500);
+	Synth testsound(100.0, 1.0, samplerate, testbuf);
+	
+	auto process_block = [&sensei, &mm, &running,
+						  &testsound, &testbuf
+						  ](StereoOutputBuffer& buffer) {
+		verbose("processing " + to_string(buffer.getBlockSize()) + " samples");
+		while(buffer.isReadyToWrite() && running) {
+			// Process Modulation Matrix
+			mm.process();
+			// Process everything else (voices, mastering, effects...)
+			sensei.process();
+			
+			// Write samples to current processing buffer
+			testsound.tick();
+			auto smp = (float) testbuf->getCurrentSample() / (float) SAMPLE_MAX_VALUE;
+			buffer.writeSamplePair(smp, smp);
+			buffer.tick();
+			
+			testbuf->tick();
+			
+		}
+	};
+	
+	while(running) {
+		if(buffer_0.isReadyToWrite()) {
+			verbose(to_string(chrono::steady_clock::now().time_since_epoch().count()) + "writing buffer_0");
+			process_block(buffer_0);
+			verbose("done writing buffer_0");
+		}
+		if(buffer_1.isReadyToWrite()) {
+			verbose(to_string(chrono::steady_clock::now().time_since_epoch().count()) + "writing buffer_1");
+			process_block(buffer_1);
+			verbose("done writing buffer_1");
+		}
+	}
+}
+
+
 void init_midi(RtMidiIn *midi_in) {
 	// Check inputs.
 	unsigned int nPorts = midi_in->getPortCount();
@@ -241,12 +284,12 @@ void listMidiDevices(RtMidiIn* midi_in, RtMidiOut* midi_out, GUI* gui) {
 	unsigned int nPorts = midi_in->getPortCount();
 	unsigned int nOutPorts = midi_out->getPortCount();
 	#ifndef BUILD_GUI_IMGUI
-		gui->output("\nThere are " + to_string(nPorts) + " MIDI input sources available.\n", false);
+	gui->output("\nThere are " + to_string(nPorts) + " MIDI input sources available.\n", false);
 	#else
-		vector<string> in_ports;
-		vector<string> out_ports;
+	vector<string> in_ports;
+	vector<string> out_ports;
 	#endif
-
+	
 	// List inputs
 	string portName;
 	for (unsigned int i = 0; i < nPorts; i++) {
@@ -258,14 +301,14 @@ void listMidiDevices(RtMidiIn* midi_in, RtMidiOut* midi_out, GUI* gui) {
 			return;
 		}
 		#ifndef BUILD_GUI_IMGUI
-			gui->output("  Input Port #" + to_string(i) + ": " + portName + "\n", false);
+		gui->output("  Input Port #" + to_string(i) + ": " + portName + "\n", false);
 		#else
-			in_ports.push_back(portName);
+		in_ports.push_back(portName);
 		#endif
 	}
 	
 	#ifndef BUILD_GUI_IMGUI
-		gui->output("\nUse ", false);
+	gui->output("\nUse ", false);
 		gui->output("midi in [device_number]", false, -1, -1, 5);
 		gui->output(" to select a MIDI input device.", false);
 	
@@ -282,20 +325,19 @@ void listMidiDevices(RtMidiIn* midi_in, RtMidiOut* midi_out, GUI* gui) {
 			return;
 		}
 		#ifndef BUILD_GUI_IMGUI
-			gui->output("  Output Port #" + to_string(i) + ": " + portName + "\n", false);
+		gui->output("  Output Port #" + to_string(i) + ": " + portName + "\n", false);
 		#else
-			out_ports.push_back(portName);
+		out_ports.push_back(portName);
 		#endif
 	}
 	#ifndef BUILD_GUI_IMGUI
-		gui->output("\nUse ", false);
+	gui->output("\nUse ", false);
 		gui->output("midi out [device_number]", false, -1, -1, 5);
 		gui->output(" to select a MIDI output device.", true);
 	#else
-		gui->updateMidiDevices(in_ports, out_ports);
+	gui->updateMidiDevices(in_ports, out_ports);
 	#endif
 }
-
 void switchMidiInputs(RtMidiIn* midi_in, uint port, GUI* gui) {
 	// Check inputs.
 	unsigned int nPorts = midi_in->getPortCount();
@@ -309,7 +351,6 @@ void switchMidiInputs(RtMidiIn* midi_in, uint port, GUI* gui) {
 		gui->output("That MIDI input doesn't exist.");
 	}
 }
-
 void switchMidiOutputs(RtMidiOut* midi_out, uint port, GUI* gui) {
 	// Check outputs.
 	unsigned int nPorts = midi_out->getPortCount();
@@ -322,10 +363,6 @@ void switchMidiOutputs(RtMidiOut* midi_out, uint port, GUI* gui) {
 	} else {
 		gui->output("That MIDI output doesn't exist.");
 	}
-}
-
-void displayMidiStatus(RtMidiIn* midi_in, RtMidiOut* midi_out) {
-	// Display the status of the internal MIDI devices
 }
 
 void program() {
@@ -382,6 +419,12 @@ void program() {
 		voices.push_back(make_unique<Voice>(voice_buffers[i], &parameters, &mm, &tables, &sampler, &particles, &gui, (uint8_t) i));
 	}
 	
+	StereoOutputBuffer buffer_0;
+	StereoOutputBuffer buffer_1;
+	StereoOutputBuffer* is_currently_reading = nullptr;
+	
+	
+	
 	// Initialize note allocation component
 	NoteHandler handle(voices);
 	
@@ -389,25 +432,49 @@ void program() {
 	AutoMaster sensei(voices, &parameters, parameters.get(p_Master, 0));
 	pe.load("_autosave");
 	
+	thread processor(processing_thread, ref(sensei), ref(mm), ref(buffer_0), ref(buffer_1), ref(running));
+	
 	#ifdef ENGINE_JACK
 		// Assign the Jack callback function
-		jack.onProcess = [&sensei, &mm, &voices, &gui](jack_default_audio_sample_t *outBuf_L, jack_default_audio_sample_t *outBuf_R, jack_nframes_t nframes) {
+		jack.onProcess = [&sensei, &mm, &gui, &buffer_0, &buffer_1, &is_currently_reading](jack_default_audio_sample_t *outBuf_L, jack_default_audio_sample_t *outBuf_R, jack_nframes_t nframes) {
 //			auto ts = chrono::steady_clock::now();
 //			for(auto& v : voices) {
 //				v->block((size_t) nframes);
 //			}
-			
-			for (unsigned int i = 0; i < nframes; i++) {
-				mm.process();
-				sensei.process();
-
-				outBuf_L[i] = sensei.getLeftChannel();
-				outBuf_R[i] = sensei.getRightChannel();
-
-				sensei.tick();
+			if(buffer_0.isReadyToRead() && ((is_currently_reading && !is_currently_reading->isReadyToRead()) || !is_currently_reading)) {
+				verbose(to_string(chrono::steady_clock::now().time_since_epoch().count()) + "reading buffer_0");
+				is_currently_reading = &buffer_0;
+			} else if(buffer_1.isReadyToRead() && !is_currently_reading->isReadyToRead()) {
+				verbose(to_string(chrono::steady_clock::now().time_since_epoch().count()) + "reading buffer_1");
+				is_currently_reading = &buffer_1;
+			}
+			if(is_currently_reading) {
+				is_currently_reading->setBlockSize(nframes);
 			}
 			
-			gui.stereoPlot(outBuf_L, outBuf_R, nframes);
+			for (unsigned int i = 0; i < nframes; i++) {
+				// Find out which block to read from:
+				// - If buffer_0 is ready and
+				if(is_currently_reading) {
+					outBuf_L[i] = is_currently_reading->getLeftSample();
+					outBuf_R[i] = is_currently_reading->getRightSample();
+					is_currently_reading->tickReadHead();
+				} else {
+					outBuf_L[i] = 0.0;
+					outBuf_R[i] = 0.0;
+				}
+//				mm.process();
+//				sensei.process();
+//
+//				outBuf_L[i] = sensei.getLeftChannel();
+//				outBuf_R[i] = sensei.getRightChannel();
+//
+//				sensei.tick();
+			}
+			
+//			gui.stereoPlot(outBuf_L, outBuf_R, nframes);
+			gui.stereoPlot(is_currently_reading->getl(), is_currently_reading->getr(), nframes);
+
 
 //			verbose(chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - ts).count());
 			return 0;
@@ -434,8 +501,13 @@ void program() {
 		thread autosave_handler(backup, ref(pe), ref(running));
 	#endif
 	
+	// Start UI loop
 	ui(running, ref(gui), event_queue, ref(parameters), ref(pe), voices);
 	
+	// ... //
+	
+	// Program shutdown
+	processor.join();
 	midi_handler.join();
 	event_handler.join();
 //	scheduling_handler.join();
@@ -444,6 +516,10 @@ void program() {
 	#endif
 	
 	gui.cleanup();
+	
+	for(auto& vb : voice_buffers) {
+		delete vb;
+	}
 	delete midi_in;
 	delete midi_out;
 	exit(0);

@@ -11,30 +11,26 @@ PresetEngine::PresetEngine(ParameterPool* parameters, ModMatrix* mm, Sampler* sa
 	this->particles = particles;
 	this->library = library;
 	this->gui = gui;
-
-	available_presets = new vector<string>;
-	presets = new vector<Preset*>;
+	
 	selected = 0;
 }
 
-PresetEngine::~PresetEngine() {
-	for (auto &pr : *presets) {
-		delete pr;
-	}
-	delete available_presets;
-}
+PresetEngine::~PresetEngine() {}
 
 void PresetEngine::log() {
+	vector<string> available_presets;
 	filesystem::path path = filesystem::current_path() / ".donut_runtime/presets";
+	
 	#ifdef BUILD_GUI_IMGUI
 		vector<PresetGUIItem> gui_presets;
 	#endif
+	
 	for (const auto & entry : filesystem::directory_iterator(path)) {
 		auto filename = entry.path().string();
 		filename = filename.substr(filename.find_last_of("/\\") + 1);
 		filename = filename.substr(0, filename.find_last_of("."));
 		
-		available_presets->push_back(filename.c_str());
+		available_presets.emplace_back(filename.c_str());
 		#ifdef BUILD_GUI_IMGUI
 			// Geez C++...
 			// TODO: clean this up, someday
@@ -55,9 +51,9 @@ void PresetEngine::log() {
 	}
 	
 	#ifndef BUILD_GUI_IMGUI
-		for (uint i = 0; i < available_presets->size(); i++) {
+		for (uint i = 0; i < available_presets.size(); i++) {
 			gui->output("[" + to_string(i) + "] ", false, -1, -1, 5);
-			gui->output(available_presets->at(i) + "\n", false);
+			gui->output(available_presets.at(i) + "\n", false);
 		}
 	#else
 		gui->updatePresets(gui_presets);
@@ -80,7 +76,7 @@ void PresetEngine::load(string name) {
 			preset.name = name;
 			
 			for(auto& p : filecontents["parameters"]) {
-				preset.parameters.push_back(new ParameterPreset {
+				preset.parameters.push_back(ParameterPreset {
 					p["key"], p["voice"], p["base_value"]
 				});
 			}
@@ -106,12 +102,9 @@ void PresetEngine::load(string name) {
 				sampler->addRegion(r["sample"], r["key_start"], r["key_end"], r["key_root"], r["smp_start"], r["smp_end"]);
 			}
 			
-			if(filecontents["particles_setup"].size() > 0) {
+			if(!filecontents["particles_setup"].empty()) {
 				particles->swap(filecontents["particles_setup"]["sample"], filecontents["particles_setup"]["key_root"]);
 			}
-			
-			// Store the preset in memory
-			presets->push_back(&preset);
 			
 			// Write to ParameterPool
 			pool->load(&preset.parameters);
@@ -133,12 +126,12 @@ void PresetEngine::store(string name) {
 	filecontents["sampler_regions"] = {};
 	
 	for(auto& param : *pool->getAll()) {
-		string key = pool->translate(param->pid);
+		string key = pool->translate(param.pid);
 		filecontents["parameters"].push_back({
 		 {"key", key},
-		 {"voice", param->voice_id},
-		 {"value", param->value},
-		 {"base_value", param->base_value}
+		 {"voice", param.voice_id},
+		 {"value", param.value},
+		 {"base_value", param.base_value}
 		});
 	}
 	

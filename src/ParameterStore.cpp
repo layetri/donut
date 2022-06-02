@@ -102,25 +102,25 @@ void ParameterPool::add(ParameterID pid, uint8_t voice_id, float value) {
 	get(pid, voice_id)->value = get(pid, voice_id)->base_value + value;
 }
 
-void ParameterPool::load(vector<ParameterPreset*>* params) {
+void ParameterPool::load(vector<ParameterPreset>* params) {
 	for(auto& p : *params) {
-		set(translate(p->key), p->voice_id, p->value);
+		set(translate(p.key), p.voice_id, p.value);
 	}
 }
 
 Parameter* ParameterPool::get(ParameterID pid, uint8_t voice_id) {
 	for(auto& p : parameters) {
-		if(p->pid == pid && p->voice_id == voice_id) {
-			return p;
+		if(p.pid == pid && p.voice_id == voice_id) {
+			return &p;
 		}
 	}
-	return parameters[0];
+	return &parameters[0];
 }
 
 ParameterID ParameterPool::translate(string key) {
 	for(auto& p : dictionary) {
-		if(p->key == key) {
-			return p->pid;
+		if(p.key == key) {
+			return p.pid;
 		}
 	}
 	return p_NotFound;
@@ -128,17 +128,17 @@ ParameterID ParameterPool::translate(string key) {
 
 string ParameterPool::translate(ParameterID pid) {
 	for(auto& p : dictionary) {
-		if(p->pid == pid) {
-			return p->key;
+		if(p.pid == pid) {
+			return p.key;
 		}
 	}
 	return "";
 }
 
-vector<Parameter*>* ParameterPool::getAll() {
+vector<Parameter>* ParameterPool::getAll() {
 	return &parameters;
 }
-vector<ParameterDict*>* ParameterPool::getDictionary() {
+vector<ParameterDict>* ParameterPool::getDictionary() {
 	return &dictionary;
 }
 
@@ -148,7 +148,7 @@ float ParameterPool::value(ParameterID pid, uint8_t voice_id) {
 
 void ParameterPool::store(ParameterID pid, uint8_t voice_id, string key, float value, float base_value, float min, float max) {
 	if(!voice_id) {
-		dictionary.push_back(new ParameterDict {pid, key});
+		dictionary.push_back(ParameterDict {pid, key});
 	}
-	parameters.push_back(new Parameter {pid, voice_id, value, base_value, min, max});
+	parameters.push_back(Parameter {pid, voice_id, value, base_value, min, max});
 }

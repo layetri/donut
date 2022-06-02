@@ -3,7 +3,6 @@
 #include <Source/WaveShaper.h>
 #include <Source/WaveTable.h>
 #include <Source/Tensions.h>
-#include <Source/Square.h>
 #include <Source/Sampler.h>
 #include <Source/Particles.h>
 

@@ -9,12 +9,14 @@ class FloatBuffer {
 
         virtual void tick();
         void write(float sample);
-        virtual float getSample();
-
+        void purge();
+		virtual float getSample();
+		virtual float getSampleAt(uint n);
+		
         void setPosition(int position);
 
-	protected:
         float* data;
+	protected:
         int position;
         int length;
 };

@@ -59,10 +59,10 @@ GUI::GUI (ParameterPool* parameters, ModMatrix* mod, queue<Event*>* event_queue,
 		parameterCategories.insert({"fxdelay", "StereoDelay"});
 		
 		for(auto& p : *parameters->getDictionary()) {
-			if(p->key.find("amount") != string::npos) {
-				mix_controls.push_back(parameters->get(p->pid, 0));
+			if(p.key.find("amount") != string::npos) {
+				mix_controls.push_back(parameters->get(p.pid, 0));
 			} else {
-				voice_controls.push_back(parameters->get(p->pid, 0));
+				voice_controls.push_back(parameters->get(p.pid, 0));
 			}
 		}
 		
@@ -72,7 +72,13 @@ GUI::GUI (ParameterPool* parameters, ModMatrix* mod, queue<Event*>* event_queue,
 			exit(1);
 	
 		// Create window with graphics context
+	#ifdef SYS_LINUX
+		// Set resolution for Pi touchscreen (generalizing to all Linux clients for now)
 		window = glfwCreateWindow(800, 480, "DonutUI", NULL, NULL);
+	#else
+		// On non-Linux systems, create a 1280x720px window
+		window = glfwCreateWindow(1280, 720, "Donut", NULL, NULL);
+	#endif
 		if (window == NULL)
 			exit(1);
 		glfwMakeContextCurrent(window);
@@ -239,7 +245,6 @@ void GUI::loop() {
 		ImGuiStyle& window_style = ImGui::GetStyle();
 		window_style.ChildRounding = 7.0f;
 		window_style.FrameRounding = 7.0f;
-//		window_style.WindowRounding = 7.0f;
 		window_style.GrabRounding = 7.0f;
 		window_style.TabRounding = 7.0f;
 		window_style.PopupRounding = 7.0f;
@@ -447,6 +452,7 @@ void GUI::loop() {
 			ImGui::SetNextWindowPos(ImVec2(fwx-270, 45));
 			ImGui::Begin(ICON_FAD_SLIDERHANDLE_1 "Voice controls", NULL, global_window_flags);
 			string category = "";
+			int i = 0;
 			for(auto& v : voice_controls) {
 				auto name = parameters->translate(v->pid);
 				if(name.find("_") != string::npos) {
@@ -465,10 +471,11 @@ void GUI::loop() {
 					ImGui::PopFont();
 					
 					ImGui::PushItemWidth(240);
-					ImGui::SliderFloat("##slider", &v->value, v->min, v->max, "%.5f");
+					ImGui::SliderFloat(("##slider" + to_string(i)).c_str(), &v->base_value, v->min, v->max, "%.5f");
 					if (ImGui::IsItemEdited()) {
-						event_queue->push(new Event{e_Control, (uint16_t) (21 + v->pid),(uint16_t) (127.0f * (v->value / (v->max - v->min)))});
+						event_queue->push(new Event{e_Control, (uint16_t) (21 + v->pid),(uint16_t) (127.0f * (v->base_value / (v->max - v->min)))});
 					}
+					i++;
 				}
 			}
 			ImGui::End();
@@ -489,7 +496,7 @@ void GUI::loop() {
 				for (auto& p : *parameters->getDictionary()) {
 					ImGui::TableNextRow();
 					ImGui::TableSetColumnIndex(0);
-					ImGui::Text("%s", p->key.c_str());
+					ImGui::Text("%s", p.key.c_str());
 					
 					col = 1;
 					for (auto& m : *mod->getDict()) {
@@ -497,7 +504,7 @@ void GUI::loop() {
 						ImGui::TableSetColumnIndex(col);
 						ImGui::SliderFloat("", &v, 0.0f, 1.0f);
 						if(ImGui::IsItemEdited()) {
-							mod->setOrCreate(m.mid, p->pid, v);
+							mod->setOrCreate(m.mid, p.pid, v);
 						}
 						col++;
 					}

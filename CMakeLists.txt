@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.18)
 
 project(Donut VERSION 0.2 DESCRIPTION "Donut firmware for EL-ONE hardware synthesizer")
 
-file(GLOB sources_1 "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
-file(GLOB sources_2 "${CMAKE_CURRENT_SOURCE_DIR}/src/ui/*.cpp")
+file(GLOB sources "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
+file(GLOB sources_ext "${CMAKE_CURRENT_SOURCE_DIR}/src/ext/*.cpp")
 
 ## Find dependencies
 add_subdirectory("imgui")
@@ -31,7 +31,7 @@ if(UNIX AND NOT APPLE)
     set(GL_LIBRARY GL GLU X11)
 endif()
 
-add_executable(donut ${sources_1} ${sources_2})
+add_executable(donut ${sources} ${sources_ext} src/StereoOutputBuffer.cpp Include/DSP/StereoOutputBuffer.h Include/Source/TestSynth.h)
 
 if(UNIX AND NOT APPLE)
     target_link_libraries(donut PRIVATE glfw3 ${GL_LIBRARY} dl m)

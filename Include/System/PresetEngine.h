@@ -41,7 +41,7 @@
 using namespace std;
 
 struct Preset {
-    vector<ParameterPreset*> parameters;
+    vector<ParameterPreset> parameters;
 	string name = "default";
 };
 
@@ -63,8 +63,6 @@ class PresetEngine {
 		SampleLibrary* library;
 		GUI* gui;
 		
-		vector<Preset*>* presets;
-		vector<string>* available_presets;
 		uint16_t selected;
 };
 

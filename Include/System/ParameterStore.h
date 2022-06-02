@@ -42,18 +42,18 @@ class ParameterPool {
 		void set(ParameterID pid, uint8_t voice_id, float value);
 		void add(ParameterID pid, uint8_t voice_id, float value);
 		void store(ParameterID pid, uint8_t voice_id, string key, float value, float base_value=1.0, float min=0.0f, float max=1.0f);
-		void load(vector<ParameterPreset*>* params);
+		void load(vector<ParameterPreset>* params);
 
 		ParameterID translate(string key);
 		string translate(ParameterID pid);
 
 		float value(ParameterID pid, uint8_t voice_id);
-		vector<Parameter*>* getAll();
-		vector<ParameterDict*>* getDictionary();
+		vector<Parameter>* getAll();
+		vector<ParameterDict>* getDictionary();
 
 	private:
-		vector<Parameter*> parameters;
-		vector<ParameterDict*> dictionary;
+		vector<Parameter> parameters;
+		vector<ParameterDict> dictionary;
 };
 
 

@@ -11,7 +11,7 @@
 #define PLATFORM_DARWIN_X86
 
 // Make sure that there's only one platform at once
-#if !defined(PLATFORM_DARWIN_X86)
+#if !defined(PLATFORM_DARWIN_X86) or !defined(SYS_LINUX)
   // Set platform to Arduino
   //#define PLATFORM_ARDUINO_ARM
 

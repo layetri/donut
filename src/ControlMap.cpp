@@ -6,8 +6,6 @@
 
 ControlMap::ControlMap(ParameterPool* pool) {
 	this->pool = pool;
-	current_map = new Map {"default_controls"};
-	selected_controller = 1;
 
 	// Map modwheel
 	addCC(p_WS1_Detune, 1);
@@ -41,11 +39,11 @@ ControlMap::ControlMap(ParameterPool* pool) {
 ControlMap::~ControlMap() {}
 
 void ControlMap::addCC(ParameterID pid, uint16_t cc, uint16_t channel) {
-	current_map->values.push_back(new Control {pid, cc, channel});
+	current_map.values.push_back(new Control {pid, cc, channel});
 }
 
 void ControlMap::changeCC(ParameterID pid, uint16_t cc) {
-	for(auto& v : current_map->values) {
+	for(auto& v : current_map.values) {
 		if(v->cc == cc) {
 			v->parameter = pid;
 		}
@@ -80,7 +78,7 @@ void ControlMap::storeMap(const string& name) {
 	nlohmann::json filecontents;
 	filecontents["controls"] = {};
 	
-	for(auto& v : current_map->values) {
+	for(auto& v : current_map.values) {
 		string key = pool->translate(v->parameter);
 		filecontents["controls"].push_back({
 			{"cc", v->cc},
@@ -94,7 +92,7 @@ void ControlMap::storeMap(const string& name) {
 }
 
 int ControlMap::getCC(ParameterID pid) {
-	for(auto& v : current_map->values) {
+	for(auto& v : current_map.values) {
 		if(v->parameter == pid) {
 			return v->cc;
 		}
@@ -103,7 +101,7 @@ int ControlMap::getCC(ParameterID pid) {
 }
 
 ParameterID ControlMap::getPID(uint16_t cc, uint16_t channel) {
-	for(auto& v : current_map->values) {
+	for(auto& v : current_map.values) {
 		if(v->cc == cc && v->channel == channel) {
 			return v->parameter;
 		}
@@ -114,7 +112,7 @@ ParameterID ControlMap::getPID(uint16_t cc, uint16_t channel) {
 vector<ParameterID> ControlMap::getPIDs(uint16_t cc, uint16_t channel) {
 	vector<ParameterID> ret_arr;
 	
-	for(auto& v : current_map->values) {
+	for(auto& v : current_map.values) {
 		if(v->cc == cc && v->channel == channel) {
 			ret_arr.push_back(v->parameter);
 		}
@@ -124,13 +122,5 @@ vector<ParameterID> ControlMap::getPIDs(uint16_t cc, uint16_t channel) {
 }
 
 void ControlMap::reset() {
-	current_map->values.clear();
-}
-
-void ControlMap::listControllers() {
-
-}
-
-void ControlMap::setController(uint input_num) {
-
+	current_map.values.clear();
 }

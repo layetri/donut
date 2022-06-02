@@ -20,6 +20,7 @@
 #include <ext/RtMidi.h>
 
 #include <DSP/Buffer.h>
+#include <DSP/StereoOutputBuffer.h>
 
 #include <Effect/AutoMaster.h>
 #include <Source/Sampler.h>

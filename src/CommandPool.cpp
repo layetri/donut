@@ -190,7 +190,7 @@ struct handleListParams : public Command {
 	void handle (string command) override {
 		if (auto m = ctre::match<pattern>(command)) {
 			for (auto &p: *parameters->getDictionary()) {
-				gui->output(p->key);
+				gui->output(p.key);
 			}
 		}
 	}

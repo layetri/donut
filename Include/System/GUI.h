@@ -84,35 +84,42 @@ class GUI {
 		char cmd_stream[80];
 	
 	#ifdef BUILD_GUI_IMGUI
+		// Variables for Dear ImGui
 		ImGuiIO* io;
 		GLFWwindow* window;
 		ImVec4 clear_color = ImVec4(0.496f, 0.882f, 0.968f, 1.00f);
 		ImFont *font_regular, *font_bold, *font_light, *text_small, *text_small_bold;
 		ImGuiWindowFlags global_window_flags = 0;
 		
-		bool demo_var = false;
+		// Variables for the main interface/controls
+		vector<ToggleWindowButton> mainButtons;
+		vector<Parameter*> mix_controls; // Store parameters that belong to Mixer
+		vector<Parameter*> voice_controls; // Store parameters that belong to Voice
+		unordered_map<string, string> parameterCategories;
+		
+		// Variables for Devmode Console
 		deque<string> log;
 		uint log_size = 16;
 		
+		// Variables for Oscilloscope
 		uint plot_size = 0;
 		float *plotL = 0, *plotR = 0;
 		
+		// Variables for MIDI Device selection
 		vector<string> midi_inputs;
 		vector<string> midi_outputs;
 		uint16_t midi_in_selector = 0;
 		uint16_t midi_out_selector = 0;
 		
+		// Variables for Presets interface
 		vector<PresetGUIItem> presets;
-		bool newPresetDialog = false;
 		char pr_name[80] = "";
 		uint selected_preset = 0;
 		
+		// Variables for Pads
 		PadMode padMode = pm_MIDI;
 		
-		vector<ToggleWindowButton> mainButtons;
-		vector<Parameter*> mix_controls; // Store parameters that belong to Mixer
-		vector<Parameter*> voice_controls;
-		unordered_map<string, string> parameterCategories;
+		
 	#endif
 };
 
