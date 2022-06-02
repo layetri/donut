@@ -517,7 +517,7 @@ void GUI::loop() {
 				
 				ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
 				ImGui::PushFont(font_bold);
-				ImGui::Text("%s", label.c_str());
+				ImGui::Text("%s", parameterCategories.at(label).c_str());
 				ImGui::PopFont();
 				
 				ImGui::SetCursorPosX((windowWidth - 18) * 0.5f);
