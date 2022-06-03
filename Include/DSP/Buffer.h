@@ -46,6 +46,8 @@ public:
     sample_t& operator[] (int index) {
       return data[index];
     }
+	
+	float getMultiplier() const {return multiplier;};
 
 private:
 	uint bounds(int value);

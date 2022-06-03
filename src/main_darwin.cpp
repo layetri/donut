@@ -227,16 +227,14 @@ void schedule(Scheduler& scheduler, bool& running) {
 }
 
 
-void processing_thread(AutoMaster& sensei, ModMatrix& mm, StereoOutputBuffer& buffer_0, StereoOutputBuffer& buffer_1, bool& running) {
+void processing_thread(AutoMaster& sensei, ModMatrix& mm, DeveloperUtility& devUtils, StereoOutputBuffer& buffer_0, StereoOutputBuffer& buffer_1, bool& running) {
 	
 	// TODO: REMOVE
 	#include <Source/TestSynth.h>
 	Buffer* testbuf = new Buffer(500);
 	Synth testsound(100.0, 1.0, samplerate, testbuf);
 	
-	auto process_block = [&sensei, &mm, &running,
-						  &testsound, &testbuf
-						  ](StereoOutputBuffer& buffer) {
+	auto process_block = [&sensei, &mm, &running, &testsound, &testbuf, &devUtils](StereoOutputBuffer& buffer) {
 		while(buffer.isReadyToWrite() && running) {
 			// Process Modulation Matrix
 			mm.process();
@@ -258,14 +256,14 @@ void processing_thread(AutoMaster& sensei, ModMatrix& mm, StereoOutputBuffer& bu
 	
 	while(running) {
 		if(buffer_0.isReadyToWrite()) {
-//			verbose(to_string(chrono::steady_clock::now().time_since_epoch().count()) + ": writing buffer_0");
+			auto ts = chrono::steady_clock::now();
 			process_block(buffer_0);
-//			verbose(to_string(chrono::steady_clock::now().time_since_epoch().count()) + ": done writing buffer_0");
+			devUtils.registerProcessingTimeMeasurement(chrono::duration_cast<chrono::microseconds>(chrono::steady_clock::now() - ts).count());
 		}
 		if(buffer_1.isReadyToWrite()) {
-//			verbose(to_string(chrono::steady_clock::now().time_since_epoch().count()) + ": writing buffer_1");
+			auto ts = chrono::steady_clock::now();
 			process_block(buffer_1);
-//			verbose(to_string(chrono::steady_clock::now().time_since_epoch().count()) + ": done writing buffer_1");
+			devUtils.registerProcessingTimeMeasurement(chrono::duration_cast<chrono::microseconds>(chrono::steady_clock::now() - ts).count());
 		}
 		usleep(1);
 	}
@@ -377,8 +375,13 @@ void program() {
 	ModMatrix mm(&parameters);
 	queue<Event *> event_queue;
 	
+	#ifdef DEVMODE
+	// Initialize developer tools
+		DeveloperUtility devUtils;
+	#endif
+	
 	// Initialize GUI
-	GUI gui(&parameters, &mm, &event_queue, &running);
+	GUI gui(&parameters, &mm, &event_queue, &devUtils, &running);
 	gui.initgui();
 	
 	#ifdef ENGINE_JACK
@@ -434,54 +437,46 @@ void program() {
 	AutoMaster sensei(voices, &parameters, parameters.get(p_Master, 0));
 	pe.load("_autosave");
 	
-	thread processor(processing_thread, ref(sensei), ref(mm), ref(buffer_0), ref(buffer_1), ref(running));
+	thread processor(processing_thread, ref(sensei), ref(mm), ref(devUtils), ref(buffer_0), ref(buffer_1), ref(running));
 	
 	#ifdef ENGINE_JACK
 		// Assign the Jack callback function
 		float last_sample_left = 0.0, last_sample_right = 0.0;
-		jack.onProcess = [&gui, &buffer_0, &buffer_1, &is_currently_reading, &last_sample_left, &last_sample_right](jack_default_audio_sample_t *outBuf_L, jack_default_audio_sample_t *outBuf_R, jack_nframes_t nframes) {
-//			for(auto& v : voices) {
-//				v->block((size_t) nframes);
-//			}
+		jack.onProcess = [&gui, &devUtils, &buffer_0, &buffer_1, &is_currently_reading, &last_sample_left, &last_sample_right](jack_default_audio_sample_t *outBuf_L, jack_default_audio_sample_t *outBuf_R, jack_nframes_t nframes) {
+			// Take time reading for dev console
+			auto ts = chrono::steady_clock::now();
 
-			if(is_currently_reading->isDoneReading()) {
-				if(is_currently_reading == &buffer_1 && buffer_0.isReadyToRead()) {
-					is_currently_reading = &buffer_0;
-					is_currently_reading->resetReadCount();
-					buffer_1.recycle();
-//					verbose(to_string(chrono::steady_clock::now().time_since_epoch().count()) + ": reading buffer_0");
-				} else if(is_currently_reading == &buffer_0 && buffer_1.isReadyToRead()) {
-					is_currently_reading = &buffer_1;
-					is_currently_reading->resetReadCount();
-					buffer_0.recycle();
-//					verbose(to_string(chrono::steady_clock::now().time_since_epoch().count()) + ": reading buffer_1");
-				}
-				is_currently_reading->setBlockSize(nframes);
-			}
+			// Adjust block size if necessary
+			is_currently_reading->setBlockSize(nframes);
+			devUtils.registerBlockSize(nframes);
 			
 			for (unsigned int i = 0; i < nframes; i++) {
+				if(is_currently_reading->isDoneReading()) {
+					if(is_currently_reading == &buffer_1 && buffer_0.isReadyToRead()) {
+						is_currently_reading = &buffer_0;
+						is_currently_reading->resetReadCount();
+						buffer_1.recycle();
+					} else if(is_currently_reading == &buffer_0 && buffer_1.isReadyToRead()) {
+						is_currently_reading = &buffer_1;
+						is_currently_reading->resetReadCount();
+						buffer_0.recycle();
+					}
+				}
 				if(is_currently_reading->isReadyToRead()) {
 					outBuf_L[i] = is_currently_reading->getLeftSample();
 					outBuf_R[i] = is_currently_reading->getRightSample();
 					is_currently_reading->tickReadHead();
-					
-					last_sample_left = outBuf_L[i];
-					last_sample_right = outBuf_R[i];
 				} else {
-					outBuf_L[i] = last_sample_left;
-					outBuf_R[i] = last_sample_right;
+					outBuf_L[i] = 0.9 * last_sample_left;
+					outBuf_R[i] = 0.9 * last_sample_right;
 				}
-//				mm.process();
-//				sensei.process();
-//
-//				outBuf_L[i] = sensei.getLeftChannel();
-//				outBuf_R[i] = sensei.getRightChannel();
-//
-//				sensei.tick();
+				last_sample_left = 0.5 * last_sample_left + 0.5 * outBuf_L[i];
+				last_sample_right = 0.5 * last_sample_right + 0.5 * outBuf_R[i];
 			}
 			
-//			gui.stereoPlot(outBuf_L, outBuf_R, nframes);
-			gui.stereoPlot(is_currently_reading->getl(), outBuf_R, nframes);
+			gui.stereoPlot(outBuf_L, outBuf_R, nframes);
+			
+			devUtils.registerJackCycleTimeMeasurement(chrono::duration_cast<chrono::microseconds>(chrono::steady_clock::now() - ts).count());
 
 			return 0;
 		};

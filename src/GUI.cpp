@@ -10,11 +10,12 @@ static void glfw_error_callback(int error, const char* description) {
 	fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
 
-GUI::GUI (ParameterPool* parameters, ModMatrix* mod, queue<Event*>* event_queue, bool* running) {
+GUI::GUI (ParameterPool* parameters, ModMatrix* mod, queue<Event*>* event_queue, DeveloperUtility* utils, bool* running) {
 	this->parameters = parameters;
 	this->event_queue = event_queue;
 	this->mod = mod;
 	this->running = running;
+	this->devUtils = utils;
 	
 	// Construct a GUI with ncurses, ImGui, or std::cout
 	#if defined(BUILD_GUI_NCURSES)
@@ -38,9 +39,11 @@ GUI::GUI (ParameterPool* parameters, ModMatrix* mod, queue<Event*>* event_queue,
 	#ifdef FEATURES_PADS
 		mainButtons.push_back(ToggleWindowButton{ICON_FAD_DRUMPAD "Pads", win_Pads});
 	#endif
-		mainButtons.push_back(ToggleWindowButton{"MIDI Console", win_MIDI_Console});
 		mainButtons.push_back(ToggleWindowButton{ICON_FAD_MIDIPLUG "MIDI Devices", win_MIDI_Devices});
 		mainButtons.push_back(ToggleWindowButton{ICON_FAD_MODSINE "Oscilloscope", win_Oscilloscope});
+	#ifdef DEVMODE
+		mainButtons.push_back(ToggleWindowButton{ICON_FAD_CPU "DevTools", win_Devtools});
+	#endif
 		
 		parameterCategories.insert({"adsr1", "ADSR1"});
 		parameterCategories.insert({"adsr2", "ADSR2"});
@@ -93,7 +96,7 @@ GUI::GUI (ParameterPool* parameters, ModMatrix* mod, queue<Event*>* event_queue,
 		ImGui::StyleColorsDark();
 		
 		// Import fonts
-		font_regular = io->Fonts->AddFontFromFileTTF(".donut_runtime/fonts/NotoSans-Regular.ttf", 20.0f);
+		io->Fonts->AddFontFromFileTTF(".donut_runtime/fonts/NotoSans-Regular.ttf", 20.0f);
 		
 		static const ImWchar icons_ranges[] = { ICON_MIN_FAD, ICON_MAX_16_FAD, 0 };
 		ImFontConfig icons_config;
@@ -103,6 +106,7 @@ GUI::GUI (ParameterPool* parameters, ModMatrix* mod, queue<Event*>* event_queue,
 		icons_config.GlyphOffset = ImVec2(-2.0f, 5.0f);
 		io->Fonts->AddFontFromFileTTF(".donut_runtime/fonts/fontaudio.ttf", 20.0f, &icons_config, icons_ranges );
 		
+		font_regular = io->Fonts->AddFontFromFileTTF(".donut_runtime/fonts/NotoSans-Regular.ttf", 17.0f);
 		font_bold = io->Fonts->AddFontFromFileTTF(".donut_runtime/fonts/NotoSans-Bold.ttf", 20.0f);
 		font_light = io->Fonts->AddFontFromFileTTF(".donut_runtime/fonts/NotoSans-Light.ttf", 20.0f);
 		text_small = io->Fonts->AddFontFromFileTTF(".donut_runtime/fonts/NotoSans-Regular.ttf", 14.0f);
@@ -223,9 +227,9 @@ void GUI::output(const string line, bool lb, int x, int y, int c) {
 			cout << line;
 		}
 	#elif defined(BUILD_GUI_IMGUI)
-		log.push_back(line);
+		log.push_front(line);
 		if(log.size() > log_size) {
-			log.pop_front();
+			log.pop_back();
 		}
 	#endif
 }
@@ -278,15 +282,6 @@ void GUI::loop() {
 			ImGui::End();
 		}
 		
-		// MIDI console
-		if(mainButtons[win_MIDI_Console].status) {
-			ImGui::Begin("MIDI Console");
-			for(basic_string<char> line : log) {
-				ImGui::Text("%s", line.c_str());
-			}
-			ImGui::End();
-		}
-		
 		// MIDI Devices
 		if(mainButtons[win_MIDI_Devices].status) {
 			ImGui::Begin(ICON_FAD_MIDIPLUG "MIDI Devices");
@@ -298,20 +293,6 @@ void GUI::loop() {
 					if (ImGui::Selectable(midi_inputs[n].c_str(), is_selected)) {
 						midi_in_selector = n;
 						event_queue->push(new Event{e_System, 21 + p_MIDI_In, midi_in_selector});
-					}
-					
-					if (is_selected)
-						ImGui::SetItemDefaultFocus();
-				}
-				ImGui::EndListBox();
-			}
-			
-			if (ImGui::BeginListBox("MIDI Outputs")) {
-				for (int n = 0; n < midi_outputs.size(); n++) {
-					const bool is_selected = (midi_out_selector == n);
-					if (ImGui::Selectable(midi_outputs[n].c_str(), is_selected)) {
-						midi_out_selector = n;
-						event_queue->push(new Event{e_System, 21 + p_MIDI_In, midi_out_selector});
 					}
 					
 					if (is_selected)
@@ -544,6 +525,79 @@ void GUI::loop() {
 			ImGui::End();
 		}
 		
+	#ifdef DEVMODE
+		// Devtools
+		if(mainButtons[win_Devtools].status) {
+			ImGui::Begin("Developer tools");
+			
+			auto m = devUtils->getMeasurements();
+			
+			// Print samplerate
+			ImGui::Text("Samplerate: ");
+			ImGui::PushFont(font_bold);
+			ImGui::SameLine();
+			ImGui::Text("%u Hz", m.sampleRate);
+			ImGui::PopFont();
+			
+			// Print block size
+			ImGui::Text("Block size: ");
+			ImGui::PushFont(font_bold);
+			ImGui::SameLine();
+			ImGui::Text("%u", m.blockSize);
+			ImGui::PopFont();
+			
+			// Print processing times
+			ImGui::Text("Average process time: ");
+			ImGui::PushFont(font_bold);
+			ImGui::SameLine();
+			ImGui::Text("%u us", m.avgProcessTime);
+			ImGui::PopFont();
+			ImGui::SameLine();
+			ImGui::PushFont(text_small);
+			ImGui::Text(" (%u us max)", m.maxProcessTime);
+			ImGui::PopFont();
+			
+			// Print JACK times
+			ImGui::Text("Average JACK cycle time: ");
+			ImGui::PushFont(font_bold);
+			if(m.avgJackCycleTime > m.allowedCycleTime) {
+				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+			}
+			ImGui::SameLine();
+			ImGui::Text("%u us", m.avgJackCycleTime);
+			ImGui::PopFont();
+			if(m.avgJackCycleTime > m.allowedCycleTime) {
+				ImGui::PopStyleColor();
+			}
+			ImGui::SameLine();
+			ImGui::PushFont(text_small);
+			ImGui::Text(" (%u us allowed)", m.allowedCycleTime);
+			ImGui::PopFont();
+			
+			ImGui::BeginChild("App Monitor", ImVec2(0,0), true);
+			ImGui::PushFont(font_regular);
+			bool is_first = true;
+			for(basic_string<char> line : log) {
+				if(is_first){
+					ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.443f, 0.909f, 0.96f, 1.0f));
+				} else {
+					ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 0.5f, 1.0f));
+				}
+				
+				ImGui::Text("%s", line.c_str());
+				
+				ImGui::PopStyleColor();
+				if(is_first) {
+					is_first = false;
+				}
+			}
+			ImGui::PopFont();
+			ImGui::EndChild();
+			
+			ImGui::End();
+		}
+		
+	#endif
 		// Rendering
 		ImGui::Render();
 		int display_w, display_h;

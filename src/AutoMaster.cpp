@@ -21,12 +21,14 @@ void AutoMaster::process () {
 	on_voices = 0;
 	
 	for(auto& voice : voices) {
-		voice->process();
-
-		left += voice->getSample();
-		right += voice->getBuffer()->readBack(stereoize);
-
-		on_voices += voice->multiplier->value > 0.0f;
+		if(voice->multiplier->value > 0.0f || !voice->isAvailable()) {
+			voice->process();
+			
+			left += voice->getSample();
+			right += voice->getBuffer()->readBack(stereoize);
+			
+			on_voices++;
+		}
 	}
 	
 	on_voices = on_voices + (on_voices == 0);

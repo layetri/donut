@@ -8,6 +8,10 @@
 #include <Global.h>
 #include <System/ParameterStore.h>
 #include <System/ModMatrix.h>
+
+#ifdef DEVMODE
+	#include <System/DeveloperUtility.h>
+#endif
 #include <ext/Fontaudio.h>
 
 #include <unordered_map>
@@ -36,9 +40,9 @@ enum WindowNames {
 	win_ModMatrix,
 	win_Presets,
 	win_Pads,
-	win_MIDI_Console,
 	win_MIDI_Devices,
 	win_Oscilloscope,
+	win_Devtools
 };
 
 enum PadMode {
@@ -60,7 +64,7 @@ struct ToggleWindowButton {
 
 class GUI {
 	public:
-		GUI (ParameterPool* parameters, ModMatrix* mod, queue<Event*>* event_queue, bool* running);
+		GUI (ParameterPool* parameters, ModMatrix* mod, queue<Event*>* event_queue, DeveloperUtility* utils, bool* running);
 		~GUI ();
 		
 		void initgui();
@@ -78,6 +82,7 @@ class GUI {
 		ModMatrix* mod;
 		bool* running;
 		queue<Event*>* event_queue;
+		DeveloperUtility* devUtils;
 		
 		int row, col, winy, winx;
 		string cmd;

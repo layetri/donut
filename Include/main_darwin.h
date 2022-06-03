@@ -37,6 +37,7 @@
 #include <System/GUI.h>
 #include <System/SampleLibrary.h>
 #include <System/Scheduler.h>
+#include <System/DeveloperUtility.h>
 
 using namespace std;
 

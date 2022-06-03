@@ -9,8 +9,6 @@
 #define DEVMODE
 // Set platform to Darwin x86 (macOS)
 #define PLATFORM_DARWIN_X86
-
-// Make sure that there's only one platform at once
   #define ENGINE_JACK
   #include <cstdint>
   #include <utility>
@@ -24,9 +22,9 @@
 
 // Provide a global sample template type
 typedef int16_t sample_t;
+typedef std::vector<unsigned char> midi_message_t;
 #define SAMPLE_MAX_VALUE 32768
-#define SAMPLE_MIN_VALUE -32767
-#define PARAMETER_MAX_VALUE 65535
+#define SAMPLE_MIN_VALUE (-32767)
 
 // Provide a global samplerate value;
 extern unsigned int samplerate;
@@ -34,10 +32,7 @@ extern unsigned int samplerate;
 // Project-specific global code goes here!
 #define NUM_INPUTS 1
 #define NUMBER_OF_VOICES 12
-#define MAX_ENVELOPE_LENGTH 220500
 #define TABLE_FREQUENCY 1.0
-
-typedef std::vector<unsigned char> midi_message_t;
 
 enum SourceID {
 	s_WS1,

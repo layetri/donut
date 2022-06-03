@@ -112,7 +112,9 @@ void Voice::process() {
 	
 	// Process sources
 	for(auto& s : sources) {
-		s->process();
+		if(s->getBuffer()->getMultiplier() > 0.0) {
+			s->process();
+		}
 	}
 	
 	// Apply amplitude envelope
