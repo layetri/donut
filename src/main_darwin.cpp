@@ -6,7 +6,7 @@
 
 mutex mtx;
 
-// This function runs the TUI
+// This function runs the UI
 void ui(bool& running, GUI& gui, queue<Event *>& events, ParameterPool& parameters, PresetEngine& presetEngine, vector<unique_ptr<Voice>>& voices) {
 	// Setup UI
 	CommandPool cmd_pool(&events, &gui, &parameters, &presetEngine, &running);
@@ -73,6 +73,12 @@ void event(vector<unique_ptr<Voice>>& voices, Sampler& sampler, GUI& gui, NoteHa
 							nh.set(p, e->value);
 						}
 					}
+					break;
+				case e_NoteOn:
+					nh.noteOn(Note {(uint8_t) e->cc, (uint8_t) e->value});
+					break;
+				case e_NoteOff:
+					nh.noteOff(Note {(uint8_t) e->cc, (uint8_t) e->value});
 					break;
 				case e_Control:
 					if(e->cid == c_Split) {
@@ -226,15 +232,9 @@ void schedule(Scheduler& scheduler, bool& running) {
 	}
 }
 
-
+// This thread runs the main audio processing system
 void processing_thread(AutoMaster& sensei, ModMatrix& mm, DeveloperUtility& devUtils, StereoOutputBuffer& buffer_0, StereoOutputBuffer& buffer_1, bool& running) {
-	
-	// TODO: REMOVE
-	#include <Source/TestSynth.h>
-	Buffer* testbuf = new Buffer(500);
-	Synth testsound(100.0, 1.0, samplerate, testbuf);
-	
-	auto process_block = [&sensei, &mm, &running, &testsound, &testbuf, &devUtils](StereoOutputBuffer& buffer) {
+	auto process_block = [&sensei, &mm, &running](StereoOutputBuffer& buffer) {
 		while(buffer.isReadyToWrite() && running) {
 			// Process Modulation Matrix
 			mm.process();
@@ -242,15 +242,11 @@ void processing_thread(AutoMaster& sensei, ModMatrix& mm, DeveloperUtility& devU
 			sensei.process();
 			
 			// Write samples to current processing buffer
-//			testsound.tick();
-//			auto smp = (float) testbuf->getCurrentSample() / (float) SAMPLE_MAX_VALUE;
-//			buffer.writeSamplePair(smp, smp);
 			buffer.writeSamplePair(sensei.getLeftChannel(), sensei.getRightChannel());
+			
+			// Advance processing buffer and synthesis process
 			buffer.tick();
 			sensei.tick();
-			
-//			testbuf->tick();
-			
 		}
 	};
 	

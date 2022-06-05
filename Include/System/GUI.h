@@ -123,8 +123,8 @@ class GUI {
 		
 		// Variables for Pads
 		PadMode padMode = pm_MIDI;
-		
-		
+		uint8_t padLowestNote = 60;
+		uint8_t padVelocity = 80;
 	#endif
 };
 

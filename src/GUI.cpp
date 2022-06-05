@@ -405,10 +405,20 @@ void GUI::loop() {
 			float window_visible_x2 = ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x;
 			for (int n = 0; n < buttons_count; n++) {
 				ImGui::PushID(n);
-				if(ImGui::Button(to_string(n).c_str(), button_sz)) {
+				ImGui::Button(to_string(n).c_str(), button_sz);
+				if(ImGui::IsItemActivated()) {
 					switch(padMode) {
 						case pm_MIDI:
-							output(to_string(n));
+							event_queue->push(new Event {e_NoteOn, (uint16_t) (padLowestNote + n), padVelocity});
+							break;
+						case pm_Trigger:
+							
+							break;
+					}
+				} else if(ImGui::IsItemDeactivated()) {
+					switch(padMode) {
+						case pm_MIDI:
+							event_queue->push(new Event {e_NoteOff, (uint16_t) (padLowestNote + n), padVelocity});
 							break;
 						case pm_Trigger:
 							

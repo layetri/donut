@@ -188,7 +188,9 @@ enum EventType {
 	e_Control,
 	e_Feedback,
 	e_System,
-	e_Transpose
+	e_Transpose,
+	e_NoteOn,
+	e_NoteOff
 };
 
 struct HelpItem {
