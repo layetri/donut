@@ -574,6 +574,11 @@ void GUI::loop() {
 			ImGui::Text(" (%u us allowed)", m.allowedCycleTime);
 			ImGui::PopFont();
 			
+			ImGui::BeginChild("Performance");
+			ImGui::PlotLines("Process time", m.processTimes, 100, 0, NULL, 0.0f, 50.0f, ImVec2(0, 60));
+			ImGui::EndChild();
+			
+			
 			ImGui::BeginChild("App Monitor", ImVec2(0,0), true);
 			ImGui::PushFont(font_regular);
 			bool is_first = true;
@@ -596,8 +601,8 @@ void GUI::loop() {
 			
 			ImGui::End();
 		}
-		
 	#endif
+		
 		// Rendering
 		ImGui::Render();
 		int display_w, display_h;

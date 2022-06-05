@@ -22,7 +22,11 @@ StatsContainer DeveloperUtility::getMeasurements () {
 	
 	uint allowed = (uint) ((1000000.0f / (float) samplerate) * block_size);
 	
-	return StatsContainer {jack_avg, process_avg, process_max, block_size, allowed};
+	for(int i = 0; i < process_time_samples.size(); i++) {
+		process[i] = (float) process_time_samples[i] / 1000.0f;
+	}
+	
+	return StatsContainer {jack_avg, process_avg, process_max, block_size, allowed, samplerate, process};
 }
 
 void DeveloperUtility::registerJackCycleTimeMeasurement (uint measurement) {

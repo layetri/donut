@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <numeric>
 #include <deque>
+#include <vector>
 
 struct StatsContainer {
 	uint avgJackCycleTime = 0;
@@ -18,6 +19,7 @@ struct StatsContainer {
 	uint blockSize = 0;
 	uint allowedCycleTime = 0;
 	uint sampleRate = samplerate;
+	float* processTimes;
 };
 
 class DeveloperUtility {
@@ -35,6 +37,7 @@ private:
 	std::deque<uint> jack_cycle_time_samples;
 	std::deque<uint> process_time_samples;
 	uint block_size = 0;
+	float process[100];
 };
 
 
