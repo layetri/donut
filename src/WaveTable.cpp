@@ -41,7 +41,8 @@ void WaveTableOscillator::process() {
 }
 
 void WaveTableOscillator::tick() {
-	refresh();
+	if(mixer != shape->value)
+		refresh();
 	
 	position += frequency;
 	position = (position < square->getSize()) * position + (position >= square->getSize()) * (position - square->getSize());
@@ -53,9 +54,12 @@ void WaveTableOscillator::tick() {
 void WaveTableOscillator::refresh() {
 	mixer = 0.8 * mixer + 0.2 * shape->value;
 
-	mix_square = 1.0 - clip(mixer, 0.0, 1.0);
-	mix_sine = clip(mixer, 0.0, 1.0) - clip(mixer-1.0, 0.0, 1.0);
-	mix_triangle = clip(mixer-1.0, 0.0, 1.0);
+	auto clp1 = clip(mixer, 0.0, 1.0);
+	auto clp2 = clip(mixer-1.0, 0.0, 1.0);
+	
+	mix_square = 1.0 - clp1;
+	mix_sine = clp1 - clp2;
+	mix_triangle = clp2;
 }
 
 void WaveTableOscillator::pitch(uint8_t midi_note) {

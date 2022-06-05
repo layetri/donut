@@ -39,6 +39,7 @@ public:
 	ModDestination* get(Modulator*, Parameter*, uint8_t);
 	vector<Modulator*>* getMods();
 	vector<ModDict>* getDict();
+	vector<ModDestination*> getByVoice(uint8_t);
 private:
 	vector<ModDestination*> connections;
 	vector<Modulator*> modulators;

@@ -102,6 +102,9 @@ class GUI {
 		vector<Parameter*> voice_controls; // Store parameters that belong to Voice
 		unordered_map<string, string> parameterCategories;
 		
+		// Variables for ModMatrix
+		float* mtx_vals;
+		
 		// Variables for Devmode Console
 		deque<string> log;
 		uint log_size = 16;

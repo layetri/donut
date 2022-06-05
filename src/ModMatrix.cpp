@@ -40,6 +40,17 @@ vector<ModDestination*>* ModMatrix::get() {
 	return &connections;
 }
 
+vector<ModDestination*> ModMatrix::getByVoice(uint8_t voice_id) {
+	vector<ModDestination*> returns;
+	for(auto& c : connections) {
+		if(c->voice_id == voice_id) {
+			returns.push_back(c);
+		}
+	}
+	
+	return returns;
+}
+
 void ModMatrix::store (Modulator* modulator) {
 	modulators.push_back(modulator);
 }

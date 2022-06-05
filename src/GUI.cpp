@@ -17,6 +17,13 @@ GUI::GUI (ParameterPool* parameters, ModMatrix* mod, queue<Event*>* event_queue,
 	this->running = running;
 	this->devUtils = utils;
 	
+	uint mtxsize = parameters->getAll()->size() * mod->getDict()->size();
+	mtx_vals = new float[mtxsize];
+	
+	for(int i = 0; i < (sizeof(&mtx_vals) / sizeof(mtx_vals[0])); i++) {
+		mtx_vals[i] = 0.0f;
+	}
+	
 	// Construct a GUI with ncurses, ImGui, or std::cout
 	#if defined(BUILD_GUI_NCURSES)
 		initscr();
@@ -129,6 +136,10 @@ GUI::~GUI () {
 	#if defined(BUILD_GUI_NCURSES)
 		cout << "\x1B[2J\x1B[H";
 		curs_set(1);
+	#elif defined(BUILD_GUI_IMGUI)
+		delete mtx_vals;
+		delete plotL;
+		delete plotR;
 	#endif
 }
 
@@ -475,6 +486,8 @@ void GUI::loop() {
 		// Modulation Matrix
 		if(mainButtons[win_ModMatrix].status){
 			ImGui::Begin("Mod Matrix");
+			
+			uint mtx_pos = 0;
 			if (ImGui::BeginTable("modmtx", mod->getDict()->size() + 1)) {
 				ImGui::TableNextRow();
 				int col = 1;
@@ -493,11 +506,13 @@ void GUI::loop() {
 					for (auto& m : *mod->getDict()) {
 						float v = 0.0f;
 						ImGui::TableSetColumnIndex(col);
-						ImGui::SliderFloat("", &v, 0.0f, 1.0f);
+						ImGui::PushItemWidth(120);
+						ImGui::SliderFloat(("##mod_" + to_string(mtx_pos)).c_str(), &mtx_vals[mtx_pos], 0.0f, 1.0f);
 						if(ImGui::IsItemEdited()) {
-							mod->setOrCreate(m.mid, p.pid, v);
+							mod->setOrCreate(m.mid, p.pid, mtx_vals[mtx_pos]);
 						}
 						col++;
+						mtx_pos++;
 					}
 				}
 				ImGui::EndTable();
