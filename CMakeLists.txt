@@ -12,7 +12,7 @@ find_library (jack_lib jack)
 message("jack: ${jack_lib}")
 
 add_definitions( -DBUILD_PLATFORM=${PLATFORM_ID} )
-add_definitions( -DBUILD_ENVIRONMENT=debug )
+#add_definitions( -DBUILD_ENVIRONMENT=debug )
 #add_definitions( -DBUILD_GUI_COUT )
 #add_definitions( -DBUILD_GUI_NCURSES )
 add_definitions( -DBUILD_GUI_IMGUI )
@@ -64,7 +64,8 @@ target_link_libraries(donut PRIVATE imgui)
 target_compile_options(donut PRIVATE
         -Wall
         -Wformat
-        -fexceptions)
+        -fexceptions
+        -O3)
 
 target_compile_features(donut PRIVATE cxx_std_20)
 target_compile_definitions(donut PRIVATE
