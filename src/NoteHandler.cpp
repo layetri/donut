@@ -32,7 +32,7 @@ void NoteHandler::noteOff(Note note) {
 	}
 }
 
-void NoteHandler::set(ParameterID parameter, uint16_t value) {
+void NoteHandler::set(ParameterID parameter, int16_t value, float float_value) {
 	const auto isVoiceInUse = [](auto& voice) { return !voice->isAvailable(); };
 	
 	const auto isThereAnActiveVoiceInHalf = [&] (auto& half) {
@@ -46,21 +46,21 @@ void NoteHandler::set(ParameterID parameter, uint16_t value) {
 		
 		if (isThereAnActiveVoiceInHalf(voices_lower)) {
 			for(auto& r : voices_lower->voices) {
-				r->set(parameter, value);
+				r->set(parameter, value, float_value);
 			}
 			last_controlled.push_back(voices_lower.get());
 		}
 		
 		if (isThereAnActiveVoiceInHalf(voices_upper)) {
 			for(auto& r : voices_upper->voices) {
-				r->set(parameter, value);
+				r->set(parameter, value, float_value);
 			}
 			last_controlled.push_back(voices_upper.get());
 		}
 	} else {
 		for(auto& half : last_controlled) {
 			for(auto& voice : half->voices) {
-				voice->set(parameter, value);
+				voice->set(parameter, value, float_value);
 			}
 		}
 	}

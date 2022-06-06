@@ -12,6 +12,7 @@
 #include <cmath>
 #include <unordered_map>
 #include <string>
+#include <algorithm>
 
 #define TWO_PI (2 * M_PI)
 

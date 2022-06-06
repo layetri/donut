@@ -61,7 +61,7 @@ class SamplerVoice : public Source {
 	private:
 		Sampler* sampler;
 		SamplerRegion* current_sample;
-		Parameter *transpose;
+		Parameter *transpose, *base_freq_dev;
 		
 		sample_t prev_tick; // Keep 1 sample of output history, for smoothing
 		uint abs_position;

@@ -153,6 +153,8 @@ enum ParameterID {
 	
 	p_OutputHPF_Frequency,
 	
+	p_DEV_Sampler_Base,
+	
 	p_VoiceMaster,
 	p_Master,
 	p_BPM,
@@ -186,6 +188,7 @@ enum ControlID {
 enum EventType {
 	e_Midi,
 	e_Control,
+	e_FloatControl,
 	e_Feedback,
 	e_System,
 	e_Transpose,
@@ -202,6 +205,7 @@ struct Event {
 	EventType type;
 	uint16_t cc = 0;
 	uint16_t value = 0;
+	float float_value = 0.0f;
 
 	ControlID cid = c_Generic;
 	SourceID source = s_Global;

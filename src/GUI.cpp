@@ -17,12 +17,14 @@ GUI::GUI (ParameterPool* parameters, ModMatrix* mod, queue<Event*>* event_queue,
 	this->running = running;
 	this->devUtils = utils;
 	
+	#ifdef BUILD_GUI_IMGUI
 	uint mtxsize = parameters->getAll()->size() * mod->getDict()->size();
 	mtx_vals = new float[mtxsize];
 	
 	for(int i = 0; i < (sizeof(&mtx_vals) / sizeof(mtx_vals[0])); i++) {
 		mtx_vals[i] = 0.0f;
 	}
+	#endif
 	
 	// Construct a GUI with ncurses, ImGui, or std::cout
 	#if defined(BUILD_GUI_NCURSES)
@@ -43,6 +45,7 @@ GUI::GUI (ParameterPool* parameters, ModMatrix* mod, queue<Event*>* event_queue,
 		mainButtons.push_back(ToggleWindowButton{ICON_FAD_MODULARPLUG "Mod Matrix", win_ModMatrix});
 	#endif
 		mainButtons.push_back(ToggleWindowButton{ICON_FAD_SAVE "Presets", win_Presets});
+		mainButtons.push_back(ToggleWindowButton{ICON_FAD_WAVEFORM "Sampler", win_Sampler});
 	#ifdef FEATURES_PADS
 		mainButtons.push_back(ToggleWindowButton{ICON_FAD_DRUMPAD "Pads", win_Pads});
 	#endif
@@ -389,6 +392,13 @@ void GUI::loop() {
 			ImGui::End();
 		}
 		
+		// Sampler
+		if(mainButtons[win_Sampler].status) {
+			ImGui::Begin("Sampler");
+			ImGui::Text("Sampler implementation coming soon...");
+			ImGui::End();
+		}
+		
 	#ifdef FEATURES_PADS
 		// Drumpads
 		if(mainButtons[win_Pads].status) {
@@ -475,7 +485,7 @@ void GUI::loop() {
 					ImGui::PushItemWidth(240);
 					ImGui::SliderFloat(("##slider" + to_string(i)).c_str(), &v->base_value, v->min, v->max, "%.5f");
 					if (ImGui::IsItemEdited()) {
-						event_queue->push(new Event{e_Control, (uint16_t) (21 + v->pid),(uint16_t) (127.0f * (v->base_value / (v->max - v->min)))});
+						event_queue->push(new Event{e_FloatControl, (uint16_t) (21 + v->pid), 0, v->base_value});
 					}
 					i++;
 				}
@@ -599,10 +609,7 @@ void GUI::loop() {
 			ImGui::Text(" (%u us allowed)", m.allowedCycleTime);
 			ImGui::PopFont();
 			
-			ImGui::BeginChild("Performance");
 			ImGui::PlotLines("Process time", m.processTimes, 100, 0, NULL, 0.0f, 50.0f, ImVec2(0, 60));
-			ImGui::EndChild();
-			
 			
 			ImGui::BeginChild("App Monitor", ImVec2(0,0), true);
 			ImGui::PushFont(font_regular);

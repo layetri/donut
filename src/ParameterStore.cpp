@@ -38,14 +38,14 @@ ParameterPool::ParameterPool() {
 		
 		store(p_WS1_Amount, i, "ws1_amount", 0.0, 0.0);
 		store(p_WS1_BaseFrequency, i, "ws1_base_frequency", 440.0, 440.0);
-		store(p_WS1_Harmonics, i, "ws1_harmonics", 2.0, 2.0);
+		store(p_WS1_Harmonics, i, "ws1_harmonics", 2.0, 2.0, -16.0f, 16.0f);
 		store(p_WS1_Detune, i, "ws1_detune", 430.0, 430.0, 430.0f, 450.0f);
 		store(p_WS1_Detune_Range, i, "ws1_detune_range", 6.35f, 6.35f);
 		store(p_WS1_Transpose, i, "ws1_transpose", 0.0, 0.0, -12.0f, 12.0f);
 		
 		store(p_WS2_Amount, i, "ws2_amount", 0.0, 0.0);
 		store(p_WS2_BaseFrequency, i, "ws2_base_frequency", 440.0, 440.0);
-		store(p_WS2_Harmonics, i, "ws2_harmonics", 2.0, 2.0);
+		store(p_WS2_Harmonics, i, "ws2_harmonics", 2.0, 2.0, -16.0f, 16.0f);
 		store(p_WS2_Detune, i, "ws2_detune", 430.0, 430.0, 430.0f, 450.0f);
 		store(p_WS2_Detune_Range, i, "ws2_detune_range", 6.35f, 6.35f);
 		store(p_WS2_Transpose, i, "ws2_transpose", 0.0, 0.0, -12.0f, 12.0f);
@@ -73,6 +73,8 @@ ParameterPool::ParameterPool() {
 		store(p_Sampler_Amount, i, "sampler_amount", 1.0, 1.0);
 		store(p_Sampler_Transpose, i, "sampler_transpose", 0.0, 0.0);
 		
+		store(p_DEV_Sampler_Base, i, "sampler_dev_base", 430.0f, 430.0f, 400.0f, 500.0f);
+		
 		store(p_Particles_Amount, i, "particles_amount", 1.0, 1.0);
 		store(p_Particles_Density, i, "particles_density", 1.0, 1.0);
 		store(p_Particles_Shape, i, "particles_shape", 0.5, 0.5);
@@ -94,12 +96,14 @@ ParameterPool::ParameterPool() {
 ParameterPool::~ParameterPool() {}
 
 void ParameterPool::set(ParameterID pid, uint8_t voice_id, float value) {
-	get(pid, voice_id)->value = value;
-	get(pid, voice_id)->base_value = value;
+	auto par = get(pid, voice_id);
+	par->value = clamp(value, par->min, par->max);
+	par->base_value = clamp(value, par->min, par->max);
 }
 
 void ParameterPool::add(ParameterID pid, uint8_t voice_id, float value) {
-	get(pid, voice_id)->value = get(pid, voice_id)->base_value + value;
+	auto par = get(pid, voice_id);
+	par->value = clamp(par->base_value + value, par->min, par->max);
 }
 
 void ParameterPool::load(vector<ParameterPreset>* params) {

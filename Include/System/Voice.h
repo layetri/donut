@@ -25,7 +25,7 @@
 #include <curses.h>
 #include <unistd.h>
 #include <vector>
-#define WS
+#include <stdexcept>
 
 using namespace std;
 
@@ -41,7 +41,7 @@ class Voice {
     void process();
 	void release();
 	void tick();
-	void set(ParameterID, int);
+	void set(ParameterID, int value=-1, float float_value=-1);
 	void block(size_t block_size);
 	
 	Buffer* getBuffer();

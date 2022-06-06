@@ -6,10 +6,11 @@
 #define DONUT_WAVESHAPER_H
 
 #include <Source/Source.h>
+#include <System/Tables.h>
 
 class WaveShaper : public Source {
   	public:
-		WaveShaper(ParameterPool*, Parameter*, Parameter*, Parameter*, SourceID, uint8_t);
+		WaveShaper(Tables* tables, ParameterPool*, Parameter*, Parameter*, Parameter*, SourceID, uint8_t);
 		~WaveShaper();
 
 		void process() override;
@@ -19,6 +20,7 @@ class WaveShaper : public Source {
 		void setFrequency(float frequency) override;
 
 	private:
+		Buffer *sine;
 		Parameter *detune, *harmonics, *transpose;
 		SourceID sid;
 		float h, old_harmonics;

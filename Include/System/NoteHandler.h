@@ -12,9 +12,6 @@
 #include <vector>
 #include <queue>
 
-#define LOWER_HALF 0
-#define UPPER_HALF 1
-
 using namespace std;
 
 struct KeyboardHalf {
@@ -30,7 +27,7 @@ class NoteHandler {
 
     void noteOn(Note note);
 	void noteOff(Note note);
-	void set(ParameterID, uint16_t);
+	void set(ParameterID, int16_t=-1, float=-1);
 	
 	bool findNextFree(Note note);
 	void stealLeastRecent(Note note);

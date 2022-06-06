@@ -39,6 +39,7 @@ enum WindowNames {
 	win_Mixer,
 	win_ModMatrix,
 	win_Presets,
+	win_Sampler,
 	win_Pads,
 	win_MIDI_Devices,
 	win_Oscilloscope,
@@ -54,6 +55,11 @@ struct PresetGUIItem {
 	string name;
 	string created_at;
 	string donut_version = "1.0";
+};
+
+struct SampleGUIItem {
+	string name;
+	string length;
 };
 
 struct ToggleWindowButton {
@@ -76,6 +82,7 @@ class GUI {
 		void stereoPlot(float *left, float *right, uint size);
 		void updateMidiDevices(vector<string> inputs, vector<string> outputs);
 		void updatePresets(vector<PresetGUIItem>);
+//		void updateSamples(vector<SampleGUIItem>);
 	
 	private:
 		ParameterPool* parameters;
@@ -128,6 +135,9 @@ class GUI {
 		PadMode padMode = pm_MIDI;
 		uint8_t padLowestNote = 60;
 		uint8_t padVelocity = 80;
+		
+		// Variable for Sampler
+		vector<SampleGUIItem> sampleLibrary;
 	#endif
 };
 

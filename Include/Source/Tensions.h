@@ -26,6 +26,8 @@ struct Exciter {
 				buffer->writeAhead(tables->getSquare()->getSample(i * (samplerate / length)), i);
 			} else if(shape == "pulse") {
 				buffer->writeAhead((i % 2 * -1) * SAMPLE_MAX_VALUE, i);
+			} else if(shape == "noise") {
+				buffer->writeAhead(tables->getNoise()->getSample(i * (samplerate / length)), i);
 			}
 		}
 	}

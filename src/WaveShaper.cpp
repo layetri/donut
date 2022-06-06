@@ -4,12 +4,15 @@
 
 #include <Source/WaveShaper.h>
 
-WaveShaper::WaveShaper(ParameterPool* parameters, Parameter* detune, Parameter* harmonics, Parameter* transpose, SourceID sid, uint8_t voice_id) : Source(parameters, voice_id) {
+WaveShaper::WaveShaper(Tables* tables, ParameterPool* parameters, Parameter* detune, Parameter* harmonics, Parameter* transpose, SourceID sid, uint8_t voice_id) : Source(parameters, voice_id) {
 	this->sid = sid;
 	base_frequency = 440.0;
 	this->harmonics = harmonics;
 	this->detune = detune;
 	this->transpose = transpose;
+	
+	this->sine = tables->getSine();
+	
 	h = 0;
 	old_harmonics = 0.0;
 	
@@ -25,16 +28,21 @@ void WaveShaper::process() {
   	output->flush();
   	h = harmonics->value;
 	  
+	  
+	  
   	if(h < 0) {
 		for (int i = 0; i < h * -1; i++) {
-			output->writeAddition(((sin(TWO_PI * n[i] * phase) / n[i]) * SAMPLE_MAX_VALUE));
+			output->writeAddition(sine->getSample(floor(n[i] * samplerate * phase)) / n[i]);
+//			output->writeAddition(((sin(TWO_PI * n[i] * phase) / n[i]) * SAMPLE_MAX_VALUE));
 		}
 	} else if(h > 0) {
-	  	for(int i = 0; i < h; i++) {
-			output->writeAddition(((sin(TWO_PI * i * phase) / i) * SAMPLE_MAX_VALUE));
+	  	for(int i = 1; i < h; i++) {
+			output->writeAddition(sine->getSample(floor(i * samplerate * phase) / i));
+//			output->writeAddition(((sin(TWO_PI * i * phase) / i) * SAMPLE_MAX_VALUE));
 		}
 	} else {
-		output->write(sin(TWO_PI * phase) * SAMPLE_MAX_VALUE);
+		output->writeAddition(sine->getSample(floor(samplerate * phase)));
+//		output->write(sin(TWO_PI * phase) * SAMPLE_MAX_VALUE);
   	}
 }
 

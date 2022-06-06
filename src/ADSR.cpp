@@ -26,6 +26,7 @@ void ADSR2::start(float velocity) {
 	this->velocity = velocity;
 	position = 0;
 	multiplier = 0;
+	regen();
 }
 
 void ADSR2::noteOff() {
@@ -34,7 +35,10 @@ void ADSR2::noteOff() {
 
 void ADSR2::process() {
 	if(phase != ph_idle) {
-		regen();
+		if(!_is_processing) {
+			regen();
+			_is_processing = true;
+		}
 		switch(phase) {
 			case ph_attack:
 				multiplier += a_step;
@@ -63,6 +67,7 @@ void ADSR2::process() {
 //				multiplier = (multiplier < 0.0 ? 0.0 : multiplier);
 				if (multiplier <= 0.0) {
 					phase = ph_idle;
+					_is_processing = false;
 					multiplier = 0.0;
 				}
 				break;

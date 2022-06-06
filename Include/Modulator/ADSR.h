@@ -31,4 +31,5 @@ class ADSR2 : public Modulator {
 
 		int position;
 		float multiplier;
+		bool _is_processing = false;
 };

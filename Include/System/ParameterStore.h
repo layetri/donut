@@ -7,6 +7,7 @@
 #include "../Global.h"
 #include <vector>
 #include <tuple>
+#include <algorithm>
 
 using namespace std;
 
@@ -17,8 +18,6 @@ struct Parameter {
 	float base_value;
 	
 	float min = 0.0f, max = 1.0f;
-	// TODO: Add scaling lambda with default range [0f, 1f]
-	// TODO: Add isPublic flag
 };
 
 struct ParameterPreset {

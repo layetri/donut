@@ -113,7 +113,12 @@ void event(vector<unique_ptr<Voice>>& voices, Sampler& sampler, GUI& gui, NoteHa
 					} else if(e->cid == c_PresetStore) {
 						pe.store(e->str_content);
 					} else if(e->cc >= p_ADSR1_Attack && e->cc <= p_Exit) {
-						nh.set(ParameterID(e->cc - 21), e->value);
+						nh.set(ParameterID(e->cc - 21), (int16_t) e->value);
+					}
+					break;
+				case e_FloatControl:
+					if(e->cc >= p_ADSR1_Attack && e->cc <= p_Exit) {
+						nh.set(ParameterID(e->cc - 21), -1, e->float_value);
 					}
 					break;
 				case e_System:

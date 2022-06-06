@@ -14,8 +14,8 @@ Voice::Voice(Buffer* output, ParameterPool* params, ModMatrix* mm, Tables* table
 	this->output = output;
 	
 	// Initialize oscillators
-	sources.push_back(new WaveShaper(params, params->get(p_WS1_Detune, v_id), params->get(p_WS1_Harmonics, v_id), params->get(p_WS1_Transpose, v_id), s_WS1, v_id)); // WS1
-	sources.push_back(new WaveShaper(params, params->get(p_WS2_Detune, v_id), params->get(p_WS2_Harmonics, v_id), params->get(p_WS2_Transpose, v_id), s_WS2, v_id)); // WS2
+	sources.push_back(new WaveShaper(tables, params, params->get(p_WS1_Detune, v_id), params->get(p_WS1_Harmonics, v_id), params->get(p_WS1_Transpose, v_id), s_WS1, v_id)); // WS1
+	sources.push_back(new WaveShaper(tables, params, params->get(p_WS2_Detune, v_id), params->get(p_WS2_Harmonics, v_id), params->get(p_WS2_Transpose, v_id), s_WS2, v_id)); // WS2
 	sources.push_back(new WaveTableOscillator(tables, params, params->get(p_WT1_Detune, v_id), params->get(p_WT1_Shape, v_id), params->get(p_WT1_Transpose, v_id), s_WT1, v_id)); // WT
 	sources.push_back(new WaveTableOscillator(tables, params, params->get(p_WT2_Detune, v_id), params->get(p_WT2_Shape, v_id), params->get(p_WT2_Transpose, v_id), s_WT2, v_id)); // WT
 	sources.push_back(new Tensions(tables, params, v_id));
@@ -112,7 +112,7 @@ void Voice::process() {
 	
 	// Process sources
 	for(auto& s : sources) {
-		if(s->getBuffer()->getMultiplier() > 0.0) {
+		if(s->getBuffer()->getMultiplier() > 0.0f) {
 			s->process();
 		}
 	}
@@ -138,6 +138,10 @@ void Voice::tick() {
 	output->flush();
 }
 
+/*!
+ * @brief Handle an incoming note-on message
+ * @param note
+ */
 void Voice::assign(Note note) {
 	this->midi_note = note;
 	this->pitch = note.pitch;
@@ -155,25 +159,37 @@ void Voice::assign(Note note) {
 	// Set modulator velocity
 	modulators[m_ADSR1]->start(sqrt(note.velocity / 127.0f));
 	modulators[m_ADSR2]->start(sqrt(note.velocity / 127.0f));
-	parameters->set(p_OutputHPF_Frequency, voice_id, Source::mtof(pitch, 440.0f) + 1.0f);
+	parameters->set(p_OutputHPF_Frequency, voice_id, Source::mtof(pitch-1, 440.0f));
 
 	// Housekeeping
 	last_used = clock();
 	available = false;
 }
 
+/*!
+ * @brief Handle an incoming note-off message
+ */
 void Voice::release() {
 	modulators[m_ADSR1]->noteOff();
 	modulators[m_ADSR2]->noteOff();
 	available = true;
 }
 
+/*!
+ * @brief Perform pre-processing for an entire rendering block
+ * @param block_size
+ */
 void Voice::block(size_t block_size) {
 	for(auto& s : sources) {
 		s->block(block_size);
 	}
 }
 
+/*!
+ * @brief Assign an incoming note-on message if the voice is not in use
+ * @param note
+ * @return True if note is assigned to voice
+ */
 bool Voice::assignIfAvailable(Note note) {
 	bool a = available;
 	if(available) {
@@ -182,6 +198,11 @@ bool Voice::assignIfAvailable(Note note) {
 	return a;
 }
 
+/*!
+ * @brief Handle an incoming note-off message if it matches the note currently held by the voice
+ * @param note
+ * @return True if matches
+ */
 bool Voice::releaseIfMatches(int note) {
 	if(!this->available && note == this->pitch) {
 		release();
@@ -190,80 +211,106 @@ bool Voice::releaseIfMatches(int note) {
 	return false;
 }
 
+/*!
+ * @brief Get the timestamp at which the voice was last assigned a note
+ * @return The timestamp at which the voice was last assigned a note
+ */
 clock_t Voice::getTime() const {
 	return last_used;
 }
 
+/*!
+ * @brief Get the voice's current sample
+ * @return The current sample on the voice's output buffer
+ */
 sample_t Voice::getSample() {
 	return output->getCurrentSample();
 }
 
+/*!
+ * @brief Get the voice's current note
+ * @return The current note
+ */
 Note Voice::getNote() {
 	return midi_note;
 }
 
-void Voice::set(ParameterID parameter, int value) {
+/*!
+ * @brief Scale and set a value for a given parameter
+ * @param parameter
+ * @param value
+ * @param float_value
+ */
+void Voice::set(ParameterID parameter, int value, float float_value) {
 	auto p = parameters->get(parameter, voice_id);
-	switch(parameter) {
-		case p_WS1_Harmonics:
-			parameters->set(p_WS1_Harmonics, voice_id, ((value + 1) / 4) - 16);
-			break;
-		case p_WS2_Harmonics:
-			parameters->set(p_WS2_Harmonics, voice_id, ((value + 1) / 4) - 16);
-			break;
-		case p_WS1_Detune:
-			parameters->set(p_WS1_Detune, voice_id,
-				(value / parameters->value(p_WS1_Detune_Range, voice_id)) + 440.0);
-			break;
-		case p_WS2_Detune:
-			parameters->set(p_WS2_Detune, voice_id,
-				(value / parameters->value(p_WS2_Detune_Range, voice_id)) + 440.0);
-			break;
-		case p_WS1_Detune_Range:
-			parameters->set(p_WS1_Detune_Range, voice_id, 1.0f - (127.0f / value));
-			break;
-		case p_WS2_Detune_Range:
-			parameters->set(p_WS2_Detune_Range, voice_id, 1.0f - (127.0f / value));
-			break;
-		case p_Filter_Resonance:
-			parameters->set(p_Filter_Resonance, voice_id, 0.5f + (value / 12.7f));
-			break;
-		case p_LFO1_Rate:
-			parameters->set(p_LFO1_Rate, voice_id, ((value / 127.0f) * 20.0) + 0.1);
-			break;
-		case p_Sampler_Amount:
-			parameters->set(p_Sampler_Amount, voice_id, value / 127.0f);
-			break;
-		case p_Particles_Amount:
-			parameters->set(p_Particles_Amount, voice_id, value / 127.0f);
-			break;
-		case p_Particles_Algorithm:
-			parameters->set(p_Particles_Algorithm, voice_id, value / 127.0f);
-			break;
-		case p_Particles_Shape:
-			parameters->set(p_Particles_Shape, voice_id, value / 127.0f);
-			break;
-		case p_Particles_Density:
-			parameters->set(p_Particles_Density, voice_id, value / 127.0f);
-			break;
-		case p_Particles_GrainSize:
-			parameters->set(p_Particles_GrainSize, voice_id, (value / 127.0f) * 5000.0f + 100.0f);
-			break;
-		case p_Particles_Position:
-			parameters->set(p_Particles_Position, voice_id, (value / 127.0f) * (particles->getMaxPosition() - parameters->get(p_Particles_GrainSize, voice_id)->value));
-			break;
-		case p_WT1_Shape:
-			parameters->set(p_WT1_Shape, voice_id, value / 63.5f);
-			sources[s_WT1]->refresh();
-			break;
-		case p_WT2_Shape:
-			parameters->set(p_WT2_Shape, voice_id, value / 63.5f);
-			sources[s_WT2]->refresh();
-			break;
-		default:
-			parameters->set(parameter, voice_id, ((value / 127.0f) * (p->max - p->min)) + p->min);
-			break;
+	if(value >= 0) {
+		parameters->set(parameter, voice_id, ((value / 127.0f) * (p->max - p->min)) + p->min);
+	} else if(float_value >= 0.0f) {
+		parameters->set(parameter, voice_id, float_value);
 	}
+//	else {
+//		throw std::invalid_argument("Did not receive one of two required arguments");
+//	}
+//	switch(parameter) {
+//		case p_WS1_Harmonics:
+//			parameters->set(p_WS1_Harmonics, voice_id, ((value + 1) / 4) - 16);
+//			break;
+//		case p_WS2_Harmonics:
+//			parameters->set(p_WS2_Harmonics, voice_id, ((value + 1) / 4) - 16);
+//			break;
+//		case p_WS1_Detune:
+//			parameters->set(p_WS1_Detune, voice_id,
+//				(value / parameters->value(p_WS1_Detune_Range, voice_id)) + 440.0);
+//			break;
+//		case p_WS2_Detune:
+//			parameters->set(p_WS2_Detune, voice_id,
+//				(value / parameters->value(p_WS2_Detune_Range, voice_id)) + 440.0);
+//			break;
+//		case p_WS1_Detune_Range:
+//			parameters->set(p_WS1_Detune_Range, voice_id, 1.0f - (127.0f / value));
+//			break;
+//		case p_WS2_Detune_Range:
+//			parameters->set(p_WS2_Detune_Range, voice_id, 1.0f - (127.0f / value));
+//			break;
+//		case p_Filter_Resonance:
+//			parameters->set(p_Filter_Resonance, voice_id, 0.5f + (value / 12.7f));
+//			break;
+//		case p_LFO1_Rate:
+//			parameters->set(p_LFO1_Rate, voice_id, ((value / 127.0f) * 20.0) + 0.1);
+//			break;
+//		case p_Sampler_Amount:
+//			parameters->set(p_Sampler_Amount, voice_id, value / 127.0f);
+//			break;
+//		case p_Particles_Amount:
+//			parameters->set(p_Particles_Amount, voice_id, value / 127.0f);
+//			break;
+//		case p_Particles_Algorithm:
+//			parameters->set(p_Particles_Algorithm, voice_id, value / 127.0f);
+//			break;
+//		case p_Particles_Shape:
+//			parameters->set(p_Particles_Shape, voice_id, value / 127.0f);
+//			break;
+//		case p_Particles_Density:
+//			parameters->set(p_Particles_Density, voice_id, value / 127.0f);
+//			break;
+//		case p_Particles_GrainSize:
+//			parameters->set(p_Particles_GrainSize, voice_id, (value / 127.0f) * 5000.0f + 100.0f);
+//			break;
+//		case p_Particles_Position:
+//			parameters->set(p_Particles_Position, voice_id, (value / 127.0f) * (particles->getMaxPosition() - parameters->get(p_Particles_GrainSize, voice_id)->value));
+//			break;
+//		case p_WT1_Shape:
+//			parameters->set(p_WT1_Shape, voice_id, value / 63.5f);
+//			sources[s_WT1]->refresh();
+//			break;
+//		case p_WT2_Shape:
+//			parameters->set(p_WT2_Shape, voice_id, value / 63.5f);
+//			sources[s_WT2]->refresh();
+//			break;
+//		default:
+//			parameters->set(parameter, voice_id, ((value / 127.0f) * (p->max - p->min)) + p->min);
+//			break;
+//	}
 }
 
 bool Voice::isAvailable() {

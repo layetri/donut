@@ -7,6 +7,7 @@
 SamplerVoice::SamplerVoice (Sampler *sampler, ParameterPool *params, uint8_t voice_id) : Source(params, voice_id) {
 	this->sampler = sampler;
 	this->transpose = params->get(p_Sampler_Transpose, voice_id);
+	this->base_freq_dev = params->get(p_DEV_Sampler_Base, voice_id);
 	
 	prev_tick = 0;
 	abs_position = 0;
@@ -27,7 +28,7 @@ void SamplerVoice::pitch(uint8_t midi_note) {
 		position = current_sample->smp_start;
 		abs_position = current_sample->smp_start;
 	}
-	increment = (samplerate / mtof(current_sample->key_root)) / mtof(127-(midi_note + 2 + (uint8_t) transpose->value), 430.0);// repitch sample
+	increment = (samplerate / mtof(current_sample->key_root)) / mtof(127-(midi_note + 2 + (uint8_t) transpose->value), 430.0f);// repitch sample
 	playing = true;
 }
 
@@ -65,6 +66,7 @@ SamplerRegion* Sampler::lookup(uint8_t midi_note) {
 			return r;
 		}
 	}
+	return nullptr;
 }
 
 vector<SamplerRegion*>* Sampler::getRegions() {

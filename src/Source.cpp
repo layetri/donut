@@ -36,8 +36,6 @@ float Source::mtof(uint8_t midi_note, float base_frequency) {
 	return pow(2.0, (midi_note - 69.0) / 12.0) * base_frequency;
 }
 
-float Source::clip(float value, float bottom=0.0, float top=1.0) {
-	return (value < top && value > bottom) * value +
-		(value >= top) * top +
-		(value <= bottom) * bottom;
+float Source::clip(float value, float bottom=0.0f, float top=1.0f) {
+	return clamp(value, bottom, top);
 }
