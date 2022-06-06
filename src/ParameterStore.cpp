@@ -52,7 +52,7 @@ ParameterPool::ParameterPool() {
 		
 		store(p_KS_Amount, i, "ks_amount", 1.0, 0.0);
 		store(p_KS_DelayTime, i, "ks_delay", 440.0, 440.0, 1.0f, 1000.0f);
-		store(p_KS_Feedback, i, "ks_feedback", 0.999999, 0.999999, 0.1f, 0.99999999f);
+		store(p_KS_Feedback, i, "ks_feedback", 0.999999, 0.999999, 0.1f, 1.05f);
 		store(p_KS_FilterCutoff, i, "ks_dampening", 10000.0, 10000.0, 1.0f, 16000.0f);
 		store(p_KS_Transpose, i, "ks_transpose", 0.0, 0.0, -12.0f, 12.0f);
 
@@ -88,6 +88,9 @@ ParameterPool::ParameterPool() {
 	store(p_FX_Delay_DTRight, 0, "fxdelay_time_right", 8000, 8000, 100, 44100);
 	store(p_FX_Delay_FBLeft, 0, "fxdelay_feedback_left", 0.5, 0.5, 0.01, 0.99);
 	store(p_FX_Delay_FBRight, 0, "fxdelay_feedback_right", 0.5, 0.5, 0.01, 0.99);
+	
+	store(p_FX_Fold_Amount, 0, "fxfold_amount", 0.5f, 0.5f, 0.0f, 1.0f);
+	store(p_FX_Fold_Gain, 0, "fxfold_gain", 1.0f, 1.0f, 0.5f, 1.5f);
 	
 	store(p_Master, 0, "master", 1.0, 1.0);
 	store(p_BPM, 0, "bpm", 120.0, 120.0, 60.0f, 240.0f);

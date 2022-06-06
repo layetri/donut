@@ -92,8 +92,11 @@ void ModMatrix::setOrCreate(ModID source, ParameterID destination, float amount)
 		auto dst = parameters->get(destination, i);
 		auto src = get(source, i);
 		auto link = get(src, dst, i);
+		
 		if(link != nullptr) {
 			link->amount = amount;
+		} else {
+			this->link(dst, src, i, amount);
 		}
 	}
 }

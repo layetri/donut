@@ -70,6 +70,7 @@ GUI::GUI (ParameterPool* parameters, ModMatrix* mod, queue<Event*>* event_queue,
 		parameterCategories.insert({"sampler", "Sampler"});
 		parameterCategories.insert({"particles", "Particles"});
 		parameterCategories.insert({"fxdelay", "StereoDelay"});
+		parameterCategories.insert({"fxfold", "WaveFolder"});
 		
 		for(auto& p : *parameters->getDictionary()) {
 			if(p.key.find("amount") != string::npos) {
