@@ -12,7 +12,7 @@ find_library (jack_lib jack)
 message("jack: ${jack_lib}")
 
 add_definitions( -DBUILD_PLATFORM=${PLATFORM_ID} )
-#add_definitions( -DBUILD_ENVIRONMENT=debug )
+add_definitions( -DBUILD_ENVIRONMENT=debug )
 #add_definitions( -DBUILD_GUI_COUT )
 #add_definitions( -DBUILD_GUI_NCURSES )
 add_definitions( -DBUILD_GUI_IMGUI )
@@ -20,7 +20,7 @@ add_definitions( -DBUILD_GUI_IMGUI )
 # Configure build options (features, sound engines, etc)
 add_definitions( -DFEATURES_PADS )
 add_definitions( -DFEATURES_MODMATRIX )
-#add_definitions( -DENGINES_PARTICLES )
+add_definitions( -DENGINES_PARTICLES )
 
 if(UNIX AND NOT APPLE)
     # finds OpenGL, GLU and X11

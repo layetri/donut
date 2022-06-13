@@ -148,8 +148,10 @@ void midi(NoteHandler& handler, GUI& gui, queue<Event*>& event_queue, RtMidiIn* 
 	bool sustain = false;
 
 	size_t nBytes;
-	int row, col;
-	getmaxyx(stdscr, row, col);
+	#ifdef BUILD_GUI_NCURSES
+		int row, col;
+		getmaxyx(stdscr, row, col);
+	#endif
 
 	// Periodically check input queue.
 	while (running) {
@@ -240,6 +242,7 @@ void schedule(Scheduler& scheduler, bool& running) {
 // This thread runs the main audio processing system
 void processing_thread(AutoMaster& sensei, ModMatrix& mm, DeveloperUtility& devUtils, StereoOutputBuffer& buffer_0, StereoOutputBuffer& buffer_1, bool& running) {
 	auto process_block = [&sensei, &mm, &running](StereoOutputBuffer& buffer) {
+		sensei.block(buffer.getBlockSize());
 		while(buffer.isReadyToWrite() && running) {
 			// Process Modulation Matrix
 			mm.process();
@@ -403,7 +406,7 @@ void program() {
 	Tables tables;
 	tables.generateWaveforms();
 	
-	Sampler sampler(&parameters, &lib);
+	Sampler sampler(&parameters, &lib, &gui);
 	if(lib.load("default")) {
 		sampler.addRegion("default");
 		sampler.setRoot("default", 50);

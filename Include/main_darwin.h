@@ -15,6 +15,10 @@
 #include <mutex>
 #include <chrono>
 
+#ifdef BUILD_GUI_NCURSES
+	#include <curses.h>
+#endif
+
 #include <ext/jack_module.h>
 #include <ext/RtMidi.h>
 
