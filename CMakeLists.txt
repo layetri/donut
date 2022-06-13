@@ -34,7 +34,7 @@ endif()
 add_executable(donut ${sources} ${sources_ext} src/StereoOutputBuffer.cpp Include/DSP/StereoOutputBuffer.h Include/Source/TestSynth.h)
 
 if(UNIX AND NOT APPLE)
-    target_link_libraries(donut PRIVATE glfw3 ${GL_LIBRARY} dl m)
+    target_link_libraries(donut PRIVATE glfw ${GL_LIBRARY} dl m)
     add_definitions( -DSYS_LINUX )
 endif()
 
