@@ -22,7 +22,6 @@
 #include <System/Tables.h>
 #include <System/GUI.h>
 
-#include <curses.h>
 #include <unistd.h>
 #include <vector>
 #include <stdexcept>
