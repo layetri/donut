@@ -336,8 +336,11 @@ void GUI::loop() {
 			ImGui::Begin("Presets", NULL, preset_window_flags);
 			
 			ImVec2 list_dims(120, 250);
-			event_queue->push(new ControlEvent{c_PresetsList});
+			if(presets.empty() || ImGui::Button(ICON_FAD_REPEAT "Refresh")) {
+				event_queue->push(new ControlEvent{c_PresetsList});
+			}
 			
+			ImGui::SameLine();
 			if(ImGui::Button(ICON_FAD_SAVEAS "New..."))
 				ImGui::OpenPopup(ICON_FAD_SAVEAS "Store preset");
 			
@@ -364,6 +367,12 @@ void GUI::loop() {
 				ImGui::PopFont();
 				ImGui::PushFont(text_small);
 				ImGui::Text("Modified: %s", presets[selected_preset].created_at.c_str());
+				
+				if(presets[selected_preset].donut_version < DONUT_VERSION_NUMBER) {
+					ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+					ImGui::TextWrapped("This preset may not be compatible with your Donut version. (Preset version: %i)", presets[selected_preset].donut_version);
+					ImGui::PopStyleColor();
+				}
 				ImGui::PopFont();
 				
 				ImGui::SetCursorPos(ImVec2(140, ImGui::GetWindowHeight() - 40));
@@ -395,8 +404,14 @@ void GUI::loop() {
 		
 		// Sampler
 		if(mainButtons[win_Sampler].status) {
+			if(sampleLibrary.empty()) {
+				event_queue->push(new ControlEvent {c_SampleList});
+			}
 			ImGui::Begin("Sampler");
-			ImGui::Text("Sampler implementation coming soon...");
+			for(auto& s : sampleLibrary) {
+				ImGui::Text("%s", s.name.c_str());
+			}
+			
 			ImGui::End();
 		}
 		
@@ -515,7 +530,6 @@ void GUI::loop() {
 					
 					col = 1;
 					for (auto& m : *mod->getDict()) {
-						float v = 0.0f;
 						ImGui::TableSetColumnIndex(col);
 						ImGui::PushItemWidth(120);
 						ImGui::SliderFloat(("##mod_" + to_string(mtx_pos)).c_str(), &mtx_vals[mtx_pos], 0.0f, 1.0f);
@@ -693,6 +707,15 @@ void GUI::updatePresets(vector<PresetGUIItem> presets) {
 	this->presets.clear();
 	for(auto& p : presets) {
 		this->presets.push_back(p);
+	}
+#endif
+}
+
+void GUI::updateSampleList(vector<SampleGUIItem> samples) {
+#ifdef BUILD_GUI_IMGUI
+	this->sampleLibrary.clear();
+	for(auto& p : samples) {
+		this->sampleLibrary.push_back(p);
 	}
 #endif
 }

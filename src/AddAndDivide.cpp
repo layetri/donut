@@ -27,18 +27,18 @@ AddAndDivide::~AddAndDivide() {
 }
 
 void AddAndDivide::process() {
-  long val = 0;
-  auto div = ws1->value + ws2->value + wt1->value + wt2->value + ks->value + smp->value + part->value;
+  	long val = 0;
+  	auto div = ws1->value + ws2->value + wt1->value + wt2->value + ks->value + smp->value + part->value;
 
-  for(auto& b : *inputs) {
-    val += b->getCurrentSampleMultiplied();
-  }
-  div = div < 1.0f ? 1.0f : div;
-//  val = (sample_t) ((float) val / ((float) (div == 0.0f) + div));
-  val = (sample_t) ((float) val / 7.0f);
+  	for(auto& b : *inputs) {
+    	val += b->getCurrentSampleMultiplied();
+  	}
+  	div = div < 1.0f ? 1.0f : div;
+	val = (sample_t) ((float) val / (float) ((div == 0.0f) + div));
+//  val = (sample_t) ((float) val / 7.0f);
 
-  filter_queue->write(val * master->value);
-  output_filter->process();
+  	filter_queue->write(val * master->value);
+  	output_filter->process();
 }
 
 void AddAndDivide::tick() {

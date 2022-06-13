@@ -54,7 +54,7 @@ enum PadMode {
 struct PresetGUIItem {
 	string name;
 	string created_at;
-	string donut_version = "1.0";
+	int donut_version = 0;
 };
 
 struct SampleGUIItem {
@@ -82,7 +82,7 @@ class GUI {
 		void stereoPlot(float *left, float *right, uint size);
 		void updateMidiDevices(vector<string> inputs, vector<string> outputs);
 		void updatePresets(vector<PresetGUIItem>);
-//		void updateSamples(vector<SampleGUIItem>);
+		void updateSampleList(vector<SampleGUIItem>);
 	
 	private:
 		ParameterPool* parameters;

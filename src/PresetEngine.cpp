@@ -35,6 +35,14 @@ void PresetEngine::log() {
 			// Geez C++...
 			// TODO: clean this up, someday
 			auto ts = filesystem::last_write_time(entry);
+			int preset_version = 0;
+			ifstream file(entry.path().c_str());
+			nlohmann::json filecontents;
+			file >> filecontents;
+		
+			if(!filecontents["donut_version"].empty()) {
+				preset_version = filecontents["donut_version"][0]["value"];
+			}
 		#ifdef SYS_LINUX
 			auto cstime = chrono::file_clock::to_sys(ts);
 			auto ftime = chrono::system_clock::to_time_t(cstime);
@@ -46,7 +54,7 @@ void PresetEngine::log() {
 			strftime(buffer, 80, "%x, %R", localtime(&ftime));
 			
 			string ln = buffer;
-			gui_presets.push_back(PresetGUIItem {filename, ln});
+			gui_presets.push_back(PresetGUIItem {filename, ln, preset_version});
 		#endif
 	}
 	
@@ -120,6 +128,7 @@ void PresetEngine::store(string name) {
 	ofstream out(path.append(name + ".donutpreset"));
 
 	nlohmann::json filecontents;
+	filecontents["donut_version"] = {};
 	filecontents["parameters"] = {};
 	filecontents["mod_links"] = {};
 	filecontents["sample_lib"] = {};
@@ -162,6 +171,8 @@ void PresetEngine::store(string name) {
 			{"mode", r->mode}
 		});
 	}
+	
+	filecontents["donut_version"].push_back({{"value", DONUT_VERSION_NUMBER}});
 	
 	out << setw(4) << filecontents << endl;
 	out.close();

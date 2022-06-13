@@ -17,36 +17,36 @@ ParameterPool::ParameterPool() {
 		store(p_ADSR2_Release, i, "adsr2_release", 2200.0, 2200.0, 0.0f, 220500.0f);
 
 		store(p_Filter_Cutoff, i, "filter_cutoff", 16000.0, 16000.0, 1.0f, 16000.0f);
-		store(p_Filter_Resonance, i, "filter_resonance", 0.5, 0.5);
-		store(p_Filter_Type, i, "filter_type", 0.0, 0.0);
-		store(p_Filter_KeyTrack, i, "filter_keytrack", 0.0, 0.0);
+		store(p_Filter_Resonance, i, "filter_resonance", 0.5, 0.5, 0.5f, 10.0f);
+		store(p_Filter_Type, i, "filter-type", 0.0, 0.0);
+		store(p_Filter_KeyTrack, i, "filter-keytrack", 0.0, 0.0);
 
 		store(p_FM_KeyTrack, i, "fm-keytrack", 0.5, 0.5);
 		
 		store(p_WT1_Amount, i, "wt1_amount", 0.0, 0.0);
 		store(p_FM_Amount, i, "wt1_fm", 0.77, 0.77);
-		store(p_WT1_Shape, i, "wt1_shape", 1.0, 1.0);
-		store(p_WT1_Detune, i, "wt1_detune", 430.0, 430.0, 350.0f, 500.0f);
+		store(p_WT1_Shape, i, "wt1_shape", 1.0, 1.0, 0.0f, 2.0f);
+		store(p_WT1_Detune, i, "wt1_detune", 0.0f, 0.0f, -10.0f, 10.0f);
 		store(p_WT1_BaseFrequency, i, "wt1_base_frequency", 440.0, 440.0);
 		store(p_WT1_Transpose, i, "wt1_transpose", 0.0, 0.0, -12.0f, 12.0f);
 		
 		store(p_WT2_Amount, i, "wt2_amount", 0.0, 0.0);
-		store(p_WT2_Shape, i, "wt2_shape", 1.0, 1.0);
-		store(p_WT2_Detune, i, "wt2_detune", 430.0, 430.0, 350.0f, 500.0f);
+		store(p_WT2_Shape, i, "wt2_shape", 1.0, 1.0, 0.0f, 2.0f);
+		store(p_WT2_Detune, i, "wt2_detune", 0.0f, 0.0f, -10.0f, 10.0f);
 		store(p_WT2_BaseFrequency, i, "wt2_base_frequency", 440.0, 440.0);
 		store(p_WT2_Transpose, i, "wt2_transpose", 0.0, 0.0, -12.0f, 12.0f);
 		
 		store(p_WS1_Amount, i, "ws1_amount", 0.0, 0.0);
 		store(p_WS1_BaseFrequency, i, "ws1_base_frequency", 440.0, 440.0);
 		store(p_WS1_Harmonics, i, "ws1_harmonics", 2.0, 2.0, -16.0f, 16.0f);
-		store(p_WS1_Detune, i, "ws1_detune", 430.0, 430.0, 430.0f, 450.0f);
+		store(p_WS1_Detune, i, "ws1_detune", 0.0f, 0.0f, 0.0f, 10.0f);
 		store(p_WS1_Detune_Range, i, "ws1_detune_range", 6.35f, 6.35f);
 		store(p_WS1_Transpose, i, "ws1_transpose", 0.0, 0.0, -12.0f, 12.0f);
 		
 		store(p_WS2_Amount, i, "ws2_amount", 0.0, 0.0);
 		store(p_WS2_BaseFrequency, i, "ws2_base_frequency", 440.0, 440.0);
 		store(p_WS2_Harmonics, i, "ws2_harmonics", 2.0, 2.0, -16.0f, 16.0f);
-		store(p_WS2_Detune, i, "ws2_detune", 430.0, 430.0, 430.0f, 450.0f);
+		store(p_WS2_Detune, i, "ws2_detune", 0.0f, 0.0f, 0.0f, 10.0f);
 		store(p_WS2_Detune_Range, i, "ws2_detune_range", 6.35f, 6.35f);
 		store(p_WS2_Transpose, i, "ws2_transpose", 0.0, 0.0, -12.0f, 12.0f);
 		
@@ -90,7 +90,7 @@ ParameterPool::ParameterPool() {
 	store(p_FX_Delay_FBRight, 0, "fxdelay_feedback_right", 0.5, 0.5, 0.01, 0.99);
 	
 	store(p_FX_Fold_Amount, 0, "fxfold_amount", 0.5f, 0.5f, 0.0f, 1.0f);
-	store(p_FX_Fold_Gain, 0, "fxfold_gain", 1.0f, 1.0f, 0.5f, 1.5f);
+	store(p_FX_Fold_Gain, 0, "fxfold_gain", 1.0f, 1.0f, 1.0f, 4.0f);
 	
 	store(p_Master, 0, "master", 1.0, 1.0);
 	store(p_BPM, 0, "bpm", 120.0, 120.0, 60.0f, 240.0f);

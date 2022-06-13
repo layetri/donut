@@ -26,10 +26,13 @@ Tensions::~Tensions() {
 }
 
 void Tensions::pitch(uint8_t note) {
-	ks_delaytime->value = mtof(note + (uint8_t) transpose->value, 440.0);
+	ks_delaytime->value = mtof(note + (int8_t) transpose->value, 440.0);
 	
 	// Handle excitation via an interface struct
-	exciter->excite("noise", trigger_time);
+	dl_in->wipe();
+	output->wipe();
+	
+	exciter->excite("pulse", trigger_time);
 	remaining_trigger_time = trigger_time;
 }
 

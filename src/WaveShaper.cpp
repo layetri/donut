@@ -24,37 +24,36 @@ WaveShaper::WaveShaper(Tables* tables, ParameterPool* parameters, Parameter* det
 WaveShaper::~WaveShaper() {}
 
 void WaveShaper::process() {
+	phase_step = (frequency + detune->value) / samplerate;
 	phase = (phase + phase_step < 1.0) * (phase + phase_step);
   	output->flush();
   	h = harmonics->value;
 	  
-	  
-	  
   	if(h < 0) {
 		for (int i = 0; i < h * -1; i++) {
-			output->writeAddition(sine->getSample(floor(n[i] * samplerate * phase)) / n[i]);
-//			output->writeAddition(((sin(TWO_PI * n[i] * phase) / n[i]) * SAMPLE_MAX_VALUE));
+//			output->writeAddition(sine->getSample(floor((float) (n[i] * samplerate * phase)) / n[i]) / 2.0f);
+			output->writeAddition(((sin(TWO_PI * n[i] * phase) / n[i]) * SAMPLE_MAX_VALUE));
 		}
 	} else if(h > 0) {
 	  	for(int i = 1; i < h; i++) {
-			output->writeAddition(sine->getSample(floor(i * samplerate * phase) / i));
-//			output->writeAddition(((sin(TWO_PI * i * phase) / i) * SAMPLE_MAX_VALUE));
+//			output->writeAddition(sine->getSample(floor((float) (i * samplerate * phase) / i) / 2.0f));
+			output->writeAddition(((sin(TWO_PI * i * phase) / i) * SAMPLE_MAX_VALUE));
 		}
 	} else {
-		output->writeAddition(sine->getSample(floor(samplerate * phase)));
-//		output->write(sin(TWO_PI * phase) * SAMPLE_MAX_VALUE);
+//		output->writeAddition(sine->getSample(floor((float) (samplerate * phase)) / 2.0f));
+		output->write(sin(TWO_PI * phase) * SAMPLE_MAX_VALUE);
   	}
 }
 
 void WaveShaper::pitch (uint8_t midi_note) {
-	frequency = mtof((midi_note + (uint8_t) transpose->value), 440.0 + detune->value);
-	phase_step = frequency / samplerate;
-	base_frequency = frequency;
+	frequency = mtof((uint8_t) (midi_note + transpose->value), BASE_TUNING);
+	base_frequency = frequency + detune->value;
+	phase_step = base_frequency / samplerate;
 }
 
 void WaveShaper::setFrequency (float frequency) {
 	this->frequency = frequency;
-	phase_step = frequency / samplerate;
+	phase_step = (frequency + detune->value) / samplerate;
 }
 
 /**

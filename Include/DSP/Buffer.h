@@ -30,7 +30,6 @@ public:
     void flush();
     void wipe();
     void setPosition(int position);
-	void setMultiplier(float multiplier);
 	void attachMultiplier(Parameter* multiplier);
 
     uint getPosition();
@@ -47,7 +46,7 @@ public:
       return data[index];
     }
 	
-	float getMultiplier() const {return multiplier;};
+	float getMultiplier() const {return multiplier->value;};
 
 private:
 	uint bounds(int value);
@@ -55,8 +54,7 @@ private:
     uint size;
     uint position;
     std::string name;
-	float multiplier;
-	Parameter* multiplier_src;
+	Parameter* multiplier;
 
     bool full_cycle_flag;
 };

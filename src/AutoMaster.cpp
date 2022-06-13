@@ -4,7 +4,12 @@
 
 #include <Effect/AutoMaster.h>
 
-AutoMaster::AutoMaster(vector<unique_ptr<Voice>>& voices, ParameterPool* params, Parameter* volume) : voices(voices), output_left(samplerate/2), output_right(samplerate/2), delay(params, &output_left, &output_right) {
+AutoMaster::AutoMaster(vector<unique_ptr<Voice>>& voices, ParameterPool* params, Parameter* volume) : voices(voices),
+output_left(samplerate/2),
+output_right(samplerate/2),
+//folder_left(params, &output_left),
+//folder_right(params, &output_right),
+delay(params, &output_left, &output_right) {
 	this->volume = volume;
 	this->delay_amount = params->get(p_FX_Delay_Amount, 0);
 	master_left = delay.getLeftChannel();
@@ -35,10 +40,20 @@ void AutoMaster::process () {
 	mult = (float) (0.5 + 0.4 * sqrt(1.0 / on_voices));
 	mult = (mult >= 1.0f) + (mult < 1.0f) * mult;
 	
+	// Write multiplied samples to output buffers
 	output_left.write((sample_t) (left * mult));
 	output_right.write((sample_t) (right * mult));
 	
+	// Run FX chain
+//	folder_left.process();
+//	folder_right.process();
 	delay.process();
+}
+
+void AutoMaster::block(size_t block_size) {
+	for(auto& v : voices) {
+		v->block(block_size);
+	}
 }
 
 void AutoMaster::tick () {

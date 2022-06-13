@@ -9,7 +9,6 @@ Buffer::Buffer(uint length, std::string name) {
   size = length;
   position = 0;
   full_cycle_flag = false;
-  multiplier = 1.0;
 
   this->name = name;
   
@@ -52,7 +51,7 @@ sample_t Buffer::getCurrentSample() {
 }
 
 sample_t Buffer::getCurrentSampleMultiplied() {
-  return this->operator[](position) * multiplier * multiplier_src->value;
+  return this->operator[](position) * multiplier->value;
 }
 
 void Buffer::tick() {
@@ -87,12 +86,8 @@ sample_t Buffer::readBack(int places) {
   return getSample(position - places);
 }
 
-void Buffer::setMultiplier(float multiplier) {
-	this->multiplier = multiplier;
-}
-
 void Buffer::attachMultiplier (Parameter *multiplier) {
-	this->multiplier_src = multiplier;
+	this->multiplier = multiplier;
 }
 
 void Buffer::flush() {

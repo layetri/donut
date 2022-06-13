@@ -6,6 +6,9 @@
 #ifndef DONUT_GLOBAL_H
 #define DONUT_GLOBAL_H
 
+#define BASE_TUNING 440.0f
+#define DONUT_VERSION_NUMBER 3
+
 #define DEVMODE
 // Set platform to Darwin x86 (macOS)
 #define PLATFORM_DARWIN_X86

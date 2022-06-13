@@ -8,6 +8,7 @@
 #include <Global.h>
 #include <Source/Source.h>
 #include <System/SampleLibrary.h>
+#include <System/GUI.h>
 
 enum RepeatMode {
 	oneshot,
@@ -28,7 +29,7 @@ struct SamplerRegion {
 // The base Sampler class that contains region assignments etc
 class Sampler {
 	public:
-		Sampler(ParameterPool*, SampleLibrary* lib);
+		Sampler(ParameterPool*, SampleLibrary* lib, GUI* gui);
 		~Sampler() = default;
 		
 		void addRegion(string, uint8_t start=0, uint8_t end=127, uint8_t root=0, uint smp_start=0, uint smp_end=0);
@@ -43,6 +44,7 @@ class Sampler {
 		vector<SamplerRegion*> regions;
 		SampleLibrary* library;
 		Parameter *start, *length, *speed, *direction;
+		GUI* gui;
 		
 		RepeatMode repeat;
 		uint position;

@@ -49,8 +49,27 @@ bool SampleLibrary::load(const string& name) {
 
 void SampleLibrary::list() {
 	filesystem::path path = filesystem::current_path() / ".donut_runtime/samples";
-	for (const auto & entry : filesystem::directory_iterator(path)) {
-		gui->output(entry.path().string() + "\n", false);
+	#ifdef BUILD_GUI_IMGUI
+		vector<SampleGUIItem> disp_list;
+		findAllSampleFiles(&disp_list, path);
+		gui->updateSampleList(disp_list);
+	#else
+		for (const auto & entry : filesystem::directory_iterator(path)) {
+			gui->output(entry.path().string() + "\n", false);
+		}
+	#endif
+	
+}
+
+void SampleLibrary::findAllSampleFiles(vector<SampleGUIItem>* returnList, filesystem::path base_path) {
+	for (const auto & entry : filesystem::directory_iterator(base_path)) {
+		auto p = entry.path().string();
+		p = p.substr(p.find(".donut_runtime/samples") + 23);
+		if(entry.is_directory()) {
+			findAllSampleFiles(returnList, entry.path());
+		} else if(entry.path().string().find(".wav") != string::npos) {
+			returnList->push_back(SampleGUIItem {p});
+		}
 	}
 }
 

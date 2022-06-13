@@ -9,7 +9,10 @@
 
 #include <Global.h>
 #include <DSP/Buffer.h>
+
 #include <Effect/StereoDelay.h>
+#include <Effect/Fold.h>
+
 #include <System/Voice.h>
 #include <System/ParameterStore.h>
 
@@ -22,6 +25,7 @@ class AutoMaster {
 		
 		void process();
 		void tick();
+		void block(size_t block_size);
 		float scale(sample_t sample);
 		
 		float getLeftChannel();
@@ -32,6 +36,8 @@ class AutoMaster {
 		Parameter *volume, *delay_amount;
 		Buffer output_left, output_right;
 		Buffer *master_left, *master_right;
+		
+//		Fold folder_left, folder_right;
 		StereoDelay delay;
 	
 		uint16_t stereoize;

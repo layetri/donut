@@ -17,8 +17,9 @@ SamplerVoice::SamplerVoice (Sampler *sampler, ParameterPool *params, uint8_t voi
 
 void SamplerVoice::process () {
 	if(sampler->isReady() && playing) {
-		output->write((sample_t) (0.3 * current_sample->sample->sample->getSample(abs_position) + 0.7 * prev_tick));
-		prev_tick = current_sample->sample->sample->getSample(abs_position);
+		auto smp = current_sample->sample->sample->getSample(abs_position);
+		output->write((sample_t) (0.3 * smp + 0.7 * prev_tick));
+		prev_tick = smp;
 	}
 }
 
@@ -28,7 +29,7 @@ void SamplerVoice::pitch(uint8_t midi_note) {
 		position = current_sample->smp_start;
 		abs_position = current_sample->smp_start;
 	}
-	increment = (samplerate / mtof(current_sample->key_root)) / mtof(127-(midi_note + 2 + (uint8_t) transpose->value), 430.0f);// repitch sample
+	increment = (samplerate / mtof(current_sample->key_root)) / mtof(127-(midi_note + 2 + (int8_t) transpose->value), 430.0f);// repitch sample
 	playing = true;
 }
 
@@ -37,7 +38,10 @@ void SamplerVoice::tick() {
 	if(sampler->isReady() && playing) {
 		if(current_sample->mode != oneshot || position < current_sample->smp_end) {
 			position += increment;
-			position = (current_sample->mode != oneshot) * ((position < current_sample->smp_end) * position + (position >= current_sample->smp_end) * ((position - current_sample->smp_end) + current_sample->smp_start)) + (current_sample->mode == oneshot) * position;
+			if(current_sample->mode != oneshot) {
+				position = (position < current_sample->smp_end) * position +
+				  (position >= current_sample->smp_end) * ((position - current_sample->smp_end) + current_sample->smp_start);
+			}
 			abs_position = floor(position);
 		} else {
 			playing = false;
@@ -47,9 +51,10 @@ void SamplerVoice::tick() {
 	}
 }
 
-Sampler::Sampler(ParameterPool* params, SampleLibrary* lib) {
+Sampler::Sampler(ParameterPool* params, SampleLibrary* lib, GUI* gui) {
 	this->samples = lib->getSamples();
 	this->library = lib;
+	this->gui = gui;
 }
 
 void Sampler::addRegion (string sample, uint8_t start, uint8_t end, uint8_t root, uint smp_start, uint smp_end) {

@@ -44,7 +44,7 @@ void WaveTableOscillator::tick() {
 	if(mixer != shape->value)
 		refresh();
 	
-	position += frequency;
+	position += (frequency + detune->value);
 	position = (position < square->getSize()) * position + (position >= square->getSize()) * (position - square->getSize());
 	fl_position = floor(position);
 	
@@ -63,7 +63,7 @@ void WaveTableOscillator::refresh() {
 }
 
 void WaveTableOscillator::pitch(uint8_t midi_note) {
-	frequency = (samplerate / TABLE_FREQUENCY) / mtof(127-(midi_note + 2 + (uint8_t) transpose->value), detune->value);
+	frequency = (samplerate / TABLE_FREQUENCY) / mtof(127-(midi_note + 2 + (int8_t) transpose->value), BASE_TUNING - 10.0f);
 }
 
 float WaveTableOscillator::bind(float value) {

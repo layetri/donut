@@ -36,6 +36,8 @@ class SampleLibrary {
 	private:
 		vector<Sample*> samples;
 		GUI* gui;
+		
+		void findAllSampleFiles(vector<SampleGUIItem>*, filesystem::path);
 };
 
 
