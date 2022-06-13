@@ -11,7 +11,6 @@
 #include <functional>
 #include <vector>
 #include <queue>
-#include <curses.h>
 
 #include <Global.h>
 #include <ext/ctre.h>

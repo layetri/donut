@@ -5,7 +5,6 @@
 #ifndef DONUT_MAIN_DARWIN_H
 #define DONUT_MAIN_DARWIN_H
 
-#include <curses.h>
 #include <vector>
 #include <string>
 #include <sstream>
