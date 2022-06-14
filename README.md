@@ -73,3 +73,9 @@ NOTE 2 (Linux only): before running Donut, make sure there's a MIDI connection a
 
 ### Thanks and stuff
 - The default piano sample was generously provided by Björn Colin
+- This project uses open source code from the following repositories:
+  - [ocornut/imgui](https://github.com/ocornut/imgui)
+  - [nlohmann/json](https://github.com/nlohmann/json)
+  - [adamstark/AudioFile](https://github.com/adamstark/AudioFile)
+  - [thertk/RtMidi](https://github.com/thertk/rtmidi)
+  - [hanickadot/compile-time-regular-expressions](https://github.com/hanickadot/compile-time-regular-expressions)
