@@ -94,7 +94,7 @@ void PresetEngine::load(string name) {
 					modmatrix->link(
 					  pool->get(pool->translate((string) m["destination"]), m["voice"]),
 					  modmatrix->get((string) m["source"], m["voice"]),
-					  m["voice"]);
+					  m["voice"], m["amount"]);
 				}
 			}
 			

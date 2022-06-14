@@ -32,7 +32,6 @@ class NoteHandler {
 	bool findNextFree(Note note);
 	void stealLeastRecent(Note note);
 	void incrementVoiceIndex(KeyboardHalf& half);
-    void tick();
 	uint8_t inUse();
 	
 	void setSplit(uint8_t key);

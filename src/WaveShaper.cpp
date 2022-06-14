@@ -29,6 +29,7 @@ void WaveShaper::process() {
   	output->flush();
   	h = harmonics->value;
 	  
+  // TODO: Determine which one is better
   	if(h < 0) {
 		for (int i = 0; i < h * -1; i++) {
 //			output->writeAddition(sine->getSample(floor((float) (n[i] * samplerate * phase)) / n[i]) / 2.0f);

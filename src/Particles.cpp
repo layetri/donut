@@ -172,7 +172,7 @@ vector<Particle*> ParticleVoice::getInactiveParticles() {
 void ParticleVoice::process () {
 	long sample = 0;
 	
-	if(!active_particles.empty()) {
+	if(!active_particles.empty() && grain_size->value < engine->getMaxPosition()) {
 		for (auto &p: active_particles) {
 			sample += p->getSample();
 		}

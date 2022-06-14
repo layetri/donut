@@ -14,6 +14,10 @@ NoteHandler::NoteHandler(vector<unique_ptr<Voice>>& voices) : voices(voices) {
 NoteHandler::~NoteHandler() {
 }
 
+/*!
+ * @brief Distribute Note On messages
+ * @param note
+ */
 void NoteHandler::noteOn(Note note) {
 	// Find a free voice or steal the least recently used voice
 	if(!findNextFree(note)) {
@@ -23,6 +27,10 @@ void NoteHandler::noteOn(Note note) {
 	}
 }
 
+/*!
+ * @brief Distribute Note Off messages
+ * @param note
+ */
 void NoteHandler::noteOff(Note note) {
 	for(auto& v : voices) {
 		if(v->releaseIfMatches(note.pitch)) {
@@ -32,6 +40,12 @@ void NoteHandler::noteOff(Note note) {
 	}
 }
 
+/*!
+ * @brief Sets a given parameter to a given value (int or float) on the most recently controlled voice group
+ * @param parameter
+ * @param value
+ * @param float_value
+ */
 void NoteHandler::set(ParameterID parameter, int16_t value, float float_value) {
 	const auto isVoiceInUse = [](auto& voice) { return !voice->isAvailable(); };
 	
@@ -41,16 +55,21 @@ void NoteHandler::set(ParameterID parameter, int16_t value, float float_value) {
     							[&] (auto& voice) { return isVoiceInUse(voice); }) > 0;
 	};
 	
+	// If any voices are currently being played, we need to figure out which voice(s) to assign values to
 	if(inUse() > 0) {
+		// Clear assignment memory
 		last_controlled.clear();
 		
+		// For both keyboard halves, check if it contains any active voices
 		if (isThereAnActiveVoiceInHalf(voices_lower)) {
+			// If it does, assign the parameter value to all voices in this half
 			for(auto& r : voices_lower->voices) {
 				r->set(parameter, value, float_value);
 			}
+			// Remember that this was the last controlled half, for when no notes are being played
 			last_controlled.push_back(voices_lower.get());
 		}
-		
+		// Do this for the upper half of the keyboard too
 		if (isThereAnActiveVoiceInHalf(voices_upper)) {
 			for(auto& r : voices_upper->voices) {
 				r->set(parameter, value, float_value);
@@ -58,6 +77,8 @@ void NoteHandler::set(ParameterID parameter, int16_t value, float float_value) {
 			last_controlled.push_back(voices_upper.get());
 		}
 	} else {
+		// If no voices are currently playing, set the value on the voice group that was most recently changed
+		// TODO: look into whether this is intuitive enough
 		for(auto& half : last_controlled) {
 			for(auto& voice : half->voices) {
 				voice->set(parameter, value, float_value);
@@ -66,6 +87,11 @@ void NoteHandler::set(ParameterID parameter, int16_t value, float float_value) {
 	}
 }
 
+/*!
+ * @brief Assign a note to the next free voice, round-robin style
+ * @param note
+ * @return True if the note can be assigned, false if all voices are in use
+ */
 bool NoteHandler::findNextFree(Note note) {
 	KeyboardHalf& half = getHalf(note);
 	for(int i = 0; i < half.voices.size(); i++) {
@@ -78,10 +104,18 @@ bool NoteHandler::findNextFree(Note note) {
 	return false;
 }
 
+/*!
+ * @brief Increment the voice index, round-robin style
+ * @param half
+ */
 void NoteHandler::incrementVoiceIndex(KeyboardHalf& half) {
 	half.rr_index = (half.rr_index + 1 < half.voices.size()) * (half.rr_index + 1);
 }
 
+/*!
+ * @brief Assign a note to the least recently used voice
+ * @param note
+ */
 void NoteHandler::stealLeastRecent(Note note) {
 	clock_t s = clock();
 	Voice* voice_to_steal = nullptr;
@@ -97,24 +131,10 @@ void NoteHandler::stealLeastRecent(Note note) {
 	voice_to_steal->assign(note);
 }
 
-void NoteHandler::tick() {
-  // Assign all notes in queue - if any are left, delete them
-  while(!note_queue.empty()) {
-    Note tmp = note_queue.front();
-    note_queue.pop();
-
-    for (auto &voice : voices) {
-      if (voice->assignIfAvailable(tmp)) {
-        break;
-      }
-    }
-  }
-}
-
-/**
-*   @brief Splits the note range in two.
-*   @param uint_8t MIDI note number (0-127) to split the keyboard at.
-*/
+/*!
+ * @brief Set the MIDI note to split the keyboard at
+ * @param key
+ */
 void NoteHandler::setSplit (uint8_t key) {
 	this->split_key = key;
 	intelliSplit();
@@ -125,28 +145,20 @@ void NoteHandler::setSplit (uint8_t key) {
 	for(int i = 0; i < NUMBER_OF_VOICES; i++) {
 		if(i < split_index) {
 			voices_lower->voices.push_back(voices.at(i).get());
-//			cout << "l" << i << " ";
 		} else {
 			voices_upper->voices.push_back(voices.at(i).get());
-//			cout << "u" << i << " ";
 		}
 	}
 	cout << endl;
 }
 
-/**
-*   @brief Set the ratio between the number of voices assigned to both keyboard halves.
-*   @param float MIDI CC value (0-127) for the split ratio.
-*/
+// TODO: implement and document intelligent keyboard split
 void NoteHandler::setSplitRatio(float split_ratio) {
 	split_index = split_ratio * NUMBER_OF_VOICES;
 	
 	intelliSplit();
 }
 
-/**
-*   @brief Abstraction to provide bounds for split functionality.
-*/
 void NoteHandler::intelliSplit() {
 	split_index = (split_key / 127.0) * (NUMBER_OF_VOICES - 1);
 	split_index =
@@ -155,6 +167,11 @@ void NoteHandler::intelliSplit() {
 		  (split_index == NUMBER_OF_VOICES) * (NUMBER_OF_VOICES - (split_key < 127));
 }
 
+/*!
+ * @brief Determine the half that contains a given note
+ * @param note
+ * @return The keyboard half that contains the given note
+ */
 KeyboardHalf& NoteHandler::getHalf(Note note) {
 	if(note.pitch >= split_key) {
 		return *voices_upper;
@@ -163,6 +180,10 @@ KeyboardHalf& NoteHandler::getHalf(Note note) {
 	}
 }
 
+/*!
+ * @brief Return the number of voices that are currently in use
+ * @return The number of voices currently in use [0, 12]
+ */
 uint8_t NoteHandler::inUse() {
 	return used_voices;
 }
