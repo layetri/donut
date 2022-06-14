@@ -17,6 +17,7 @@ Particles::~Particles () {
 void Particles::swap(const string& name, int root_key) {
 	sample = library->get(name);
 	base_frequency = Source::mtof(root_key, 440.0f);
+	sample_changed_ = true;
 }
 
 float Particles::getBaseFrequency () {
@@ -25,6 +26,10 @@ float Particles::getBaseFrequency () {
 
 uint Particles::getMaxPosition () {
 	return this->sample->sample->getSize();
+}
+
+bool Particles::hasSampleChanged () {
+	return sample_changed_;
 }
 
 Sample** Particles::getSample () {
@@ -42,6 +47,9 @@ ParticleVoice::ParticleVoice (Particles* engine, ParameterPool* params, uint8_t 
 	this->grain_size = params->get(p_Particles_GrainSize, voice_id);
 	this->playhead = params->get(p_Particles_Position, voice_id);
 	
+	grain_size->max = engine->getMaxPosition();
+	playhead->max = engine->getMaxPosition() - grain_size->value;
+	
 	for(int i = 0; i < MAX_NUM_PARTICLES; i++) {
 		this->particles.push_back(new Particle {engine->getSample(), shape, playhead});
 	}
@@ -56,6 +64,10 @@ ParticleVoice::~ParticleVoice () {
 void ParticleVoice::block(size_t ext_block_size) {
 	// This is where we do all pre-calculation for the next N blocks
 	block_size += ext_block_size;
+	if(engine->hasSampleChanged()) {
+		grain_size->max = engine->getMaxPosition();
+		playhead->max = engine->getMaxPosition() - grain_size->value;
+	}
 	
 	// Apply chunking (we render a few blocks at a time)
 	if(aggregate_counter_ == CHUNKING) {
@@ -75,7 +87,7 @@ void ParticleVoice::block(size_t ext_block_size) {
 		n_particles = n_particles > max_particles ? max_particles : n_particles;
 		
 		// Search algorithm and apply it
-		switch (GranulationAlgorithm(round(algorithm->value * 2))) {
+		switch (GranulationAlgorithm(round(algorithm->value * 3))) {
 			case ga_Deterministic:
 				// Iterate and trigger grains
 				for (int i = 0; i < n_particles; i++) {
@@ -111,6 +123,17 @@ void ParticleVoice::block(size_t ext_block_size) {
 					v = (static_cast<float>(rand()) / static_cast<float>(RAND_MAX));
 					if (v < density->value && particle_index < MAX_NUM_PARTICLES) {
 						inactive_particles[particle_index]->start = v * block_size;
+						inactive_particles[particle_index]->in_queue_ = true;
+						particle_index++;
+					}
+				}
+				break;
+			case ga_Note:
+				minimum_interval = ((float) samplerate / (float) block_size) * frequency;
+				n_particles = block_size / minimum_interval;
+				for(int i = 0; i < n_particles; i++) {
+					if(particle_index < MAX_NUM_PARTICLES) {
+						inactive_particles[particle_index]->start = i * minimum_interval;
 						inactive_particles[particle_index]->in_queue_ = true;
 						particle_index++;
 					}
@@ -183,6 +206,7 @@ void ParticleVoice::tick() {
 
 void ParticleVoice::pitch (uint8_t key) {
 	// Set speed AND LENGTH of all particles
+	frequency = mtof(key, 430.0f);
 	for(auto& p : particles) {
 		p->speed = mtof(key, 430.0f) / engine->getBaseFrequency(); // TODO: calculate speed for any frequency
 	}

@@ -25,7 +25,8 @@ enum ParticleShape {
 enum GranulationAlgorithm {
 	ga_DivideDown,
 	ga_Deterministic,
-	ga_RandomStart
+	ga_RandomStart,
+	ga_Note
 };
 
 // How to shape:
@@ -126,10 +127,12 @@ class Particles {
 		Sample** getSample();
 		float getBaseFrequency();
 		uint getMaxPosition();
+		bool hasSampleChanged();
 	private:
 		SampleLibrary* library;
 		Sample* sample;
 		float base_frequency = 0.0;
+		bool sample_changed_ = false;
 };
 
 class ParticleVoice : public Source {
@@ -155,6 +158,7 @@ private:
 	uint block_size = 0;
 	uint block_counter = 0;
 	uint aggregate_counter_ = CHUNKING;
+	float frequency = 440.0f;
 };
 
 #endif //DONUT_PARTICLES_H
